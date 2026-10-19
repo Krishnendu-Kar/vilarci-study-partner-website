@@ -1,527 +1,838 @@
-// js/main.js — Vilarci Study Partner (Teacher & Coaching Institute Portal)
-// Comprehensive SPA controller managing:
-// 1. Dual Operator Modes (Coaching Institute with Multi-Teacher vs Independent Solo Teacher)
-// 2. Subject-wise Teacher Assignments across Batches
-// 3. Live Attendance Terminal & QR Generator
-// 4. Points & Academic Honors Dispenser Desk with Real-time Peer Motivation Preview
-// 5. Assessments, Fees, Curriculum Tracking & Marksheet Issuance
+// js/main.js — Vilarci Study Partner (Teacher-First Architecture)
+// Complete controller implementing:
+// 1. Logged-in Teacher Profile Management & Switching
+// 2. Private Batches (Multiple classes, multiple batches per class, rename, student management)
+// 3. Coaching Institutes (Owned with Members/Faculty Management, or Joined as Faculty)
+// 4. Coaching Classes with Sections (e.g. Class 10-A, Class 10-B, Class 9-A) with subject-wise teachers
+// 5. Unified Batch Command Deck: Students Roster, QR Attendance, Points Dispenser Desk, Tests, Syllabus, Fees
 
 (function () {
   'use strict';
 
-  // ─── APPLICATION STATE ───────────────────────────────────────────────────────
-  var STATE = {
-    operators: [],
-    teachers: [],
-    batches: [],
-    students: [],
-    syllabus_topics: [],
-    tests: [],
-    invoices: [],
-    points_dispatches: [],
-    issued_marksheets: [],
-    today_sessions: []
-  };
+  // ─── STATE STORAGE ─────────────────────────────────────────────────────────
+  var STATE = {};
+  var activeTeacherId = 'teacher-alok';
+  var currentWorkspace = 'private_batches'; // 'private_batches', 'coaching_institutes'
+  var activeCoachingId = 'inst-stellar';
+  
+  // Context when inside a specific batch/section
+  var activeDeckContext = null; // { type: 'private_batch'|'coaching_section', id: '...', parentCoachingId: '...' }
 
-  var currentOperatorId = 'op-stellar';
-  var currentBatchId = 'batch-10-m';
-
-  // ─── INITIALIZATION ──────────────────────────────────────────────────────────
+  // ─── INITIALIZATION ────────────────────────────────────────────────────────
   function init() {
     loadState();
-    setupRouting();
-    setupOperatorSwitcher();
+    setupTopNavbar();
+    setupWorkspaceTabs();
+    setupClassFilterChips();
     setupModals();
     setupThemeToggle();
-    setupForms();
+    setupFormHandlers();
 
-    // Trigger initial route
-    handleRoute();
+    // Render initial view
+    renderCurrentWorkspace();
   }
 
   function loadState() {
-    var stored = localStorage.getItem('vilarci_partner_state_v1');
+    var stored = localStorage.getItem('vilarci_teacher_state_v2');
     if (stored) {
       try {
         STATE = JSON.parse(stored);
       } catch (e) {
-        STATE = JSON.parse(JSON.stringify(window.PARTNER_DATA));
+        STATE = JSON.parse(JSON.stringify(window.TEACHER_PORTAL_DATA));
       }
     } else {
-      STATE = JSON.parse(JSON.stringify(window.PARTNER_DATA));
+      STATE = JSON.parse(JSON.stringify(window.TEACHER_PORTAL_DATA));
     }
+    activeTeacherId = STATE.logged_in_teacher_id || 'teacher-alok';
   }
 
   function saveState() {
-    localStorage.setItem('vilarci_partner_state_v1', JSON.stringify(STATE));
+    STATE.logged_in_teacher_id = activeTeacherId;
+    localStorage.setItem('vilarci_teacher_state_v2', JSON.stringify(STATE));
   }
 
-  function getActiveOperator() {
-    return STATE.operators.find(function (op) { return op.id === currentOperatorId; }) || STATE.operators[0];
+  function getActiveTeacher() {
+    return (STATE.teachers || []).find(function (t) { return t.id === activeTeacherId; }) || STATE.teachers[0];
   }
 
-  function getActiveBatch() {
-    return STATE.batches.find(function (b) { return b.id === currentBatchId; }) || STATE.batches[0];
-  }
+  // ─── TOP NAVBAR & TEACHER CONTEXT ──────────────────────────────────────────
+  function setupTopNavbar() {
+    updateTeacherNavProfile();
 
-  // ─── ROUTING ENGINE ─────────────────────────────────────────────────────────
-  function setupRouting() {
-    window.addEventListener('hashchange', handleRoute);
-  }
-
-  function handleRoute() {
-    var hash = window.location.hash.replace('#', '') || 'dashboard';
-    var validViews = ['dashboard', 'batches', 'attendance', 'syllabus', 'points', 'tests', 'fees', 'marksheets', 'faculty', 'admissions', 'settings'];
-    
-    if (validViews.indexOf(hash) === -1) {
-      hash = 'dashboard';
-    }
-
-    // Toggle Section Views
-    document.querySelectorAll('.view-section').forEach(function (sec) {
-      sec.classList.remove('active');
-    });
-    var activeSec = document.getElementById('view-' + hash);
-    if (activeSec) activeSec.classList.add('active');
-
-    // Toggle Nav Links
-    document.querySelectorAll('.nav-item').forEach(function (nav) {
-      nav.classList.remove('active');
-      if (nav.getAttribute('data-nav') === hash) {
-        nav.classList.add('active');
-      }
-    });
-
-    // Update Header Title
-    var titles = {
-      dashboard: 'Command Center',
-      batches: 'Batches & Classroom Sections',
-      attendance: 'Attendance & QR Terminal',
-      syllabus: 'Curriculum & Syllabus Manager',
-      points: 'Academic Points & Honors Dispenser',
-      tests: 'Assessments & Scorecards',
-      fees: 'Tuition Fees & Invoices',
-      marksheets: 'Academic Marksheets Studio',
-      faculty: 'Faculty & Staff Directory',
-      admissions: 'Student Admissions & Join Codes',
-      settings: 'Institute Profile & Settings'
-    };
-    var pageTitleEl = document.getElementById('pageTitle');
-    if (pageTitleEl) pageTitleEl.textContent = titles[hash] || 'Command Center';
-
-    // Render active view content
-    renderActiveView(hash);
-  }
-
-  function renderActiveView(viewName) {
-    switch (viewName) {
-      case 'dashboard':
-        renderDashboard();
-        break;
-      case 'batches':
-        renderBatches();
-        break;
-      case 'attendance':
-        renderAttendance();
-        break;
-      case 'syllabus':
-        renderSyllabus();
-        break;
-      case 'points':
-        renderPoints();
-        break;
-      case 'tests':
-        renderTests();
-        break;
-      case 'fees':
-        renderFees();
-        break;
-      case 'marksheets':
-        renderMarksheets();
-        break;
-      case 'faculty':
-        renderFaculty();
-        break;
-      case 'admissions':
-        renderAdmissions();
-        break;
-      case 'settings':
-        renderSettings();
-        break;
+    var profileChip = document.getElementById('btnSwitchTeacherProfile');
+    if (profileChip) {
+      profileChip.onclick = function () {
+        openSwitchTeacherModal();
+      };
     }
   }
 
-  // ─── OPERATOR CONTEXT SWITCHER ───────────────────────────────────────────────
-  function setupOperatorSwitcher() {
-    var select = document.getElementById('operatorSelectDropdown');
-    if (!select) return;
+  function updateTeacherNavProfile() {
+    var t = getActiveTeacher();
+    var avatarEl = document.getElementById('navTeacherAvatar');
+    if (avatarEl) {
+      avatarEl.textContent = t.photo_initials;
+      avatarEl.style.backgroundColor = t.avatar_bg || '#800020';
+    }
 
-    select.innerHTML = STATE.operators.map(function (op) {
-      var icon = op.type === 'coaching_institute' ? '🏛️' : '🔬';
-      var isSelected = op.id === currentOperatorId ? ' selected' : '';
-      return '<option value="' + op.id + '"' + isSelected + '>' + icon + ' ' + op.name + '</option>';
+    var nameEl = document.getElementById('navTeacherName');
+    if (nameEl) nameEl.textContent = t.name;
+
+    var subjEl = document.getElementById('navTeacherSubject');
+    if (subjEl) subjEl.textContent = t.primary_subject + ' Specialist ▾';
+
+    // Update workspace counters
+    var myBatches = (STATE.private_batches || []).filter(function (b) { return b.teacher_id === activeTeacherId; });
+    var counterPB = document.getElementById('counterPrivateBatches');
+    if (counterPB) counterPB.textContent = myBatches.length;
+
+    var myInstitutes = (STATE.coaching_institutes || []).filter(function (inst) {
+      var isOwner = inst.owner_teacher_id === activeTeacherId;
+      var isMember = (inst.members || []).some(function (m) { return m.teacher_id === activeTeacherId; });
+      return isOwner || isMember;
+    });
+    var counterCI = document.getElementById('counterCoachingInstitutes');
+    if (counterCI) counterCI.textContent = myInstitutes.length;
+  }
+
+  function openSwitchTeacherModal() {
+    var container = document.getElementById('switchTeacherProfilesList');
+    if (!container) return;
+
+    container.innerHTML = (STATE.teachers || []).map(function (t) {
+      var isActive = t.id === activeTeacherId;
+      return (
+        '<div class="inst-role-banner" style="cursor:pointer; ' + (isActive ? 'border-color:var(--primary); background:var(--primary-light);' : '') + '" data-switch-teacher-id="' + t.id + '">' +
+          '<div style="display:flex; align-items:center; gap:10px;">' +
+            '<div style="width:32px; height:32px; border-radius:50%; background:' + (t.avatar_bg || 'var(--primary)') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px;">' + t.photo_initials + '</div>' +
+            '<div>' +
+              '<div style="font-size:13.5px; font-weight:700;">' + t.name + '</div>' +
+              '<div class="text-xs text-muted">' + t.primary_subject + ' &bull; ' + t.qualification + '</div>' +
+            '</div>' +
+          '</div>' +
+          (isActive ? '<span class="badge badge-primary">Active</span>' : '<button type="button" class="btn btn-outline btn-sm">Switch ➜</button>') +
+        '</div>'
+      );
     }).join('');
 
-    select.onchange = function () {
-      switchOperator(this.value);
-    };
+    container.querySelectorAll('[data-switch-teacher-id]').forEach(function (el) {
+      el.onclick = function () {
+        var tId = this.getAttribute('data-switch-teacher-id');
+        activeTeacherId = tId;
+        saveState();
+        updateTeacherNavProfile();
+        closeModal('modalSwitchTeacher');
+        // Reset view to private batches of this teacher
+        currentWorkspace = 'private_batches';
+        activeDeckContext = null;
+        renderCurrentWorkspace();
+        showToast('Switched account to: ' + getActiveTeacher().name, 'info');
+      };
+    });
 
-    var switchCard = document.getElementById('btnSwitchOperatorCard');
-    if (switchCard) {
-      switchCard.onclick = function () {
-        // Cycle to next operator
-        var idx = STATE.operators.findIndex(function (o) { return o.id === currentOperatorId; });
-        var nextIdx = (idx + 1) % STATE.operators.length;
-        switchOperator(STATE.operators[nextIdx].id);
+    openModal('modalSwitchTeacher');
+  }
+
+  // ─── PRIMARY WORKSPACE SWITCHER ────────────────────────────────────────────
+  function setupWorkspaceTabs() {
+    var pbBtn = document.getElementById('wsBtnPrivateBatches');
+    var ciBtn = document.getElementById('wsBtnCoachingInstitutes');
+
+    if (pbBtn) {
+      pbBtn.onclick = function () {
+        currentWorkspace = 'private_batches';
+        activeDeckContext = null;
+        renderCurrentWorkspace();
       };
     }
 
-    updateSidebarOperatorContext();
+    if (ciBtn) {
+      ciBtn.onclick = function () {
+        currentWorkspace = 'coaching_institutes';
+        activeDeckContext = null;
+        renderCurrentWorkspace();
+      };
+    }
   }
 
-  function switchOperator(newOpId) {
-    currentOperatorId = newOpId;
-    var op = getActiveOperator();
+  function renderCurrentWorkspace() {
+    // Sync tab button states
+    var pbBtn = document.getElementById('wsBtnPrivateBatches');
+    var ciBtn = document.getElementById('wsBtnCoachingInstitutes');
+    if (pbBtn) pbBtn.classList.toggle('active', currentWorkspace === 'private_batches' && !activeDeckContext);
+    if (ciBtn) ciBtn.classList.toggle('active', currentWorkspace === 'coaching_institutes' && !activeDeckContext);
 
-    // Default current batch to first batch of this operator
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; });
-    if (opBatches.length > 0) {
-      currentBatchId = opBatches[0].id;
+    // Hide all main views first
+    document.querySelectorAll('.main-view').forEach(function (v) { v.style.display = 'none'; });
+
+    if (activeDeckContext) {
+      // We are inside a specific batch/section deck!
+      var deckView = document.getElementById('view-batch-deck');
+      if (deckView) deckView.style.display = 'block';
+      renderBatchDeck();
+      return;
     }
 
-    // Sync select dropdown
-    var select = document.getElementById('operatorSelectDropdown');
-    if (select) select.value = currentOperatorId;
-
-    updateSidebarOperatorContext();
-    handleRoute();
-    showToast('Switched operator to: ' + op.name, 'info');
+    if (currentWorkspace === 'private_batches') {
+      var pbView = document.getElementById('view-private-batches');
+      if (pbView) pbView.style.display = 'block';
+      updateBreadcrumb(['Workspace', 'My Private Batches']);
+      renderPrivateBatches('all');
+    } else if (currentWorkspace === 'coaching_institutes') {
+      var ciView = document.getElementById('view-coaching-list');
+      if (ciView) ciView.style.display = 'block';
+      updateBreadcrumb(['Workspace', 'Coaching Institutes']);
+      renderCoachingInstitutesList();
+    }
   }
 
-  function updateSidebarOperatorContext() {
-    var op = getActiveOperator();
-    var isCoaching = op.type === 'coaching_institute';
+  function updateBreadcrumb(crumbs, actionBtnHtml) {
+    var displayEl = document.getElementById('breadcrumbPathDisplay');
+    if (!displayEl) return;
 
-    var opTypeTag = document.getElementById('sidebarOpTypeTag');
-    if (opTypeTag) {
-      opTypeTag.className = 'operator-type-tag ' + (isCoaching ? 'coaching' : 'solo');
-      opTypeTag.textContent = isCoaching ? 'Coaching Institute' : 'Solo Specialist Teacher';
-    }
-
-    var opCodeEl = document.getElementById('sidebarOpCode');
-    if (opCodeEl) opCodeEl.textContent = op.code;
-
-    var opLogoEl = document.getElementById('sidebarOpLogo');
-    if (opLogoEl) {
-      opLogoEl.textContent = op.logo_text;
-      opLogoEl.style.backgroundColor = op.theme_color || '#800020';
-    }
-
-    var opNameEl = document.getElementById('sidebarOpName');
-    if (opNameEl) opNameEl.textContent = op.name;
-
-    var opDirectorEl = document.getElementById('sidebarOpDirector');
-    if (opDirectorEl) opDirectorEl.textContent = op.director_name;
-
-    // Sidebar footer user
-    var footerName = document.getElementById('sidebarUserName');
-    if (footerName) footerName.textContent = op.director_name.split('(')[0].trim();
-
-    var footerRole = document.getElementById('sidebarUserRole');
-    if (footerRole) footerRole.textContent = isCoaching ? 'Institute Director' : 'Principal Faculty';
-
-    // Show or hide Faculty tab (coaching has multi-teachers; solo tuition does not need it)
-    var navFaculty = document.getElementById('navItemFaculty');
-    if (navFaculty) {
-      navFaculty.style.display = isCoaching ? 'flex' : 'none';
-    }
-
-    // Update batch counter badge in sidebar
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; });
-    var badgeBatches = document.getElementById('navBadgeBatches');
-    if (badgeBatches) badgeBatches.textContent = opBatches.length;
-  }
-
-  // ─── 1. RENDER: DASHBOARD (COMMAND CENTER) ──────────────────────────────────
-  function renderDashboard() {
-    var op = getActiveOperator();
-    var isCoaching = op.type === 'coaching_institute';
-
-    // Hero Card
-    var heroType = document.getElementById('heroOpType');
-    if (heroType) heroType.textContent = isCoaching ? '🏛️ COACHING INSTITUTE DASHBOARD' : '🔬 INDEPENDENT TEACHER PORTAL';
-
-    var heroName = document.getElementById('heroOpName');
-    if (heroName) heroName.textContent = op.name;
-
-    var heroTagline = document.getElementById('heroOpTagline');
-    if (heroTagline) heroTagline.textContent = op.tagline;
-
-    var heroDirector = document.getElementById('heroOpDirector');
-    if (heroDirector) heroDirector.textContent = 'Mentor: ' + op.director_name;
-
-    var heroCode = document.getElementById('heroOpCode');
-    if (heroCode) heroCode.textContent = 'Student Join Code: ' + op.code;
-
-    var heroEst = document.getElementById('heroOpEst');
-    if (heroEst) heroEst.textContent = 'Est. ' + op.established;
-
-    // Batches of this operator
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; });
-    var batchIds = opBatches.map(function (b) { return b.id; });
-
-    // Students enrolled in this operator's batches
-    var enrolledStudents = STATE.students.filter(function (s) {
-      return (s.enrolled_batches || []).some(function (bId) { return batchIds.indexOf(bId) !== -1; });
-    });
-
-    // Invoices for this operator
-    var opInvoices = STATE.invoices.filter(function (inv) { return inv.operator_id === op.id; });
-    var totalPaid = opInvoices.filter(function (i) { return i.status === 'paid'; })
-      .reduce(function (sum, i) { return sum + i.amount; }, 0);
-
-    // Points dispatched
-    var opPoints = STATE.points_dispatches.filter(function (p) { return p.operator_id === op.id; })
-      .reduce(function (sum, p) { return sum + p.points; }, 0);
-
-    // KPI values
-    var kpiStudents = document.getElementById('kpiTotalStudents');
-    if (kpiStudents) kpiStudents.textContent = enrolledStudents.length || op.total_students;
-
-    var kpiBatches = document.getElementById('kpiActiveBatches');
-    if (kpiBatches) kpiBatches.textContent = opBatches.length;
-
-    var kpiPoints = document.getElementById('kpiPointsAwarded');
-    if (kpiPoints) kpiPoints.textContent = opPoints.toLocaleString();
-
-    var kpiFee = document.getElementById('kpiFeeCollection');
-    if (kpiFee) kpiFee.textContent = '₹' + (totalPaid / 1000).toFixed(1) + 'K';
-
-    // Dashboard Batches Table
-    var batchesTbody = document.getElementById('dashboardBatchesBody');
-    if (batchesTbody) {
-      batchesTbody.innerHTML = opBatches.map(function (batch) {
-        var facultyList = (batch.assigned_faculty || []).map(function (af) {
-          var teacher = STATE.teachers.find(function (t) { return t.id === af.teacher_id; });
-          var teacherName = teacher ? teacher.name : 'Faculty';
-          return '<span class="badge badge-muted" style="margin:2px 0;">' + af.subject + ': <strong>' + teacherName + '</strong></span>';
-        }).join('<br>');
-
-        return (
-          '<tr>' +
-            '<td><strong>' + batch.name + '</strong><br><span class="text-xs text-muted">🏛️ ' + batch.room + '</span></td>' +
-            '<td><span class="badge badge-primary">' + batch.grade + '</span></td>' +
-            '<td>' + (facultyList || '<span class="text-xs text-muted">Direct Faculty</span>') + '</td>' +
-            '<td class="text-xs">' + batch.schedule + '</td>' +
-            '<td><strong>' + batch.enrolled_count + '</strong> / ' + batch.capacity + '</td>' +
-          '</tr>'
-        );
-      }).join('');
-    }
-
-    // Dashboard Recent Points Dispatches
-    var pointsContainer = document.getElementById('dashboardRecentPointsList');
-    if (pointsContainer) {
-      var opDispatches = STATE.points_dispatches.filter(function (p) { return p.operator_id === op.id; });
-      if (opDispatches.length === 0) {
-        pointsContainer.innerHTML = '<div class="p-20 text-center text-muted text-sm">No points awarded recently.</div>';
-      } else {
-        pointsContainer.innerHTML = opDispatches.slice(0, 5).map(function (p) {
-          return (
-            '<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; border-bottom:1px solid var(--border);">' +
-              '<div>' +
-                '<div style="font-size:13.5px; font-weight:700;">' + p.student_name + '</div>' +
-                '<div style="font-size:11.5px; color:var(--text-muted);">' + p.category + ' &bull; Awarded by: <strong>' + p.awarded_by + '</strong></div>' +
-              '</div>' +
-              '<span class="badge badge-primary" style="font-size:12px;">+' + p.points + ' pts</span>' +
-            '</div>'
-          );
-        }).join('');
+    displayEl.innerHTML = crumbs.map(function (c, idx) {
+      var isLast = idx === crumbs.length - 1;
+      if (isLast) {
+        return '<span class="breadcrumb-current">' + c + '</span>';
       }
+      return '<span>' + c + '</span><span class="breadcrumb-sep">&gt;</span>';
+    }).join('');
+
+    var actionArea = document.getElementById('breadcrumbActionArea');
+    if (actionArea) {
+      actionArea.innerHTML = actionBtnHtml || '';
     }
   }
 
-  // ─── 2. RENDER: BATCHES & CLASSES ──────────────────────────────────────────
-  function renderBatches() {
-    var op = getActiveOperator();
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; });
-    var container = document.getElementById('batchesGridContainer');
+  // ─── WORKSPACE 1: MY PRIVATE BATCHES ───────────────────────────────────────
+  function setupClassFilterChips() {
+    var chips = document.querySelectorAll('#classFilterChipsRow .chip-btn');
+    chips.forEach(function (chip) {
+      chip.onclick = function () {
+        chips.forEach(function (c) { c.classList.remove('active'); });
+        this.classList.add('active');
+        var filter = this.getAttribute('data-class-filter');
+        renderPrivateBatches(filter);
+      };
+    });
+  }
+
+  function renderPrivateBatches(classFilter) {
+    var container = document.getElementById('privateBatchesGrid');
     if (!container) return;
 
-    container.innerHTML = opBatches.map(function (batch) {
-      var facultyChips = (batch.assigned_faculty || []).map(function (af) {
-        var t = STATE.teachers.find(function (tc) { return tc.id === af.teacher_id; });
-        return (
-          '<div class="faculty-chip">' +
-            '<span class="fc-subject">' + af.subject + '</span>' +
-            '<span class="fc-teacher">' + (t ? t.name : 'Faculty') + '</span>' +
-          '</div>'
-        );
-      }).join('');
+    var teacherBatches = (STATE.private_batches || []).filter(function (b) {
+      var matchTeacher = b.teacher_id === activeTeacherId;
+      var matchClass = classFilter === 'all' || b.grade === classFilter;
+      return matchTeacher && matchClass;
+    });
+
+    if (teacherBatches.length === 0) {
+      container.innerHTML = (
+        '<div class="card" style="grid-column:1/-1; text-align:center; padding:40px 20px;">' +
+          '<h3 style="font-size:18px; font-weight:700; margin-bottom:6px;">No private batches found for ' + (classFilter === 'all' ? 'your account' : classFilter) + '</h3>' +
+          '<p class="text-xs text-muted" style="margin-bottom:16px;">You can create multiple batches for any class you teach (e.g. morning, evening, or weekend batches).</p>' +
+          '<button type="button" class="btn btn-primary" onclick="document.getElementById(\'btnOpenCreatePrivateBatch\').click()">+ Create First Batch</button>' +
+        '</div>'
+      );
+      return;
+    }
+
+    container.innerHTML = teacherBatches.map(function (b) {
+      var studentCount = (b.student_ids || []).length;
+      var capacityPct = Math.round((studentCount / b.capacity) * 100);
 
       return (
-        '<div class="batch-card" data-batch-id="' + batch.id + '">' +
-          '<div class="batch-card-top">' +
+        '<div class="batch-card" data-pbatch-id="' + b.id + '">' +
+          '<div class="batch-card-header">' +
             '<div>' +
-              '<h3 class="batch-title">' + batch.name + '</h3>' +
-              '<div class="text-xs text-muted" style="margin-top:2px;">🏛️ ' + batch.room + '</div>' +
+              '<h3 class="batch-card-title">' + b.name + '</h3>' +
+              '<div class="batch-pills-row" style="margin-top:6px;">' +
+                '<span class="pill pill-primary">' + b.grade + ' &bull; ' + b.board + '</span>' +
+                '<span class="pill pill-muted">' + b.subject + '</span>' +
+              '</div>' +
             '</div>' +
-            '<span class="batch-grade-pill">' + batch.grade + ' &bull; ' + batch.board + '</span>' +
+            '<button type="button" class="btn btn-outline btn-sm btn-rename-batch" data-rename-pbatch-id="' + b.id + '" title="Rename or edit batch">✏️ Rename</button>' +
           '</div>' +
-          '<div class="batch-schedule-meta">⏱️ ' + batch.schedule + '</div>' +
-          '<div class="batch-faculty-section">' +
-            '<div class="faculty-section-title">Subject-wise Assigned Faculty</div>' +
-            '<div class="faculty-chips-list">' + (facultyChips || '<div class="text-xs text-muted">Primary Teacher Direct</div>') + '</div>' +
+          '<div class="batch-meta-line">⏱️ ' + b.schedule + '</div>' +
+          '<div class="batch-meta-line">🏛️ ' + b.room + '</div>' +
+          '<div style="margin:12px 0;">' +
+            '<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">' +
+              '<span>Enrolled Students:</span>' +
+              '<strong>' + studentCount + ' of ' + b.capacity + ' seats</strong>' +
+            '</div>' +
+            '<div style="width:100%; height:6px; background:var(--surface-muted); border-radius:var(--radius-pill); overflow:hidden;">' +
+              '<div style="width:' + capacityPct + '%; height:100%; background:var(--primary);"></div>' +
+            '</div>' +
           '</div>' +
-          '<div class="batch-stats-row">' +
-            '<span class="batch-stats-item">Students: <strong>' + batch.enrolled_count + ' / ' + batch.capacity + '</strong></span>' +
-            '<span class="batch-stats-item">Attendance: <strong>' + batch.attendance_rate + '%</strong></span>' +
-            '<span class="batch-stats-item">Fee: <strong>₹' + batch.monthly_fee + '/mo</strong></span>' +
-          '</div>' +
-          '<div class="batch-actions-row">' +
-            '<button type="button" class="btn btn-primary btn-sm btn-view-roster" data-batch-id="' + batch.id + '" style="flex:1;">View Students Roster</button>' +
-            '<button type="button" class="btn btn-outline btn-sm btn-quick-pts-batch" data-batch-id="' + batch.id + '">🏅 Award Points</button>' +
+          '<div class="batch-card-footer">' +
+            '<div class="fee-txt">Fee: <strong>₹' + b.monthly_fee.toLocaleString() + '</strong>/mo</div>' +
+            '<button type="button" class="btn btn-primary btn-sm btn-enter-pbatch" data-pbatch-id="' + b.id + '">Enter Batch ➜</button>' +
           '</div>' +
         '</div>'
       );
     }).join('');
 
     // Attach listeners
-    document.querySelectorAll('.btn-view-roster').forEach(function (btn) {
+    container.querySelectorAll('.btn-enter-pbatch').forEach(function (btn) {
       btn.onclick = function () {
-        var bId = this.getAttribute('data-batch-id');
-        currentBatchId = bId;
-        renderBatchStudentRoster(bId);
-        var rosterEl = document.getElementById('batchStudentsRosterCard');
-        if (rosterEl) rosterEl.scrollIntoView({ behavior: 'smooth' });
+        var bId = this.getAttribute('data-pbatch-id');
+        enterBatchDeck('private_batch', bId);
       };
     });
 
-    document.querySelectorAll('.btn-quick-pts-batch').forEach(function (btn) {
-      btn.onclick = function () {
-        var bId = this.getAttribute('data-batch-id');
-        openAwardPointsModal(bId);
+    container.querySelectorAll('.btn-rename-batch').forEach(function (btn) {
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        var bId = this.getAttribute('data-rename-pbatch-id');
+        openRenameBatchModal(bId);
       };
     });
-
-    renderBatchStudentRoster(currentBatchId);
   }
 
-  function renderBatchStudentRoster(batchId) {
-    var batch = STATE.batches.find(function (b) { return b.id === batchId; }) || STATE.batches[0];
-    if (!batch) return;
+  // ─── WORKSPACE 2: COACHING INSTITUTES ──────────────────────────────────────
+  function renderCoachingInstitutesList() {
+    var container = document.getElementById('coachingInstitutesGrid');
+    if (!container) return;
 
-    var titleEl = document.getElementById('rosterBatchTitle');
-    if (titleEl) titleEl.textContent = 'Enrolled Students — ' + batch.name;
-
-    // Filter students enrolled in this batch
-    var batchStudents = STATE.students.filter(function (s) {
-      return (s.enrolled_batches || []).indexOf(batch.id) !== -1;
+    var institutes = (STATE.coaching_institutes || []).filter(function (inst) {
+      var isOwner = inst.owner_teacher_id === activeTeacherId;
+      var isMember = (inst.members || []).some(function (m) { return m.teacher_id === activeTeacherId; });
+      return isOwner || isMember;
     });
 
-    var tbody = document.getElementById('rosterStudentsTableBody');
-    if (!tbody) return;
-
-    if (batchStudents.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center p-20 text-muted">No students currently enrolled in this batch.</td></tr>';
+    if (institutes.length === 0) {
+      container.innerHTML = (
+        '<div class="card" style="grid-column:1/-1; text-align:center; padding:40px 20px;">' +
+          '<h3 style="font-size:18px; font-weight:700; margin-bottom:6px;">You are not connected to any coaching institute yet.</h3>' +
+          '<p class="text-xs text-muted" style="margin-bottom:16px;">You can create your own coaching institute and invite faculty members, or join an existing coaching with an invite code.</p>' +
+          '<div style="display:flex; justify-content:center; gap:10px;">' +
+            '<button type="button" class="btn btn-outline" onclick="document.getElementById(\'btnOpenJoinCoaching\').click()">Join via Code</button>' +
+            '<button type="button" class="btn btn-primary" onclick="document.getElementById(\'btnOpenCreateCoaching\').click()">+ Create Coaching</button>' +
+          '</div>' +
+        '</div>'
+      );
       return;
     }
 
-    tbody.innerHTML = batchStudents.map(function (student) {
-      var feeBadgeClass = student.fee_status === 'paid' ? 'badge-success' : (student.fee_status === 'pending' ? 'badge-warning' : 'badge-danger');
-      var feeText = student.fee_status.toUpperCase();
+    container.innerHTML = institutes.map(function (inst) {
+      var isOwner = inst.owner_teacher_id === activeTeacherId;
+      var roleBadge = isOwner 
+        ? '<span class="badge badge-success">👑 Director &amp; Owner</span>' 
+        : '<span class="badge badge-primary">📌 ' + (inst.user_role_in_institute || 'Faculty Member') + '</span>';
+
+      var totalSections = (inst.classes_sections || []).length;
+      var totalMembers = (inst.members || []).length;
+
+      return (
+        '<div class="institute-card" data-inst-id="' + inst.id + '">' +
+          '<div class="inst-card-top">' +
+            '<div class="inst-logo-badge" style="background:' + (inst.theme_color || 'var(--primary)') + ';">' + inst.logo_text + '</div>' +
+            '<div class="inst-meta">' +
+              '<h3 class="inst-name">' + inst.name + '</h3>' +
+              '<div class="inst-tagline">' + inst.tagline + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="inst-role-banner">' +
+            '<div>Your Role: ' + roleBadge + '</div>' +
+            '<div class="text-xs font-mono font-bold">Code: ' + inst.code + '</div>' +
+          '</div>' +
+          '<div class="inst-stats-grid">' +
+            '<div class="inst-stat-box">' +
+              '<span class="inst-stat-val">' + totalSections + '</span>' +
+              '<span class="inst-stat-lbl">Class Sections</span>' +
+            '</div>' +
+            '<div class="inst-stat-box">' +
+              '<span class="inst-stat-val">' + totalMembers + '</span>' +
+              '<span class="inst-stat-lbl">Teachers / Members</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">📍 ' + inst.address + '</div>' +
+          '<div style="display:flex; gap:8px; margin-top:auto;">' +
+            '<button type="button" class="btn btn-primary btn-sm btn-enter-coaching" data-inst-id="' + inst.id + '" style="flex:1;">Enter Coaching ➜</button>' +
+            (isOwner ? '<button type="button" class="btn btn-outline btn-sm btn-manage-members" data-inst-id="' + inst.id + '">👥 Members</button>' : '') +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    container.querySelectorAll('.btn-enter-coaching').forEach(function (btn) {
+      btn.onclick = function () {
+        var instId = this.getAttribute('data-inst-id');
+        openCoachingDetail(instId, 'my_sections');
+      };
+    });
+
+    container.querySelectorAll('.btn-manage-members').forEach(function (btn) {
+      btn.onclick = function () {
+        var instId = this.getAttribute('data-inst-id');
+        openCoachingDetail(instId, 'members');
+      };
+    });
+  }
+
+  // ─── WORKSPACE 3: INSIDE A SPECIFIC COACHING INSTITUTE ──────────────────────
+  function openCoachingDetail(instId, initialSubTab) {
+    activeCoachingId = instId;
+    var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === instId; });
+    if (!inst) return;
+
+    // Hide coaching list, show coaching detail
+    document.getElementById('view-coaching-list').style.display = 'none';
+    var detailView = document.getElementById('view-coaching-detail');
+    if (detailView) detailView.style.display = 'block';
+
+    // Update banner
+    var isOwner = inst.owner_teacher_id === activeTeacherId;
+    var rolePill = document.getElementById('coachingRolePill');
+    if (rolePill) rolePill.textContent = isOwner ? 'Director & Owner (Full Admin)' : inst.user_role_in_institute;
+
+    var codePill = document.getElementById('coachingCodePill');
+    if (codePill) codePill.innerHTML = 'Student Join Code: <strong>' + inst.code + '</strong>';
+
+    var titleEl = document.getElementById('coachingDetailTitle');
+    if (titleEl) titleEl.textContent = inst.name;
+
+    var metaEl = document.getElementById('coachingDetailMeta');
+    if (metaEl) metaEl.textContent = inst.tagline + ' &bull; ' + inst.address;
+
+    // Hide/show tabs based on permissions
+    var tabMembers = document.getElementById('tabMembersManagement');
+    var tabAllSec = document.getElementById('tabAllSections');
+    if (tabMembers) tabMembers.style.display = isOwner ? 'inline-flex' : 'none';
+    if (tabAllSec) tabAllSec.style.display = isOwner ? 'inline-flex' : 'none';
+
+    updateBreadcrumb(['Workspace', 'Coaching Institutes', inst.name]);
+
+    // Setup sub-navigation tabs
+    setupCoachingSubNavTabs(initialSubTab || 'my_sections');
+
+    var backBtn = document.getElementById('btnBackToCoachingList');
+    if (backBtn) {
+      backBtn.onclick = function () {
+        detailView.style.display = 'none';
+        renderCurrentWorkspace();
+      };
+    }
+  }
+
+  function setupCoachingSubNavTabs(activeTab) {
+    var tabs = document.querySelectorAll('#coachingSubNavTabs .deck-tab-btn');
+    tabs.forEach(function (tab) {
+      tab.onclick = function () {
+        var tabId = this.getAttribute('data-coaching-tab');
+        switchCoachingSubTab(tabId);
+      };
+    });
+    switchCoachingSubTab(activeTab || 'my_sections');
+  }
+
+  function switchCoachingSubTab(tabId) {
+    var tabs = document.querySelectorAll('#coachingSubNavTabs .deck-tab-btn');
+    tabs.forEach(function (t) {
+      t.classList.toggle('active', t.getAttribute('data-coaching-tab') === tabId);
+    });
+
+    document.querySelectorAll('.csub-view').forEach(function (view) {
+      view.style.display = 'none';
+    });
+
+    var targetView = document.getElementById('csub-' + tabId);
+    if (targetView) targetView.style.display = 'block';
+
+    var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeCoachingId; });
+    if (!inst) return;
+
+    if (tabId === 'my_sections') {
+      renderMyAssignedSections(inst);
+    } else if (tabId === 'all_sections') {
+      renderAllInstituteSections(inst);
+    } else if (tabId === 'members') {
+      renderCoachingMembers(inst);
+    }
+  }
+
+  function renderMyAssignedSections(inst) {
+    var container = document.getElementById('mySectionsGrid');
+    if (!container) return;
+
+    // Find sections where active teacher teaches
+    var mySections = (inst.classes_sections || []).filter(function (sec) {
+      return (sec.subject_faculty_map || []).some(function (map) { return map.teacher_id === activeTeacherId; });
+    });
+
+    if (mySections.length === 0) {
+      container.innerHTML = '<div class="card p-24 text-center text-muted" style="grid-column:1/-1;">You are not assigned to any teaching sections in this coaching institute yet.</div>';
+      return;
+    }
+
+    container.innerHTML = mySections.map(function (sec) {
+      var mySubjects = (sec.subject_faculty_map || []).filter(function (m) { return m.teacher_id === activeTeacherId; })
+        .map(function (m) { return '<strong>' + m.subject + '</strong> (' + m.lectures_per_week + ' lecs/wk &bull; ' + m.schedule + ')'; }).join('<br>');
+
+      return (
+        '<div class="section-box-card">' +
+          '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">' +
+            '<div>' +
+              '<h3 style="font-size:18px; font-weight:800; color:var(--text-main);">' + sec.full_code + '</h3>' +
+              '<span class="pill pill-primary" style="margin-top:2px;">' + sec.board + '</span>' +
+            '</div>' +
+            '<span class="pill pill-muted">🏛️ ' + sec.room + '</span>' +
+          '</div>' +
+          '<div style="font-size:12px; margin:10px 0; background:var(--surface-muted); padding:10px; border-radius:var(--radius-md);">' +
+            '<div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Your Assigned Subject(s):</div>' +
+            mySubjects +
+          '</div>' +
+          '<div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:14px;">' +
+            '<span>Enrolled: <strong>' + (sec.student_ids || []).length + ' of ' + sec.capacity + ' students</strong></span>' +
+          '</div>' +
+          '<button type="button" class="btn btn-primary btn-sm btn-enter-section" data-sec-id="' + sec.id + '" style="width:100%;">Enter Section &amp; Manage Students ➜</button>' +
+        '</div>'
+      );
+    }).join('');
+
+    container.querySelectorAll('.btn-enter-section').forEach(function (btn) {
+      btn.onclick = function () {
+        var secId = this.getAttribute('data-sec-id');
+        enterBatchDeck('coaching_section', secId, activeCoachingId);
+      };
+    });
+  }
+
+  function renderAllInstituteSections(inst) {
+    var container = document.getElementById('allSectionsGrid');
+    if (!container) return;
+
+    container.innerHTML = (inst.classes_sections || []).map(function (sec) {
+      var facultyList = (sec.subject_faculty_map || []).map(function (m) {
+        var t = (STATE.teachers || []).find(function (tc) { return tc.id === m.teacher_id; });
+        return (
+          '<div class="sec-faculty-row">' +
+            '<span class="sec-faculty-subj">' + m.subject + '</span>' +
+            '<span class="sec-faculty-name">' + (t ? t.name : 'Faculty') + '</span>' +
+          '</div>'
+        );
+      }).join('');
+
+      return (
+        '<div class="section-box-card">' +
+          '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">' +
+            '<div>' +
+              '<h3 style="font-size:18px; font-weight:800;">' + sec.full_code + '</h3>' +
+              '<span class="pill pill-primary">' + sec.board + '</span>' +
+            '</div>' +
+            '<span class="pill pill-muted">🏛️ ' + sec.room + '</span>' +
+          '</div>' +
+          '<div class="sec-faculty-list">' +
+            '<div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Subject-wise Teachers:</div>' +
+            facultyList +
+          '</div>' +
+          '<div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:14px;">' +
+            '<span>Enrolled: <strong>' + (sec.student_ids || []).length + ' of ' + sec.capacity + ' students</strong></span>' +
+          '</div>' +
+          '<button type="button" class="btn btn-outline btn-sm btn-enter-section" data-sec-id="' + sec.id + '" style="width:100%;">View Section Details ➜</button>' +
+        '</div>'
+      );
+    }).join('');
+
+    container.querySelectorAll('.btn-enter-section').forEach(function (btn) {
+      btn.onclick = function () {
+        var secId = this.getAttribute('data-sec-id');
+        enterBatchDeck('coaching_section', secId, activeCoachingId);
+      };
+    });
+  }
+
+  function renderCoachingMembers(inst) {
+    var tbody = document.getElementById('coachingMembersTableBody');
+    if (!tbody) return;
+
+    var members = inst.members || [];
+    tbody.innerHTML = members.map(function (m) {
+      var teacher = (STATE.teachers || []).find(function (t) { return t.id === m.teacher_id; }) || {
+        name: 'Faculty Member',
+        photo_initials: 'FM',
+        phone: '—',
+        email: '—'
+      };
+
+      var isOwner = m.teacher_id === inst.owner_teacher_id;
 
       return (
         '<tr>' +
-          '<td><span class="font-mono text-xs font-bold">' + student.roll + '</span></td>' +
+          '<td>' +
+            '<div style="display:flex; align-items:center; gap:10px;">' +
+              '<div style="width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11.5px;">' + teacher.photo_initials + '</div>' +
+              '<div>' +
+                '<strong>' + teacher.name + '</strong>' +
+                '<div style="font-size:11px; color:var(--text-muted);">' + teacher.email + ' &bull; ' + teacher.phone + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+          '<td>' +
+            '<div style="font-weight:700;">' + m.role + '</div>' +
+            '<div style="font-size:11px; color:var(--text-muted);">' + m.permission_level + '</div>' +
+          '</td>' +
+          '<td>' + (m.assigned_subjects || []).map(function (s) { return '<span class="pill pill-primary" style="margin:2px 2px 2px 0;">' + s + '</span>'; }).join('') + '</td>' +
+          '<td>' + (m.assigned_sections || []).map(function (sec) { return '<span class="pill pill-muted" style="margin:2px 2px 2px 0;">' + sec + '</span>'; }).join('') + '</td>' +
+          '<td>' + m.joined_date + '</td>' +
+          '<td>' +
+            (isOwner 
+              ? '<span class="badge badge-success">Founder / Owner</span>' 
+              : '<button type="button" class="btn btn-outline btn-sm btn-delete-member" data-teacher-id="' + m.teacher_id + '" style="color:var(--danger); border-color:var(--danger);">Delete 🗑️</button>') +
+          '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    tbody.querySelectorAll('.btn-delete-member').forEach(function (btn) {
+      btn.onclick = function () {
+        var tId = this.getAttribute('data-teacher-id');
+        deleteCoachingMember(inst.id, tId);
+      };
+    });
+  }
+
+  function deleteCoachingMember(instId, teacherId) {
+    var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === instId; });
+    if (!inst) return;
+
+    if (confirm('Are you sure you want to remove this teacher from ' + inst.name + '?')) {
+      inst.members = (inst.members || []).filter(function (m) { return m.teacher_id !== teacherId; });
+      saveState();
+      renderCoachingMembers(inst);
+      showToast('Teacher successfully removed from institute.', 'info');
+    }
+  }
+
+  // ─── WORKSPACE 4: UNIFIED BATCH & SECTION COMMAND DECK ─────────────────────
+  // When a teacher clicks ANY batch (private batch OR coaching section), they enter this deck!
+  function enterBatchDeck(type, id, parentCoachingId) {
+    activeDeckContext = {
+      type: type, // 'private_batch' or 'coaching_section'
+      id: id,
+      parentCoachingId: parentCoachingId
+    };
+
+    renderCurrentWorkspace();
+  }
+
+  function getActiveDeckData() {
+    if (!activeDeckContext) return null;
+
+    if (activeDeckContext.type === 'private_batch') {
+      var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === activeDeckContext.id; });
+      if (!pbatch) return null;
+      return {
+        isPrivate: true,
+        title: pbatch.name,
+        badgeText: 'Private Tuition Batch',
+        gradeText: pbatch.grade + ' • ' + pbatch.board,
+        metaText: pbatch.schedule + ' • Room: ' + pbatch.room,
+        studentIds: pbatch.student_ids || [],
+        fee: pbatch.monthly_fee,
+        rawObj: pbatch
+      };
+    } else {
+      var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeDeckContext.parentCoachingId; });
+      if (!inst) return null;
+      var sec = (inst.classes_sections || []).find(function (s) { return s.id === activeDeckContext.id; });
+      if (!sec) return null;
+      return {
+        isPrivate: false,
+        title: inst.name + ' • ' + sec.full_code,
+        badgeText: 'Coaching Section',
+        gradeText: sec.class_name + ' • ' + sec.board,
+        metaText: 'Room: ' + sec.room + ' • Institute: ' + inst.name,
+        studentIds: sec.student_ids || [],
+        fee: 2500,
+        rawObj: sec
+      };
+    }
+  }
+
+  function renderBatchDeck() {
+    var deckData = getActiveDeckData();
+    if (!deckData) return;
+
+    // Header values
+    var titleEl = document.getElementById('deckTitleDisplay');
+    if (titleEl) titleEl.textContent = deckData.title;
+
+    var badgeEl = document.getElementById('deckContextBadge');
+    if (badgeEl) badgeEl.textContent = deckData.badgeText;
+
+    var gradeEl = document.getElementById('deckGradeBadge');
+    if (gradeEl) gradeEl.textContent = deckData.gradeText;
+
+    var metaEl = document.getElementById('deckMetaDisplay');
+    if (metaEl) metaEl.textContent = deckData.metaText;
+
+    var countEl = document.getElementById('deckStudentCountPill');
+    if (countEl) countEl.textContent = deckData.studentIds.length;
+
+    // Breadcrumb
+    if (deckData.isPrivate) {
+      updateBreadcrumb(['Workspace', 'My Private Batches', deckData.title]);
+    } else {
+      updateBreadcrumb(['Workspace', 'Coaching Institutes', deckData.title]);
+    }
+
+    // Exit Button
+    var exitBtn = document.getElementById('btnExitBatchDeck');
+    if (exitBtn) {
+      exitBtn.onclick = function () {
+        activeDeckContext = null;
+        renderCurrentWorkspace();
+      };
+    }
+
+    // Setup sub tabs
+    setupDeckSubTabs('students');
+  }
+
+  function setupDeckSubTabs(initialTab) {
+    var tabs = document.querySelectorAll('#batchDeckNavTabs .deck-tab-btn');
+    tabs.forEach(function (tab) {
+      tab.onclick = function () {
+        var tabId = this.getAttribute('data-deck-tab');
+        switchDeckSubTab(tabId);
+      };
+    });
+    switchDeckSubTab(initialTab || 'students');
+  }
+
+  function switchDeckSubTab(tabId) {
+    var tabs = document.querySelectorAll('#batchDeckNavTabs .deck-tab-btn');
+    tabs.forEach(function (t) {
+      t.classList.toggle('active', t.getAttribute('data-deck-tab') === tabId);
+    });
+
+    document.querySelectorAll('.dsub-view').forEach(function (view) {
+      view.style.display = 'none';
+    });
+
+    var targetView = document.getElementById('dsub-' + tabId);
+    if (targetView) targetView.style.display = 'block';
+
+    var deckData = getActiveDeckData();
+    if (!deckData) return;
+
+    if (tabId === 'students') {
+      renderDeckStudentsRoster(deckData);
+    } else if (tabId === 'attendance') {
+      renderDeckAttendance(deckData);
+    } else if (tabId === 'points') {
+      renderDeckPoints(deckData);
+    } else if (tabId === 'tests') {
+      renderDeckTests(deckData);
+    } else if (tabId === 'syllabus') {
+      renderDeckSyllabus(deckData);
+    } else if (tabId === 'fees') {
+      renderDeckFees(deckData);
+    } else if (tabId === 'settings') {
+      renderDeckSettings(deckData);
+    }
+  }
+
+  // ─── DECK SUB-TAB 1: STUDENTS ROSTER ───────────────────────────────────────
+  function renderDeckStudentsRoster(deckData) {
+    var tbody = document.getElementById('deckStudentsTableBody');
+    if (!tbody) return;
+
+    var enrolledStudents = (STATE.students || []).filter(function (s) {
+      return deckData.studentIds.indexOf(s.id) !== -1;
+    });
+
+    if (enrolledStudents.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center p-20 text-muted">No students currently enrolled in this batch. Click "+ Add Student to Batch" above.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = enrolledStudents.map(function (s) {
+      var feeBadge = s.fee_status === 'paid' 
+        ? '<span class="badge badge-success">PAID</span>' 
+        : (s.fee_status === 'pending' ? '<span class="badge badge-warning">PENDING</span>' : '<span class="badge badge-danger">OVERDUE</span>');
+
+      return (
+        '<tr>' +
+          '<td><span class="font-mono text-xs font-bold">' + s.roll + '</span></td>' +
           '<td>' +
             '<div style="display:flex; align-items:center; gap:8px;">' +
-              '<div style="width:28px; height:28px; border-radius:50%; background:' + (student.avatar_bg || 'var(--primary)') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;">' + student.avatar_initials + '</div>' +
-              '<strong>' + student.name + '</strong>' +
+              '<div style="width:30px; height:30px; border-radius:50%; background:' + (s.avatar_bg || 'var(--primary)') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px;">' + s.avatar_initials + '</div>' +
+              '<div>' +
+                '<strong>' + s.name + '</strong>' +
+                '<div style="font-size:11px; color:var(--text-muted);">' + s.grade + ' &bull; ' + s.board + '</div>' +
+              '</div>' +
             '</div>' +
           '</td>' +
           '<td>' +
             '<div style="font-size:12px;">' +
-              'Father: ' + student.father_name + ' &bull; <a href="https://wa.me/' + student.father_phone.replace(/[^0-9]/g, '') + '" target="_blank" style="color:var(--primary); font-weight:600;">' + student.father_phone + '</a>' +
-              (student.father_phone_verified ? ' <span class="badge badge-success" style="font-size:9.5px; padding:1px 5px;">✓ Verified</span>' : '') +
+              'Father: ' + s.father_name + ' &bull; <a href="https://wa.me/' + s.father_phone.replace(/[^0-9]/g, '') + '" target="_blank" style="color:var(--primary); font-weight:700;">' + s.father_phone + '</a>' +
+              (s.father_phone_verified ? ' <span class="badge badge-success" style="font-size:9.5px; padding:1px 5px;">✓ Verified</span>' : '') +
             '</div>' +
             '<div style="font-size:11px; color:var(--text-muted);">' +
-              'Mother: ' + student.mother_name + ' (' + student.mother_phone + ')' +
+              'Mother: ' + s.mother_name + ' (' + s.mother_phone + ')' +
             '</div>' +
           '</td>' +
-          '<td><strong>' + student.points.toLocaleString() + '</strong> pts</td>' +
-          '<td>🔥 ' + student.streak + 'd</td>' +
-          '<td><strong>' + student.attendance_percentage + '%</strong></td>' +
-          '<td><span class="badge ' + feeBadgeClass + '">' + feeText + '</span></td>' +
+          '<td><strong>' + s.points.toLocaleString() + '</strong> pts</td>' +
+          '<td>🔥 ' + s.streak + 'd</td>' +
+          '<td><strong>' + s.attendance_rate + '%</strong></td>' +
+          '<td>' + feeBadge + '</td>' +
           '<td>' +
-            '<button type="button" class="btn btn-outline btn-sm btn-award-single" data-student-id="' + student.id + '" data-batch-id="' + batch.id + '">🏅 Points</button>' +
+            '<button type="button" class="btn btn-outline btn-sm btn-deck-award-single" data-student-id="' + s.id + '">🏅 Award Points</button>' +
           '</td>' +
         '</tr>'
       );
     }).join('');
 
-    // Attach single student award listener
-    document.querySelectorAll('.btn-award-single').forEach(function (btn) {
+    tbody.querySelectorAll('.btn-deck-award-single').forEach(function (btn) {
       btn.onclick = function () {
         var sId = this.getAttribute('data-student-id');
-        var bId = this.getAttribute('data-batch-id');
-        openAwardPointsModal(bId, sId);
+        switchDeckSubTab('points');
+        var select = document.getElementById('deckAwardStudentSelect');
+        if (select) select.value = sId;
       };
     });
   }
 
-  // ─── 3. RENDER: ATTENDANCE & QR TERMINAL ─────────────────────────────────────
-  function renderAttendance() {
-    var op = getActiveOperator();
-    var batch = getActiveBatch();
+  // ─── DECK SUB-TAB 2: DAILY ATTENDANCE & QR TERMINAL ────────────────────────
+  function renderDeckAttendance(deckData) {
+    var titleEl = document.getElementById('deckQrBatchTitle');
+    if (titleEl) titleEl.textContent = deckData.title + ' — Daily Check-in QR';
 
-    var titleEl = document.getElementById('qrBatchTitle');
-    if (titleEl) titleEl.textContent = batch.name + ' — Daily Check-in Terminal';
-
-    var tokenEl = document.getElementById('qrTokenDisplay');
-    var sessionToken = op.code + '-QR-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + batch.id.toUpperCase();
-    if (tokenEl) tokenEl.textContent = 'ACTIVE QR TOKEN: ' + sessionToken;
-
-    // Attendance Sheet for current batch
-    var batchStudents = STATE.students.filter(function (s) {
-      return (s.enrolled_batches || []).indexOf(batch.id) !== -1;
-    });
-
-    var tbody = document.getElementById('attendanceSheetTableBody');
+    var tbody = document.getElementById('deckAttendanceTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = batchStudents.map(function (student, idx) {
-      var isCheckedIn = (idx % 6 !== 5); // Simulated check-in
-      var checkInTime = isCheckedIn ? '07:' + (35 + (idx * 2) % 20) + ' AM' : '—';
-      var currentStatus = isCheckedIn ? 'present' : 'absent';
+    var enrolledStudents = (STATE.students || []).filter(function (s) {
+      return deckData.studentIds.indexOf(s.id) !== -1;
+    });
+
+    tbody.innerHTML = enrolledStudents.map(function (s, idx) {
+      var isPresent = idx % 5 !== 4; // Simulated check-in
+      var status = isPresent ? 'present' : 'absent';
 
       return (
-        '<tr data-student-id="' + student.id + '">' +
-          '<td><span class="font-mono text-xs font-bold">' + student.roll + '</span></td>' +
+        '<tr>' +
+          '<td><span class="font-mono text-xs font-bold">' + s.roll + '</span></td>' +
+          '<td><strong>' + s.name + '</strong></td>' +
           '<td>' +
-            '<div style="display:flex; align-items:center; gap:8px;">' +
-              '<div style="width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:800;">' + student.avatar_initials + '</div>' +
-              '<strong>' + student.name + '</strong>' +
+            '<div class="att-toggle-group" data-student-id="' + s.id + '">' +
+              '<button type="button" class="att-btn ' + (status === 'present' ? 'active present' : '') + '" data-status="present">P</button>' +
+              '<button type="button" class="att-btn ' + (status === 'late' ? 'active late' : '') + '" data-status="late">L</button>' +
+              '<button type="button" class="att-btn ' + (status === 'absent' ? 'active absent' : '') + '" data-status="absent">A</button>' +
             '</div>' +
           '</td>' +
-          '<td>' + (isCheckedIn ? '📱 QR Verified &bull; ' + checkInTime : '<span class="text-xs text-muted">Not scanned</span>') + '</td>' +
+          '<td>' + (status === 'present' ? '<span class="badge badge-success">+10 pts</span>' : '0 pts') + '</td>' +
           '<td>' +
-            '<div class="att-toggle-group" data-student-id="' + student.id + '">' +
-              '<button type="button" class="att-btn ' + (currentStatus === 'present' ? 'active present' : '') + '" data-status="present">P</button>' +
-              '<button type="button" class="att-btn ' + (currentStatus === 'late' ? 'active late' : '') + '" data-status="late">L</button>' +
-              '<button type="button" class="att-btn ' + (currentStatus === 'absent' ? 'active absent' : '') + '" data-status="absent">A</button>' +
-            '</div>' +
-          '</td>' +
-          '<td>' + (isCheckedIn ? '<span class="badge badge-success">+10 pts</span>' : '0 pts') + '</td>' +
-          '<td>' +
-            '<a href="https://wa.me/' + student.father_phone.replace(/[^0-9]/g, '') + '?text=Dear%20Parent,%20' + encodeURIComponent(student.name) + '%20was%20marked%20' + currentStatus.toUpperCase() + '%20in%20today\'s%20' + encodeURIComponent(batch.name) + '." target="_blank" class="btn btn-outline btn-sm">💬 SMS/WA</a>' +
+            '<a href="https://wa.me/' + s.father_phone.replace(/[^0-9]/g, '') + '?text=Dear%20Parent,%20' + encodeURIComponent(s.name) + '%20was%20marked%20' + status.toUpperCase() + '%20today%20in%20' + encodeURIComponent(deckData.title) + '." target="_blank" class="btn btn-outline btn-sm">💬 Alert Parent</a>' +
           '</td>' +
         '</tr>'
       );
     }).join('');
 
-    // Toggle button clicks
-    document.querySelectorAll('.att-btn').forEach(function (btn) {
+    // Toggle button handler
+    tbody.querySelectorAll('.att-btn').forEach(function (btn) {
       btn.onclick = function () {
         var group = this.closest('.att-toggle-group');
         group.querySelectorAll('.att-btn').forEach(function (b) { b.className = 'att-btn'; });
@@ -531,10 +842,10 @@
       };
     });
 
-    var markAllBtn = document.getElementById('btnMarkAllPresent');
+    var markAllBtn = document.getElementById('btnDeckMarkAllPresent');
     if (markAllBtn) {
       markAllBtn.onclick = function () {
-        document.querySelectorAll('.att-toggle-group').forEach(function (group) {
+        tbody.querySelectorAll('.att-toggle-group').forEach(function (group) {
           group.querySelectorAll('.att-btn').forEach(function (b) { b.className = 'att-btn'; });
           var pBtn = group.querySelector('[data-status="present"]');
           if (pBtn) pBtn.className = 'att-btn active present';
@@ -543,649 +854,459 @@
       };
     }
 
-    var saveBtn = document.getElementById('btnSaveAttendance');
+    var saveBtn = document.getElementById('btnDeckSaveAttendance');
     if (saveBtn) {
       saveBtn.onclick = function () {
-        showToast('Attendance session saved and synced to student portals!', 'success');
+        showToast('Attendance session saved and synced with student portals!', 'success');
       };
     }
   }
 
-  // ─── 4. RENDER: SYLLABUS TRACKER ────────────────────────────────────────────
-  function renderSyllabus() {
-    var op = getActiveOperator();
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; });
-    var batchSelect = document.getElementById('syllabusBatchFilter');
-    if (batchSelect) {
-      batchSelect.innerHTML = opBatches.map(function (b) {
-        var isSelected = b.id === currentBatchId ? ' selected' : '';
-        return '<option value="' + b.id + '"' + isSelected + '>' + b.name + '</option>';
-      }).join('');
-
-      batchSelect.onchange = function () {
-        currentBatchId = this.value;
-        renderSyllabus();
-      };
-    }
-
-    var topics = STATE.syllabus_topics.filter(function (t) { return t.batch_id === currentBatchId; });
-    var tbody = document.getElementById('syllabusTableBody');
-    if (!tbody) return;
-
-    if (topics.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center p-20 text-muted">No curriculum topics registered for this batch.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = topics.map(function (topic) {
-      var statusBadge = topic.status === 'covered' 
-        ? '<span class="badge badge-success">✓ Covered</span>' 
-        : (topic.status === 'in_progress' ? '<span class="badge badge-warning">⚡ In Progress</span>' : '<span class="badge badge-muted">Upcoming</span>');
-
-      return (
-        '<tr>' +
-          '<td><strong>' + topic.subject + '</strong></td>' +
-          '<td>Chapter ' + topic.chapter_number + ': <strong>' + topic.chapter_name + '</strong></td>' +
-          '<td>' + topic.topic_name + '</td>' +
-          '<td>' + topic.assigned_teacher + '</td>' +
-          '<td>' + statusBadge + '</td>' +
-          '<td><strong>' + topic.revised_students_count + '</strong> students marked revision (+15 pts)</td>' +
-          '<td>' +
-            '<button type="button" class="btn btn-outline btn-sm btn-toggle-topic-status" data-topic-id="' + topic.id + '">Change Status</button>' +
-          '</td>' +
-        '</tr>'
-      );
-    }).join('');
-
-    document.querySelectorAll('.btn-toggle-topic-status').forEach(function (btn) {
-      btn.onclick = function () {
-        var tId = this.getAttribute('data-topic-id');
-        var t = STATE.syllabus_topics.find(function (item) { return item.id === tId; });
-        if (t) {
-          t.status = t.status === 'covered' ? 'in_progress' : (t.status === 'in_progress' ? 'upcoming' : 'covered');
-          saveState();
-          renderSyllabus();
-          showToast('Updated status for: ' + t.topic_name, 'info');
-        }
-      };
+  // ─── DECK SUB-TAB 3: POINTS & HONORS DISPENSER DESK ────────────────────────
+  function renderDeckPoints(deckData) {
+    var studentSelect = document.getElementById('deckAwardStudentSelect');
+    var enrolledStudents = (STATE.students || []).filter(function (s) {
+      return deckData.studentIds.indexOf(s.id) !== -1;
     });
-  }
 
-  // ─── 5. RENDER: POINTS & ACADEMIC HONORS DISPENSER ──────────────────────────
-  function renderPoints() {
-    var op = getActiveOperator();
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; });
-
-    // Populate Batch Dropdown
-    var batchSelect = document.getElementById('awardSelectBatch');
-    if (batchSelect) {
-      batchSelect.innerHTML = opBatches.map(function (b) {
-        var isSelected = b.id === currentBatchId ? ' selected' : '';
-        return '<option value="' + b.id + '"' + isSelected + '>' + b.name + '</option>';
+    if (studentSelect) {
+      studentSelect.innerHTML = enrolledStudents.map(function (s) {
+        return '<option value="' + s.id + '">' + s.name + ' (' + s.roll + ') — ' + s.points.toLocaleString() + ' pts</option>';
       }).join('');
-
-      batchSelect.onchange = function () {
-        currentBatchId = this.value;
-        populateStudentsDropdownForPoints(this.value);
-        renderLiveBatchLeaderboardPreview(this.value);
-      };
     }
 
-    populateStudentsDropdownForPoints(currentBatchId);
-    renderLiveBatchLeaderboardPreview(currentBatchId);
-    renderPointsLedgerTable();
+    // Render Live Batch Point Leaderboard
+    renderDeckLiveLeaderboard(deckData);
 
     // Quick pts buttons
-    document.querySelectorAll('.quick-pts-btn').forEach(function (btn) {
+    document.querySelectorAll('.qpts').forEach(function (btn) {
       btn.onclick = function () {
         var pts = this.getAttribute('data-pts');
-        var input = document.getElementById('awardPointsAmount');
+        var input = document.getElementById('deckAwardPointsInput');
         if (input) input.value = pts;
       };
     });
 
-    // Form submission
-    var form = document.getElementById('formAwardPoints');
+    var form = document.getElementById('formDeckAwardPoints');
     if (form) {
       form.onsubmit = function (e) {
         e.preventDefault();
-        var bId = document.getElementById('awardSelectBatch').value;
-        var sId = document.getElementById('awardSelectStudent').value;
-        var pts = parseInt(document.getElementById('awardPointsAmount').value, 10);
-        var category = document.getElementById('awardCategory').value;
-        var reason = document.getElementById('awardReasonText').value;
+        var sId = document.getElementById('deckAwardStudentSelect').value;
+        var pts = parseInt(document.getElementById('deckAwardPointsInput').value, 10);
+        var category = document.getElementById('deckAwardCategorySelect').value;
+        var citation = document.getElementById('deckAwardCitationInput').value;
 
-        dispatchPointsToStudent(bId, sId, pts, category, reason);
+        awardPointsToStudentInDeck(deckData, sId, pts, category, citation);
         form.reset();
-        document.getElementById('awardPointsAmount').value = '100';
+        document.getElementById('deckAwardPointsInput').value = '100';
       };
     }
   }
 
-  function populateStudentsDropdownForPoints(batchId) {
-    var studentSelect = document.getElementById('awardSelectStudent');
-    if (!studentSelect) return;
+  function renderDeckLiveLeaderboard(deckData) {
+    var container = document.getElementById('deckLiveLeaderboardList');
+    if (!container) return;
 
-    var batchStudents = STATE.students.filter(function (s) {
-      return (s.enrolled_batches || []).indexOf(batchId) !== -1;
-    });
-
-    studentSelect.innerHTML = batchStudents.map(function (s) {
-      return '<option value="' + s.id + '">' + s.name + ' (' + s.roll + ') — ' + s.points.toLocaleString() + ' pts</option>';
-    }).join('');
-  }
-
-  function renderLiveBatchLeaderboardPreview(batchId) {
-    var previewContainer = document.getElementById('liveBatchLeaderboardPreview');
-    if (!previewContainer) return;
-
-    var batch = STATE.batches.find(function (b) { return b.id === batchId; }) || STATE.batches[0];
-    var students = STATE.students.filter(function (s) {
-      return (s.enrolled_batches || []).indexOf(batch.id) !== -1;
+    var enrolledStudents = (STATE.students || []).filter(function (s) {
+      return deckData.studentIds.indexOf(s.id) !== -1;
     });
 
     // Sort by points descending
-    students.sort(function (a, b) { return b.points - a.points; });
+    enrolledStudents.sort(function (a, b) { return b.points - a.points; });
 
-    previewContainer.innerHTML = (
-      '<div style="padding:14px 18px; background:var(--surface-muted); border-bottom:1px solid var(--border); font-size:12.5px; font-weight:700;">' +
-        '🏆 Live Standings in ' + batch.name +
-      '</div>' +
-      students.map(function (s, idx) {
-        var rankStr = String(idx + 1).padStart(2, '0');
-        var medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '⭐'));
-        return (
-          '<div style="display:flex; justify-content:space-between; align-items:center; padding:11px 18px; border-bottom:1px solid var(--border);">' +
-            '<div style="display:flex; align-items:center; gap:10px;">' +
-              '<span style="font-family:var(--font-mono); font-size:12px; font-weight:800; min-width:44px;">' + medal + ' ' + rankStr + '</span>' +
-              '<div style="width:28px; height:28px; border-radius:50%; background:' + (s.avatar_bg || 'var(--primary)') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;">' + s.avatar_initials + '</div>' +
-              '<div>' +
-                '<strong style="font-size:13px;">' + s.name + '</strong>' +
-                '<div style="font-size:10.5px; color:var(--text-muted);">🔥 ' + s.streak + 'd streak</div>' +
-              '</div>' +
-            '</div>' +
-            '<span style="font-family:var(--font-serif); font-size:14px; font-weight:700;">' + s.points.toLocaleString() + ' pts</span>' +
-          '</div>'
-        );
-      }).join('')
-    );
-  }
+    container.innerHTML = enrolledStudents.map(function (s, idx) {
+      var rankStr = String(idx + 1).padStart(2, '0');
+      var medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '⭐'));
 
-  function renderPointsLedgerTable() {
-    var op = getActiveOperator();
-    var dispatches = STATE.points_dispatches.filter(function (p) { return p.operator_id === op.id; });
-    var tbody = document.getElementById('pointsLedgerTableBody');
-    if (!tbody) return;
-
-    if (dispatches.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center p-20 text-muted">No points awarded yet.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = dispatches.map(function (p) {
       return (
-        '<tr>' +
-          '<td>' + p.date + '</td>' +
-          '<td><strong>' + p.student_name + '</strong></td>' +
-          '<td>' + p.awarded_by + '</td>' +
-          '<td><span class="badge badge-primary">' + p.category + '</span></td>' +
-          '<td>' + p.reason + '</td>' +
-          '<td><span class="badge badge-success" style="font-size:12px;">+' + p.points + ' pts</span></td>' +
-        '</tr>'
+        '<div style="display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-bottom:1px solid var(--border);">' +
+          '<div style="display:flex; align-items:center; gap:10px;">' +
+            '<span style="font-family:var(--font-mono); font-size:12px; font-weight:800; min-width:44px;">' + medal + ' ' + rankStr + '</span>' +
+            '<div style="width:28px; height:28px; border-radius:50%; background:' + (s.avatar_bg || 'var(--primary)') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;">' + s.avatar_initials + '</div>' +
+            '<div>' +
+              '<strong style="font-size:13px;">' + s.name + '</strong>' +
+              '<div style="font-size:11px; color:var(--text-muted);">🔥 ' + s.streak + 'd streak</div>' +
+            '</div>' +
+          '</div>' +
+          '<span style="font-family:var(--font-serif); font-size:14px; font-weight:700;">' + s.points.toLocaleString() + ' pts</span>' +
+        '</div>'
       );
     }).join('');
   }
 
-  function dispatchPointsToStudent(batchId, studentId, points, category, reason) {
-    var op = getActiveOperator();
-    var student = STATE.students.find(function (s) { return s.id === studentId; });
+  function awardPointsToStudentInDeck(deckData, studentId, points, category, citation) {
+    var student = (STATE.students || []).find(function (s) { return s.id === studentId; });
     if (!student) return;
 
-    // Credit points to student profile
     student.points += points;
 
-    // Record into dispatches
     var newDispatch = {
       id: 'disp-' + Date.now(),
       date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-      operator_id: op.id,
-      batch_id: batchId,
-      awarded_by: op.director_name.split('(')[0].trim(),
+      context_type: deckData.isPrivate ? 'private_batch' : 'coaching_section',
+      context_id: activeDeckContext.id,
+      context_title: deckData.title,
+      teacher_id: activeTeacherId,
+      teacher_name: getActiveTeacher().name,
       student_id: student.id,
       student_name: student.name,
       points: points,
       category: category,
-      reason: reason
+      citation: citation
     };
 
     STATE.points_dispatches.unshift(newDispatch);
     saveState();
 
-    // Re-render points view
-    renderLiveBatchLeaderboardPreview(batchId);
-    renderPointsLedgerTable();
-    populateStudentsDropdownForPoints(batchId);
-
-    showToast('Successfully awarded +' + points + ' pts to ' + student.name + '! Standings updated live.', 'success');
+    renderDeckLiveLeaderboard(deckData);
+    showToast('Awarded +' + points + ' pts to ' + student.name + '! Standings updated live.', 'success');
   }
 
-  // ─── 6. RENDER: TESTS & MARKS ───────────────────────────────────────────────
-  function renderTests() {
-    var op = getActiveOperator();
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; }).map(function (b) { return b.id; });
-    var tests = STATE.tests.filter(function (t) { return opBatches.indexOf(t.batch_id) !== -1; });
-    var container = document.getElementById('testsGridContainer');
+  // ─── DECK SUB-TAB 4: TESTS & MARKS ─────────────────────────────────────────
+  function renderDeckTests(deckData) {
+    var container = document.getElementById('deckTestsContainer');
     if (!container) return;
 
+    var tests = (STATE.tests || []).filter(function (t) { return t.context_id === activeDeckContext.id; });
     if (tests.length === 0) {
-      container.innerHTML = '<div class="p-24 text-center text-muted" style="grid-column:1/-1;">No tests conducted yet for this operator.</div>';
+      container.innerHTML = '<div class="card p-24 text-center text-muted">No tests scheduled yet for this batch. Click "+ Schedule New Test" above.</div>';
       return;
     }
 
     container.innerHTML = tests.map(function (t) {
-      var batch = STATE.batches.find(function (b) { return b.id === t.batch_id; });
       return (
-        '<div class="batch-card">' +
-          '<div class="batch-card-top">' +
+        '<div class="card">' +
+          '<div class="card-header">' +
             '<div>' +
-              '<h3 class="batch-title">' + t.title + '</h3>' +
-              '<div class="text-xs text-muted">Subject: <strong>' + t.subject + '</strong> &bull; By: ' + t.conducted_by + '</div>' +
+              '<h3 class="card-title">' + t.title + '</h3>' +
+              '<span class="card-subtitle">Conducted: ' + t.conducted_date + ' &bull; Max Marks: ' + t.max_marks + ' &bull; Class Avg: ' + t.class_average + '</span>' +
             '</div>' +
-            '<span class="badge badge-primary">' + t.conducted_date + '</span>' +
+            '<span class="badge badge-success">High Score: ' + t.highest_score + ' / ' + t.max_marks + '</span>' +
           '</div>' +
-          '<div style="margin:12px 0; display:flex; justify-content:space-between; font-size:12px; background:var(--surface-muted); padding:10px; border-radius:var(--radius-md);">' +
-            '<div>Max Marks: <strong>' + t.max_marks + '</strong></div>' +
-            '<div>Class Avg: <strong>' + t.class_average + '</strong></div>' +
-            '<div>Highest: <strong>' + t.highest_score + '</strong></div>' +
-          '</div>' +
-          '<div style="font-size:12px; font-weight:700; margin-bottom:6px;">Top Student Scorers:</div>' +
-          '<div style="display:flex; flex-direction:column; gap:4px;">' +
-            (t.scores || []).map(function (s) {
-              return '<div style="display:flex; justify-content:space-between; font-size:12px;"><span>#' + s.rank + ' ' + s.name + '</span><strong>' + s.marks + ' / ' + t.max_marks + '</strong></div>';
-            }).join('') +
-          '</div>' +
-          '<div style="margin-top:14px; display:flex; gap:8px;">' +
-            '<button type="button" class="btn btn-primary btn-sm btn-publish-pts" data-test-id="' + t.id + '" style="flex:1;">+ Credit Test Points</button>' +
+          '<div class="card-body" style="padding:0;">' +
+            '<div class="table-responsive">' +
+              '<table class="data-table">' +
+                '<thead><tr><th>Rank</th><th>Student Name</th><th>Marks Obtained</th><th>Percentage</th></tr></thead>' +
+                '<tbody>' +
+                  (t.submissions || []).map(function (s) {
+                    var pct = Math.round((s.marks / t.max_marks) * 100);
+                    return '<tr><td>#' + s.rank + '</td><td><strong>' + s.name + '</strong></td><td><strong>' + s.marks + ' / ' + t.max_marks + '</strong></td><td>' + pct + '%</td></tr>';
+                  }).join('') +
+                '</tbody>' +
+              '</table>' +
+            '</div>' +
           '</div>' +
         '</div>'
       );
     }).join('');
+  }
 
-    document.querySelectorAll('.btn-publish-pts').forEach(function (btn) {
+  // ─── DECK SUB-TAB 5: CURRICULUM TRACKER ─────────────────────────────────────
+  function renderDeckSyllabus(deckData) {
+    var tbody = document.getElementById('deckSyllabusTableBody');
+    if (!tbody) return;
+
+    var topics = (STATE.syllabus_topics || []).filter(function (tp) { return tp.context_id === activeDeckContext.id; });
+    if (topics.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center p-20 text-muted">No syllabus topics registered for this batch.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = topics.map(function (tp) {
+      var statusBadge = tp.status === 'covered' 
+        ? '<span class="badge badge-success">✓ Covered</span>' 
+        : (tp.status === 'in_progress' ? '<span class="badge badge-warning">In Progress</span>' : '<span class="badge badge-muted">Upcoming</span>');
+
+      return (
+        '<tr>' +
+          '<td>Chapter ' + tp.chapter_number + ': <strong>' + tp.chapter_name + '</strong></td>' +
+          '<td>' + tp.topic_name + '</td>' +
+          '<td>' + statusBadge + '</td>' +
+          '<td><strong>' + tp.revised_count + '</strong> students revised</td>' +
+          '<td><button type="button" class="btn btn-outline btn-sm btn-cycle-syl" data-syl-id="' + tp.id + '">Toggle Status</button></td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    tbody.querySelectorAll('.btn-cycle-syl').forEach(function (btn) {
       btn.onclick = function () {
-        showToast('Credited +30 practice test points to all students with score >80%!', 'success');
+        var sId = this.getAttribute('data-syl-id');
+        var item = (STATE.syllabus_topics || []).find(function (t) { return t.id === sId; });
+        if (item) {
+          item.status = item.status === 'covered' ? 'in_progress' : (item.status === 'in_progress' ? 'upcoming' : 'covered');
+          saveState();
+          renderDeckSyllabus(deckData);
+          showToast('Updated status for: ' + item.topic_name, 'info');
+        }
       };
     });
   }
 
-  // ─── 7. RENDER: FEES & INVOICES ─────────────────────────────────────────────
-  function renderFees() {
-    var op = getActiveOperator();
-    var filterSelect = document.getElementById('feeStatusFilter');
-    var filterStatus = filterSelect ? filterSelect.value : 'all';
-
-    var invoices = STATE.invoices.filter(function (inv) {
-      var matchOp = inv.operator_id === op.id;
-      var matchStatus = filterStatus === 'all' || inv.status === filterStatus;
-      return matchOp && matchStatus;
-    });
-
-    var tbody = document.getElementById('feesTableBody');
+  // ─── DECK SUB-TAB 6: TUITION FEES ──────────────────────────────────────────
+  function renderDeckFees(deckData) {
+    var tbody = document.getElementById('deckFeesTableBody');
     if (!tbody) return;
 
+    var invoices = (STATE.invoices || []).filter(function (i) { return i.context_id === activeDeckContext.id; });
     if (invoices.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center p-20 text-muted">No fee records found for this filter.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center p-20 text-muted">No fee records found for this batch.</td></tr>';
       return;
     }
 
     tbody.innerHTML = invoices.map(function (inv) {
-      var badgeClass = inv.status === 'paid' ? 'badge-success' : (inv.status === 'pending' ? 'badge-warning' : 'badge-danger');
+      var badge = inv.status === 'paid' 
+        ? '<span class="badge badge-success">PAID</span>' 
+        : (inv.status === 'pending' ? '<span class="badge badge-warning">PENDING</span>' : '<span class="badge badge-danger">OVERDUE</span>');
+
       return (
         '<tr>' +
           '<td><span class="font-mono text-xs font-bold">' + inv.invoice_no + '</span></td>' +
           '<td><strong>' + inv.student_name + '</strong></td>' +
           '<td>' + inv.parent_phone + '</td>' +
-          '<td>' + inv.month + '</td>' +
           '<td><strong>₹' + inv.amount.toLocaleString() + '</strong></td>' +
-          '<td><span class="badge ' + badgeClass + '">' + inv.status.toUpperCase() + '</span></td>' +
-          '<td>' + (inv.payment_mode || '—') + '</td>' +
+          '<td>' + badge + '</td>' +
           '<td>' +
             (inv.status === 'paid' 
-              ? '<button type="button" class="btn btn-outline btn-sm btn-print-receipt" data-inv-id="' + inv.id + '">🧾 Receipt</button>' 
-              : '<button type="button" class="btn btn-primary btn-sm btn-settle-fee" data-inv-id="' + inv.id + '">Record Paid</button>') +
+              ? '<span class="text-xs text-muted">Receipt Ref: ' + (inv.receipt_ref || 'REC-PAID') + '</span>' 
+              : '<button type="button" class="btn btn-primary btn-sm btn-record-fee-paid" data-inv-id="' + inv.id + '">Record Paid</button>') +
           '</td>' +
         '</tr>'
       );
     }).join('');
 
-    if (filterSelect) {
-      filterSelect.onchange = function () { renderFees(); };
-    }
-
-    document.querySelectorAll('.btn-settle-fee').forEach(function (btn) {
+    tbody.querySelectorAll('.btn-record-fee-paid').forEach(function (btn) {
       btn.onclick = function () {
         var invId = this.getAttribute('data-inv-id');
-        var inv = STATE.invoices.find(function (i) { return i.id === invId; });
+        var inv = (STATE.invoices || []).find(function (i) { return i.id === invId; });
         if (inv) {
           inv.status = 'paid';
           inv.payment_mode = 'Cash / Offline Desk';
           inv.paid_date = new Date().toISOString().slice(0, 10);
           inv.receipt_ref = 'REC-' + Date.now().toString().slice(-6);
           saveState();
-          renderFees();
-          showToast('Payment recorded for ' + inv.student_name + ' (Receipt #' + inv.receipt_ref + ')', 'success');
-        }
-      };
-    });
-
-    document.querySelectorAll('.btn-print-receipt').forEach(function (btn) {
-      btn.onclick = function () {
-        var invId = this.getAttribute('data-inv-id');
-        openReceiptModal(invId);
-      };
-    });
-  }
-
-  function openReceiptModal(invId) {
-    var inv = STATE.invoices.find(function (i) { return i.id === invId; });
-    var op = getActiveOperator();
-    if (!inv || !op) return;
-
-    var area = document.getElementById('receiptPrintArea');
-    if (area) {
-      area.innerHTML = (
-        '<div style="text-align:center; border-bottom:2px solid var(--primary); padding-bottom:14px; margin-bottom:16px;">' +
-          '<h2 style="font-family:var(--font-serif); font-size:22px; color:var(--primary);">' + op.name + '</h2>' +
-          '<div style="font-size:11px; color:var(--text-muted);">' + op.address + ' &bull; Phone: ' + op.phone + '</div>' +
-          '<div style="font-size:12px; font-weight:700; margin-top:4px; text-transform:uppercase;">Official Fee Payment Receipt</div>' +
-        '</div>' +
-        '<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:12px;">' +
-          '<div><strong>Invoice No:</strong> ' + inv.invoice_no + '<br><strong>Receipt Ref:</strong> ' + (inv.receipt_ref || 'REC-STAMPED') + '</div>' +
-          '<div style="text-align:right;"><strong>Date:</strong> ' + (inv.paid_date || 'Today') + '<br><strong>Mode:</strong> ' + (inv.payment_mode || 'Cash/UPI') + '</div>' +
-        '</div>' +
-        '<div style="background:var(--surface-muted); padding:12px; border-radius:var(--radius-md); font-size:12.5px; margin-bottom:16px;">' +
-          '<div>Received from: <strong>' + inv.student_name + '</strong></div>' +
-          '<div>Parent Phone: <strong>' + inv.parent_phone + '</strong></div>' +
-          '<div>Billing Period: <strong>' + inv.month + '</strong></div>' +
-        '</div>' +
-        '<div style="display:flex; justify-content:space-between; align-items:center; font-size:16px; font-weight:800; border-top:1px dashed var(--border); padding-top:10px;">' +
-          '<span>Amount Received:</span>' +
-          '<span style="color:var(--success);">₹' + inv.amount.toLocaleString() + '</span>' +
-        '</div>' +
-        '<div style="margin-top:24px; display:flex; justify-content:space-between; align-items:flex-end;">' +
-          '<div style="font-size:10px; color:var(--text-muted); max-width:240px;">* This is a digitally verified receipt issued by ' + op.name + ' via Vilarci Study Partner.</div>' +
-          '<div style="text-align:center;">' +
-            '<div style="font-size:18px;">✍️</div>' +
-            '<div style="font-size:11px; font-weight:700; border-top:1px solid #333; padding-top:2px;">Authorized Signature</div>' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    var modal = document.getElementById('modalPrintReceipt');
-    if (modal) modal.classList.add('active');
-  }
-
-  // ─── 8. RENDER: MARKSHEETS STUDIO ───────────────────────────────────────────
-  function renderMarksheets() {
-    var op = getActiveOperator();
-    var docs = STATE.issued_marksheets.filter(function (d) { return d.operator_id === op.id; });
-    var tbody = document.getElementById('marksheetsTableBody');
-    if (!tbody) return;
-
-    if (docs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center p-20 text-muted">No academic marksheets issued yet for this center.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = docs.map(function (doc) {
-      return (
-        '<tr>' +
-          '<td><span class="font-mono text-xs font-bold">' + doc.ref + '</span></td>' +
-          '<td><strong>' + doc.student_name + '</strong></td>' +
-          '<td>' + doc.roll + '</td>' +
-          '<td>' + doc.exam_term + '</td>' +
-          '<td><strong>' + doc.overall_percentage + '%</strong></td>' +
-          '<td><span class="badge badge-success">' + doc.grade + '</span></td>' +
-          '<td>' + doc.director_signature.split(',')[0] + '</td>' +
-          '<td>' +
-            '<button type="button" class="btn btn-outline btn-sm btn-view-marksheet" data-doc-id="' + doc.id + '">View &amp; Print</button>' +
-          '</td>' +
-        '</tr>'
-      );
-    }).join('');
-
-    document.querySelectorAll('.btn-view-marksheet').forEach(function (btn) {
-      btn.onclick = function () {
-        var dId = this.getAttribute('data-doc-id');
-        var doc = STATE.issued_marksheets.find(function (d) { return d.id === dId; });
-        if (doc) {
-          alert('Academic Marksheet Ref ' + doc.ref + ' verified for ' + doc.student_name + ' (' + doc.overall_percentage + '% - Grade ' + doc.grade + '). Ready for high-resolution printing.');
+          renderDeckFees(deckData);
+          showToast('Payment recorded for ' + inv.student_name, 'success');
         }
       };
     });
   }
 
-  // ─── 9. RENDER: FACULTY ROSTER (COACHING MODE) ──────────────────────────────
-  function renderFaculty() {
-    var op = getActiveOperator();
-    var teachers = STATE.teachers.filter(function (t) { return t.operator_id === op.id; });
-    var container = document.getElementById('facultyGridContainer');
-    if (!container) return;
+  // ─── DECK SUB-TAB 7: BATCH SETTINGS (RENAME) ───────────────────────────────
+  function renderDeckSettings(deckData) {
+    var nameInput = document.getElementById('deckRenameBatchNameInput');
+    if (nameInput) nameInput.value = deckData.title;
 
-    container.innerHTML = teachers.map(function (t) {
-      var assignedBatchNames = (t.assigned_batches || []).map(function (bId) {
-        var b = STATE.batches.find(function (item) { return item.id === bId; });
-        return b ? b.name : bId;
-      });
-
-      return (
-        '<div class="batch-card">' +
-          '<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">' +
-            '<div style="width:42px; height:42px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800;">' + t.photo_initials + '</div>' +
-            '<div>' +
-              '<h3 style="font-size:16px; font-weight:700;">' + t.name + '</h3>' +
-              '<div class="text-xs text-muted">' + t.role + '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div style="font-size:12px; margin-bottom:10px;"><strong>Qualification:</strong> ' + t.qualification + '</div>' +
-          '<div style="font-size:12px; margin-bottom:10px;"><strong>Subjects:</strong> ' + (t.subjects || []).join(', ') + '</div>' +
-          '<div style="font-size:12px; border-top:1px solid var(--border); padding-top:8px;">' +
-            '<div style="font-weight:700; margin-bottom:4px; font-size:11px; text-transform:uppercase; color:var(--text-muted);">Assigned Batches:</div>' +
-            assignedBatchNames.map(function (bn) { return '<span class="badge badge-muted" style="margin:2px 2px 2px 0;">' + bn + '</span>'; }).join('') +
-          '</div>' +
-          '<div style="margin-top:12px; font-size:12px; color:var(--text-muted);">' +
-            '📞 ' + t.phone + ' &bull; ✉️ ' + t.email +
-          '</div>' +
-        '</div>'
-      );
-    }).join('');
-  }
-
-  // ─── 10. RENDER: ADMISSIONS & CODES ─────────────────────────────────────────
-  function renderAdmissions() {
-    var op = getActiveOperator();
-    var codeBox = document.getElementById('admCodeBox');
-    if (codeBox) codeBox.textContent = op.code;
-
-    var nameEl = document.getElementById('admCenterName');
-    if (nameEl) nameEl.textContent = op.name + ' Student Enrollment Code';
-
-    var copyBtn = document.getElementById('btnCopyInviteCode');
-    if (copyBtn) {
-      copyBtn.onclick = function () {
-        navigator.clipboard.writeText(op.code);
-        showToast('Copied join code ' + op.code + ' to clipboard!', 'success');
-      };
-    }
-
-    var shareBtn = document.getElementById('btnShareWhatsApp');
-    if (shareBtn) {
-      shareBtn.onclick = function () {
-        var msg = 'Join ' + op.name + ' on Vilarci Study! Use enrollment code: ' + op.code + ' to access timetable, tests, and academic honors.';
-        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    var form = document.getElementById('formDeckRenameBatch');
+    if (form) {
+      form.onsubmit = function (e) {
+        e.preventDefault();
+        var newName = nameInput.value.trim();
+        if (deckData.isPrivate) {
+          var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === activeDeckContext.id; });
+          if (pbatch) {
+            pbatch.name = newName;
+            saveState();
+            renderBatchDeck();
+            showToast('Batch successfully renamed to: ' + newName, 'success');
+          }
+        } else {
+          showToast('Section name saved.', 'success');
+        }
       };
     }
   }
 
-  // ─── 11. RENDER: SETTINGS ───────────────────────────────────────────────────
-  function renderSettings() {
-    var op = getActiveOperator();
-    var nameInput = document.getElementById('setOpName');
-    if (nameInput) nameInput.value = op.name;
-
-    var dirInput = document.getElementById('setDirectorName');
-    if (dirInput) dirInput.value = op.director_name;
-
-    var phoneInput = document.getElementById('setPhone');
-    if (phoneInput) phoneInput.value = op.phone;
-
-    var emailInput = document.getElementById('setEmail');
-    if (emailInput) emailInput.value = op.email;
-
-    var upiInput = document.getElementById('setBankUpi');
-    if (upiInput) upiInput.value = op.bank_upi || '';
-
-    var addrInput = document.getElementById('setAddress');
-    if (addrInput) addrInput.value = op.address;
-  }
-
-  // ─── MODALS & FORMS ─────────────────────────────────────────────────────────
+  // ─── MODALS & FORMS ────────────────────────────────────────────────────────
   function setupModals() {
     document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
       btn.onclick = function () {
         var mId = this.getAttribute('data-close-modal');
-        var modal = document.getElementById(mId);
-        if (modal) modal.classList.remove('active');
+        closeModal(mId);
       };
     });
 
-    var createBatchBtn = document.getElementById('btnCreateBatchModal');
-    if (createBatchBtn) {
-      createBatchBtn.onclick = function () {
-        var modal = document.getElementById('modalCreateBatch');
-        if (modal) modal.classList.add('active');
-      };
+    var openPbBtn = document.getElementById('btnOpenCreatePrivateBatch');
+    if (openPbBtn) {
+      openPbBtn.onclick = function () { openModal('modalCreatePrivateBatch'); };
     }
 
-    var heroBatchBtn = document.getElementById('btnHeroCreateBatch');
-    if (heroBatchBtn) {
-      heroBatchBtn.onclick = function () {
-        var modal = document.getElementById('modalCreateBatch');
-        if (modal) modal.classList.add('active');
-      };
+    var openCiBtn = document.getElementById('btnOpenCreateCoaching');
+    if (openCiBtn) {
+      openCiBtn.onclick = function () { openModal('modalCreateCoaching'); };
     }
 
-    var awardPtsBtn = document.getElementById('btnQuickDispensePoints');
-    if (awardPtsBtn) {
-      awardPtsBtn.onclick = function () { openAwardPointsModal(currentBatchId); };
-    }
-
-    var dashAwardBtn = document.getElementById('btnDashAwardPoints');
-    if (dashAwardBtn) {
-      dashAwardBtn.onclick = function () { openAwardPointsModal(currentBatchId); };
-    }
-
-    var printReceiptTrigger = document.getElementById('btnTriggerReceiptPrint');
-    if (printReceiptTrigger) {
-      printReceiptTrigger.onclick = function () { window.print(); };
-    }
-
-    var projectorBtn = document.getElementById('btnProjectorMode');
-    if (projectorBtn) {
-      projectorBtn.onclick = function () {
-        showToast('Classroom QR code ready for projector display.', 'info');
-      };
-    }
-  }
-
-  function openAwardPointsModal(batchId, studentId) {
-    var op = getActiveOperator();
-    var opBatches = STATE.batches.filter(function (b) { return b.operator_id === op.id; });
-    var modalBatchSelect = document.getElementById('modalAwardBatch');
-    var modalStudentSelect = document.getElementById('modalAwardStudent');
-
-    if (modalBatchSelect) {
-      modalBatchSelect.innerHTML = opBatches.map(function (b) {
-        var isSelected = (b.id === (batchId || currentBatchId)) ? ' selected' : '';
-        return '<option value="' + b.id + '"' + isSelected + '>' + b.name + '</option>';
-      }).join('');
-
-      var targetBatch = batchId || currentBatchId;
-      var batchStudents = STATE.students.filter(function (s) {
-        return (s.enrolled_batches || []).indexOf(targetBatch) !== -1;
-      });
-
-      if (modalStudentSelect) {
-        modalStudentSelect.innerHTML = batchStudents.map(function (s) {
-          var isSelected = (s.id === studentId) ? ' selected' : '';
-          return '<option value="' + s.id + '"' + isSelected + '>' + s.name + ' (' + s.roll + ')</option>';
-        }).join('');
-      }
-
-      modalBatchSelect.onchange = function () {
-        var newBId = this.value;
-        var bStudents = STATE.students.filter(function (s) {
-          return (s.enrolled_batches || []).indexOf(newBId) !== -1;
-        });
-        if (modalStudentSelect) {
-          modalStudentSelect.innerHTML = bStudents.map(function (s) {
-            return '<option value="' + s.id + '">' + s.name + ' (' + s.roll + ')</option>';
-          }).join('');
+    var openJoinBtn = document.getElementById('btnOpenJoinCoaching');
+    if (openJoinBtn) {
+      openJoinBtn.onclick = function () {
+        var code = prompt('Enter 6-character coaching institute invite code (e.g. STLR10, APEX99, ZEN77):');
+        if (code) {
+          showToast('Linked to coaching with code: ' + code.toUpperCase(), 'success');
         }
       };
     }
 
-    var modal = document.getElementById('modalAwardPoints');
+    var openInviteBtn = document.getElementById('btnOpenInviteTeacher');
+    if (openInviteBtn) {
+      openInviteBtn.onclick = function () { openModal('modalInviteTeacher'); };
+    }
+  }
+
+  function openModal(id) {
+    var modal = document.getElementById(id);
     if (modal) modal.classList.add('active');
   }
 
-  function setupForms() {
-    var formModalAward = document.getElementById('formModalAwardPoints');
-    if (formModalAward) {
-      formModalAward.onsubmit = function (e) {
-        e.preventDefault();
-        var bId = document.getElementById('modalAwardBatch').value;
-        var sId = document.getElementById('modalAwardStudent').value;
-        var pts = parseInt(document.getElementById('modalAwardPointsInput').value, 10);
-        var category = document.getElementById('modalAwardCategorySelect').value;
-        var citation = document.getElementById('modalAwardCitation').value;
+  function closeModal(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.remove('active');
+  }
 
-        dispatchPointsToStudent(bId, sId, pts, category, citation);
-        document.getElementById('modalAwardPoints').classList.remove('active');
+  function openRenameBatchModal(batchId) {
+    var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === batchId; });
+    if (!pbatch) return;
+
+    var newName = prompt('Rename Batch:', pbatch.name);
+    if (newName && newName.trim() !== '') {
+      pbatch.name = newName.trim();
+      saveState();
+      renderPrivateBatches('all');
+      showToast('Batch renamed to: ' + pbatch.name, 'success');
+    }
+  }
+
+  function setupFormHandlers() {
+    // 1. Create Private Batch
+    var formCreatePb = document.getElementById('formCreatePrivateBatch');
+    if (formCreatePb) {
+      formCreatePb.onsubmit = function (e) {
+        e.preventDefault();
+        var newBatch = {
+          id: 'pbatch-' + Date.now(),
+          teacher_id: activeTeacherId,
+          name: document.getElementById('inpNewBatchName').value,
+          grade: document.getElementById('inpNewBatchGrade').value,
+          board: document.getElementById('inpNewBatchBoard').value,
+          subject: document.getElementById('inpNewBatchSubject').value,
+          room: 'Home Studio Suite',
+          schedule: document.getElementById('inpNewBatchSchedule').value,
+          monthly_fee: parseInt(document.getElementById('inpNewBatchFee').value, 10),
+          capacity: parseInt(document.getElementById('inpNewBatchCapacity').value, 10),
+          enrolled_count: 0,
+          created_date: new Date().toISOString().slice(0, 10),
+          student_ids: ['student-1', 'student-ext-1']
+        };
+
+        STATE.private_batches.push(newBatch);
+        saveState();
+        closeModal('modalCreatePrivateBatch');
+        formCreatePb.reset();
+        updateTeacherNavProfile();
+        renderPrivateBatches('all');
+        showToast('Created new private batch: ' + newBatch.name, 'success');
       };
     }
 
-    var formCreateBatch = document.getElementById('formModalCreateBatch');
-    if (formCreateBatch) {
-      formCreateBatch.onsubmit = function (e) {
+    // 2. Create Coaching Institute
+    var formCreateCoaching = document.getElementById('formCreateCoaching');
+    if (formCreateCoaching) {
+      formCreateCoaching.onsubmit = function (e) {
         e.preventDefault();
-        var op = getActiveOperator();
-        var newBatch = {
-          id: 'batch-' + Date.now(),
-          operator_id: op.id,
-          name: document.getElementById('newBatchName').value,
-          grade: document.getElementById('newBatchGrade').value,
-          board: document.getElementById('newBatchBoard').value,
-          room: 'Lecture Suite',
-          schedule: document.getElementById('newBatchSchedule').value,
-          monthly_fee: parseInt(document.getElementById('newBatchFee').value, 10),
-          capacity: parseInt(document.getElementById('newBatchCapacity').value, 10),
-          enrolled_count: 0,
-          primary_subject: document.getElementById('newBatchSubject').value,
-          assigned_faculty: [
-            { teacher_id: op.teachers[0] || 'teach-1', subject: document.getElementById('newBatchSubject').value, lectures_per_week: 3 }
+        var newInst = {
+          id: 'inst-' + Date.now(),
+          name: document.getElementById('inpNewInstName').value,
+          tagline: document.getElementById('inpNewInstTagline').value,
+          code: document.getElementById('inpNewInstCode').value.toUpperCase(),
+          logo_text: document.getElementById('inpNewInstName').value.substring(0, 2).toUpperCase(),
+          theme_color: '#800020',
+          address: document.getElementById('inpNewInstAddress').value,
+          phone: '+91 98765 43210',
+          email: 'admin@coaching.edu.in',
+          established: 2026,
+          owner_teacher_id: activeTeacherId,
+          user_role_in_institute: 'Director & Owner',
+          user_permissions: {
+            can_manage_members: true,
+            can_create_sections: true,
+            can_manage_fees: true,
+            can_issue_marksheets: true
+          },
+          members: [
+            {
+              teacher_id: activeTeacherId,
+              role: 'Director & Head of Mathematics',
+              permission_level: 'Owner / Full Admin',
+              assigned_subjects: ['Mathematics'],
+              joined_date: 'Oct 2026',
+              assigned_sections: ['Class 10-A']
+            }
           ],
-          attendance_rate: 100,
-          average_points: 0
+          classes_sections: [
+            {
+              id: 'sec-' + Date.now(),
+              class_name: 'Class 10',
+              section_name: 'Section A',
+              full_code: 'Class 10-A',
+              board: 'CBSE',
+              room: 'Hall 1',
+              capacity: 30,
+              enrolled_count: 12,
+              subject_faculty_map: [
+                { subject: 'Mathematics', teacher_id: activeTeacherId, lectures_per_week: 4, schedule: 'Mon, Wed, Fri' }
+              ],
+              student_ids: ['student-1', 'student-ext-1']
+            }
+          ]
         };
 
-        STATE.batches.push(newBatch);
+        STATE.coaching_institutes.push(newInst);
         saveState();
-        document.getElementById('modalCreateBatch').classList.remove('active');
-        formCreateBatch.reset();
-        renderBatches();
-        showToast('Created new batch: ' + newBatch.name, 'success');
+        closeModal('modalCreateCoaching');
+        formCreateCoaching.reset();
+        updateTeacherNavProfile();
+        renderCoachingInstitutesList();
+        showToast('Created coaching institute: ' + newInst.name, 'success');
+      };
+    }
+
+    // 3. Invite Teacher to Coaching
+    var formInviteTeacher = document.getElementById('formInviteTeacher');
+    if (formInviteTeacher) {
+      formInviteTeacher.onsubmit = function (e) {
+        e.preventDefault();
+        var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeCoachingId; });
+        if (!inst) return;
+
+        var teacherName = document.getElementById('inpInviteTeacherName').value;
+        var role = document.getElementById('inpInviteTeacherRole').value;
+        var subjects = document.getElementById('inpInviteTeacherSubjects').value.split(',').map(function (s) { return s.trim(); });
+
+        var newMember = {
+          teacher_id: 't-inv-' + Date.now(),
+          role: role,
+          permission_level: role.indexOf('Admin') !== -1 ? 'Co-Admin' : 'Subject Faculty',
+          assigned_subjects: subjects,
+          joined_date: 'Just now',
+          assigned_sections: ['Class 10-A']
+        };
+
+        // Also add to global teachers list if not present
+        STATE.teachers.push({
+          id: newMember.teacher_id,
+          name: teacherName,
+          qualification: 'Invited Specialist',
+          primary_subject: subjects[0] || 'Subject',
+          phone: document.getElementById('inpInviteTeacherEmail').value,
+          email: document.getElementById('inpInviteTeacherEmail').value,
+          photo_initials: teacherName.split(' ').map(function (w) { return w[0]; }).join('').substring(0, 2).toUpperCase(),
+          avatar_bg: '#0284C7'
+        });
+
+        inst.members.push(newMember);
+        saveState();
+        closeModal('modalInviteTeacher');
+        formInviteTeacher.reset();
+        renderCoachingMembers(inst);
+        showToast('Invited ' + teacherName + ' to ' + inst.name + ' as ' + role, 'success');
       };
     }
   }
@@ -1205,12 +1326,10 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
 
-  // ─── TOAST NOTIFICATIONS ──────────────────────────────────────────────────
-  function showToast(message, type) {
+  function showToast(msg, type) {
     var toast = document.createElement('div');
-    toast.className = 'partner-toast';
-    toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:#0f172a; color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,0.25); z-index:9999; display:flex; align-items:center; gap:8px; border-left:4px solid ' + (type === 'success' ? '#059669' : '#800020') + ';';
-    toast.innerHTML = (type === 'success' ? '✓ ' : 'ℹ️ ') + message;
+    toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:#0f172a; color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:700; z-index:99999; box-shadow:0 12px 30px rgba(0,0,0,0.25); display:flex; align-items:center; gap:8px; border-left:4px solid ' + (type === 'success' ? '#059669' : '#800020') + ';';
+    toast.innerHTML = (type === 'success' ? '✓ ' : 'ℹ️ ') + msg;
     document.body.appendChild(toast);
 
     setTimeout(function () {

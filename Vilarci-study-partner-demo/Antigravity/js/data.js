@@ -1,326 +1,390 @@
-// js/data.js — Vilarci Study Partner (Teacher & Coaching Institute Portal)
-// Relational dataset supporting:
-// 1. Dual Operator Modes: Multi-Teacher Coaching Institutes & Independent Solo Tuition Teachers
-// 2. Subject-wise Teacher Assignments across Batches
-// 3. Student Rosters, Attendance Records, Syllabus Tracking, Test Evaluations, Fee Invoices & Academic Points
+// js/data.js — Vilarci Study Partner (Teacher-First Portal Architecture)
+// Normalized dataset reflecting the real educator mental model:
+// 1. Logged-in Teacher Profile (e.g. Er. Alok Sharma)
+// 2. Teacher's Own Private Batches (Multiple classes, multiple batches per class, with rename & student management)
+// 3. Coaching Institutes linked with the teacher:
+//    - Owned Coaching (Stellar Academy) with Members (Teachers) management (Add, Delete, Invite, Roles)
+//    - Joined Coaching (Apex Science Hub) as Visiting Faculty
+// 4. Coaching Classes with Sections (e.g. Class 10-A, Class 10-B, Class 9-A, Class 12-PCM) with subject-wise teachers
+// 5. Section/Batch Deck: Students Roster, QR Attendance, Points Dispenser, Tests, Syllabus, Fees
 
-window.PARTNER_DATA = {
+window.TEACHER_PORTAL_DATA = {
 
-  // ─── 1. OPERATORS (Coaching Institutes & Independent Tuition Teachers) ───────
-  operators: [
-    {
-      id: 'op-stellar',
-      type: 'coaching_institute',
-      name: 'Stellar Academy',
-      tagline: 'Master Concepts. Excel in Board & Competitive Science & Maths.',
-      director_name: 'Er. Alok Sharma (Ex-IIT Delhi)',
-      code: 'STLR10',
-      logo_text: 'SA',
-      theme_color: '#800020',
-      phone: '+91 98765 43210',
-      email: 'admin@stellaracademy.edu.in',
-      address: '42, Orbit Lane, Science Nagar, Pune – 411021',
-      established: 2018,
-      teachers_count: 5,
-      total_students: 84,
-      active_batches_count: 4,
-      teachers: ['teach-1', 'teach-2', 'teach-3'],
-      bank_upi: 'stellaracademy@okhdfcbank'
-    },
-    {
-      id: 'op-apex',
-      type: 'independent_teacher',
-      name: 'Apex Chemistry (Dr. Rashmi Verma)',
-      tagline: 'Organic, Inorganic & Physical Chemistry Mastery for Boards & NEET.',
-      director_name: 'Dr. Rashmi Verma (PhD Chemistry)',
-      code: 'APEX99',
-      logo_text: 'AC',
-      theme_color: '#0284C7',
-      phone: '+91 98220 12345',
-      email: 'verma.chem@apexchem.in',
-      address: 'Shop 12, Crystal Heights, FC Road, Pune – 411005',
-      established: 2019,
-      teachers_count: 1,
-      total_students: 42,
-      active_batches_count: 2,
-      teachers: ['teach-4'],
-      bank_upi: 'dr.rashmi.chem@oksbi'
-    },
-    {
-      id: 'op-zenith',
-      type: 'independent_teacher',
-      name: 'Zenith Biology (Prof. Arindam Sen)',
-      tagline: 'Cell Biology, Genetics & Human Physiology Conceptual Immersion.',
-      director_name: 'Prof. Arindam Sen (M.Sc, Gold Medalist)',
-      code: 'ZEN77',
-      logo_text: 'ZB',
-      theme_color: '#059669',
-      phone: '+91 97330 54321',
-      email: 'arindam.bio@zenithtuitions.com',
-      address: 'Green Meadows Wing B, Kothrud, Pune – 411038',
-      established: 2020,
-      teachers_count: 1,
-      total_students: 36,
-      active_batches_count: 2,
-      teachers: ['teach-5'],
-      bank_upi: 'arindam.bio@icici'
-    },
-    {
-      id: 'op-horizon',
-      type: 'independent_teacher',
-      name: 'Horizon English Studio (Mrs. Kavita Roy)',
-      tagline: 'Board English Core, Literature Analysis & Critical Writing.',
-      director_name: 'Mrs. Kavita Roy (MA English Lit)',
-      code: 'HORIZ5',
-      logo_text: 'HE',
-      theme_color: '#7C3AED',
-      phone: '+91 98110 99887',
-      email: 'kavita.roy@horizonstudio.org',
-      address: '302, Knowledge Park, Camp, Pune – 411001',
-      established: 2021,
-      teachers_count: 1,
-      total_students: 28,
-      active_batches_count: 2,
-      teachers: ['teach-6'],
-      bank_upi: 'kavita.roy@paytm'
-    }
-  ],
-
-  // ─── 2. FACULTY & TEACHERS ROSTER ──────────────────────────────────────────
+  // ─── 1. TEACHERS DIRECTORY ──────────────────────────────────────────────────
   teachers: [
     {
-      id: 'teach-1',
-      operator_id: 'op-stellar',
+      id: 'teacher-alok',
       name: 'Er. Alok Sharma',
-      role: 'Director & Head of Mathematics',
       qualification: 'B.Tech (IIT Delhi), 14 yrs exp',
-      subjects: ['Mathematics', 'Advanced Problem Solving'],
+      primary_subject: 'Mathematics',
       phone: '+91 98765 43211',
       email: 'alok.sharma@stellaracademy.edu.in',
-      assigned_batches: ['batch-10-m', 'batch-10-e', 'batch-12-s30'],
       photo_initials: 'AS',
-      is_head: true
+      avatar_bg: '#800020'
     },
     {
-      id: 'teach-2',
-      operator_id: 'op-stellar',
+      id: 'teacher-meenakshi',
       name: 'Dr. Meenakshi Soni',
-      role: 'Senior Faculty - Physics',
       qualification: 'Ph.D Physics (IISc Bangalore), 10 yrs exp',
-      subjects: ['Physics', 'Electrodynamics & Optics'],
+      primary_subject: 'Physics',
       phone: '+91 98765 43212',
       email: 'meenakshi.soni@stellaracademy.edu.in',
-      assigned_batches: ['batch-10-m', 'batch-10-e', 'batch-12-s30'],
       photo_initials: 'MS',
-      is_head: false
+      avatar_bg: '#0284C7'
     },
     {
-      id: 'teach-3',
-      operator_id: 'op-stellar',
-      name: 'Prof. Vikramaditya Sen',
-      role: 'Junior Faculty - Foundation Science & Lab',
-      qualification: 'M.Sc Applied Sciences (Pune Univ), 6 yrs exp',
-      subjects: ['Physics Lab', 'Maths Foundation'],
-      phone: '+91 98765 43213',
-      email: 'vikram.sen@stellaracademy.edu.in',
-      assigned_batches: ['batch-10-m', 'batch-9-f'],
-      photo_initials: 'VS',
-      is_head: false
-    },
-    {
-      id: 'teach-4',
-      operator_id: 'op-apex',
+      id: 'teacher-rashmi',
       name: 'Dr. Rashmi Verma',
-      role: 'Founder & Principal Chemistry Specialist',
       qualification: 'Ph.D Chemistry (CSIR-NET JRF), 12 yrs exp',
-      subjects: ['Organic Chemistry', 'Physical Chemistry', 'Inorganic Chemistry'],
+      primary_subject: 'Chemistry',
       phone: '+91 98220 12345',
       email: 'verma.chem@apexchem.in',
-      assigned_batches: ['batch-apex-10', 'batch-apex-12'],
       photo_initials: 'RV',
-      is_head: true
+      avatar_bg: '#059669'
     },
     {
-      id: 'teach-5',
-      operator_id: 'op-zenith',
+      id: 'teacher-arindam',
       name: 'Prof. Arindam Sen',
-      role: 'Founder & Medical Biology Mentor',
       qualification: 'M.Sc Biology (Gold Medalist), 11 yrs exp',
-      subjects: ['Cell Biology', 'Genetics', 'Human Physiology'],
+      primary_subject: 'Biology',
       phone: '+91 97330 54321',
       email: 'arindam.bio@zenithtuitions.com',
-      assigned_batches: ['batch-zen-med', 'batch-zen-10'],
       photo_initials: 'AS',
-      is_head: true
+      avatar_bg: '#7C3AED'
     },
     {
-      id: 'teach-6',
-      operator_id: 'op-horizon',
+      id: 'teacher-vikram',
+      name: 'Prof. Vikramaditya Sen',
+      qualification: 'M.Sc Applied Sciences, 6 yrs exp',
+      primary_subject: 'STEM Lab & Foundation Science',
+      phone: '+91 98765 43213',
+      email: 'vikram.sen@stellaracademy.edu.in',
+      photo_initials: 'VS',
+      avatar_bg: '#D97706'
+    },
+    {
+      id: 'teacher-kavita',
       name: 'Mrs. Kavita Roy',
-      role: 'Founder & Senior Humanities Faculty',
-      qualification: 'M.A. English Literature (Delhi Univ), 15 yrs exp',
-      subjects: ['English Core', 'Literature & Analytical Writing'],
+      qualification: 'M.A. English Lit (Delhi Univ), 15 yrs exp',
+      primary_subject: 'English Core',
       phone: '+91 98110 99887',
       email: 'kavita.roy@horizonstudio.org',
-      assigned_batches: ['batch-hor-club', 'batch-hor-12'],
       photo_initials: 'KR',
-      is_head: true
+      avatar_bg: '#DC2626'
     }
   ],
 
-  // ─── 3. BATCHES (Subject-wise & Grade-wise Classes) ─────────────────────────
-  batches: [
+  // Currently logged-in teacher
+  logged_in_teacher_id: 'teacher-alok',
+
+  // ─── 2. TEACHER'S PRIVATE / OWN BATCHES (Independent Tuitions) ──────────────
+  // Teacher owns multiple batches across different classes (Class 9, 10, 11, 12).
+  // Inside a single class, they have multiple batches!
+  private_batches: [
     {
-      id: 'batch-10-m',
-      operator_id: 'op-stellar',
-      name: 'Class 10 Science & Maths Morning',
+      id: 'pbatch-10-m',
+      teacher_id: 'teacher-alok',
+      name: 'Class 10 Maths Morning Super 20',
       grade: 'Class 10',
       board: 'CBSE',
-      room: 'Lecture Hall A-1',
-      schedule: 'Mon, Wed, Fri • 07:30 AM – 09:30 AM',
+      subject: 'Mathematics',
+      room: 'Orbit Home Studio A',
+      schedule: 'Mon, Wed, Fri • 07:30 AM – 09:00 AM',
       monthly_fee: 2500,
-      capacity: 30,
-      enrolled_count: 24,
-      primary_subject: 'Maths & Physics',
-      assigned_faculty: [
-        { teacher_id: 'teach-1', subject: 'Mathematics', lectures_per_week: 3 },
-        { teacher_id: 'teach-2', subject: 'Physics', lectures_per_week: 3 },
-        { teacher_id: 'teach-3', subject: 'STEM Lab & Experiments', lectures_per_week: 1 }
-      ],
-      attendance_rate: 94.2,
-      average_points: 1395
+      capacity: 20,
+      enrolled_count: 18,
+      created_date: '2026-06-01',
+      student_ids: ['student-1', 'student-ext-1', 'student-ext-2', 'student-ext-3', 'student-ext-4', 'student-ext-5', 'student-ext-6']
     },
     {
-      id: 'batch-10-e',
-      operator_id: 'op-stellar',
-      name: 'Class 10 Science & Maths Evening',
+      id: 'pbatch-10-e',
+      teacher_id: 'teacher-alok',
+      name: 'Class 10 Maths Evening Board Prep',
       grade: 'Class 10',
       board: 'CBSE / ICSE',
-      room: 'Lecture Hall A-2',
-      schedule: 'Tue, Thu, Sat • 05:00 PM – 07:00 PM',
+      subject: 'Mathematics',
+      room: 'Orbit Home Studio B',
+      schedule: 'Tue, Thu, Sat • 05:00 PM – 06:30 PM',
       monthly_fee: 2500,
       capacity: 25,
-      enrolled_count: 20,
-      primary_subject: 'Maths & Physics',
-      assigned_faculty: [
-        { teacher_id: 'teach-1', subject: 'Mathematics', lectures_per_week: 3 },
-        { teacher_id: 'teach-2', subject: 'Physics', lectures_per_week: 3 }
-      ],
-      attendance_rate: 91.5,
-      average_points: 1280
+      enrolled_count: 15,
+      created_date: '2026-06-05',
+      student_ids: ['student-ext-2', 'student-ext-4', 'student-ext-7']
     },
     {
-      id: 'batch-12-s30',
-      operator_id: 'op-stellar',
-      name: 'Class 12 Super 30 PCM',
+      id: 'pbatch-10-o',
+      teacher_id: 'teacher-alok',
+      name: 'Class 10 Advanced Olympiad Maths',
+      grade: 'Class 10',
+      board: 'CBSE / Foundation',
+      subject: 'Olympiad Mathematics',
+      room: 'Orbit Home Studio A',
+      schedule: 'Sun • 09:00 AM – 11:30 AM',
+      monthly_fee: 1800,
+      capacity: 15,
+      enrolled_count: 12,
+      created_date: '2026-07-01',
+      student_ids: ['student-1', 'student-ext-1', 'student-ext-3']
+    },
+    {
+      id: 'pbatch-12-s',
+      teacher_id: 'teacher-alok',
+      name: 'Class 12 Calculus Super 30',
       grade: 'Class 12',
       board: 'CBSE Science',
-      room: 'Senior Seminar Room B',
-      schedule: 'Daily • 06:00 PM – 08:30 PM',
+      subject: 'Mathematics & Calculus',
+      room: 'Senior Seminar Room',
+      schedule: 'Daily • 06:00 PM – 07:30 PM',
       monthly_fee: 3500,
       capacity: 30,
-      enrolled_count: 26,
-      primary_subject: 'Advanced Maths & Physics',
-      assigned_faculty: [
-        { teacher_id: 'teach-1', subject: 'Calculus & Algebra', lectures_per_week: 4 },
-        { teacher_id: 'teach-2', subject: 'Modern Physics & Electromagnetism', lectures_per_week: 4 }
-      ],
-      attendance_rate: 97.0,
-      average_points: 1540
+      enrolled_count: 22,
+      created_date: '2026-05-15',
+      student_ids: ['student-3']
     },
     {
-      id: 'batch-9-f',
-      operator_id: 'op-stellar',
-      name: 'Class 9 Foundation Olympiad',
+      id: 'pbatch-12-b',
+      teacher_id: 'teacher-alok',
+      name: 'Class 12 CBSE Board Score Booster',
+      grade: 'Class 12',
+      board: 'CBSE Science',
+      subject: 'Mathematics',
+      room: 'Senior Seminar Room',
+      schedule: 'Mon, Wed, Fri • 04:00 PM – 05:30 PM',
+      monthly_fee: 3000,
+      capacity: 20,
+      enrolled_count: 16,
+      created_date: '2026-06-10',
+      student_ids: ['student-3']
+    },
+    {
+      id: 'pbatch-9-f',
+      teacher_id: 'teacher-alok',
+      name: 'Class 9 Foundation Mathematics',
       grade: 'Class 9',
       board: 'CBSE',
-      room: 'Studio 3',
-      schedule: 'Sat & Sun • 10:00 AM – 12:30 PM',
+      subject: 'Foundation Maths',
+      room: 'Junior Discovery Room',
+      schedule: 'Sat & Sun • 11:00 AM – 12:30 PM',
       monthly_fee: 2000,
       capacity: 20,
       enrolled_count: 14,
-      primary_subject: 'Foundation Science',
-      assigned_faculty: [
-        { teacher_id: 'teach-3', subject: 'Integrated Science & Maths', lectures_per_week: 2 }
-      ],
-      attendance_rate: 89.0,
-      average_points: 1120
-    },
-    {
-      id: 'batch-apex-10',
-      operator_id: 'op-apex',
-      name: 'Class 10 Board Excellence Batch',
-      grade: 'Class 10',
-      board: 'CBSE / ICSE',
-      room: 'Chemistry Lab Suite 1',
-      schedule: 'Tue, Thu, Sat • 04:00 PM – 05:30 PM',
-      monthly_fee: 1800,
-      capacity: 25,
-      enrolled_count: 22,
-      primary_subject: 'Chemistry',
-      assigned_faculty: [
-        { teacher_id: 'teach-4', subject: 'Board & Conceptual Chemistry', lectures_per_week: 3 }
-      ],
-      attendance_rate: 93.4,
-      average_points: 1340
-    },
-    {
-      id: 'batch-apex-12',
-      operator_id: 'op-apex',
-      name: 'Class 12 NEET & Board Chemistry',
-      grade: 'Class 12',
-      board: 'CBSE Science',
-      room: 'Organic Research Hall',
-      schedule: 'Mon, Wed, Fri • 06:00 PM – 07:30 PM',
-      monthly_fee: 2200,
-      capacity: 20,
-      enrolled_count: 20,
-      primary_subject: 'Organic & Physical Chemistry',
-      assigned_faculty: [
-        { teacher_id: 'teach-4', subject: 'NEET & Board Chemistry', lectures_per_week: 3 }
-      ],
-      attendance_rate: 96.0,
-      average_points: 1480
-    },
-    {
-      id: 'batch-zen-med',
-      operator_id: 'op-zenith',
-      name: 'Pre-Medical & High School Biology',
-      grade: 'Class 10-11',
-      board: 'CBSE / NEET Foundation',
-      room: 'Bio Discovery Lab',
-      schedule: 'Mon, Wed, Sat • 05:30 PM – 07:00 PM',
-      monthly_fee: 1600,
-      capacity: 20,
-      enrolled_count: 18,
-      primary_subject: 'Biology',
-      assigned_faculty: [
-        { teacher_id: 'teach-5', subject: 'Cell Bio & Human Physiology', lectures_per_week: 3 }
-      ],
-      attendance_rate: 95.1,
-      average_points: 1290
-    },
-    {
-      id: 'batch-hor-club',
-      operator_id: 'op-horizon',
-      name: 'Class 8-10 English Literature Club',
-      grade: 'Class 8-10',
-      board: 'CBSE / ICSE',
-      room: 'Library Discussion Suite',
-      schedule: 'Sun • 11:00 AM – 01:00 PM',
-      monthly_fee: 1200,
-      capacity: 20,
-      enrolled_count: 16,
-      primary_subject: 'English Literature',
-      assigned_faculty: [
-        { teacher_id: 'teach-6', subject: 'Literature & Critical Writing', lectures_per_week: 1 }
-      ],
-      attendance_rate: 92.0,
-      average_points: 1210
+      created_date: '2026-07-10',
+      student_ids: ['student-2']
     }
   ],
 
-  // ─── 4. ENROLLED STUDENTS (Connected to Batches & Parents) ───────────────────
+  // ─── 3. COACHING INSTITUTES (Linked Institutes) ─────────────────────────────
+  // A teacher can own an institute OR be joined as a faculty member in multiple coaching institutes!
+  coaching_institutes: [
+    {
+      id: 'inst-stellar',
+      name: 'Stellar Academy',
+      tagline: 'Master Concepts. Excel in Board & Competitive Science & Maths.',
+      code: 'STLR10',
+      logo_text: 'SA',
+      theme_color: '#800020',
+      address: '42, Orbit Lane, Science Nagar, Pune – 411021',
+      phone: '+91 98765 43210',
+      email: 'admin@stellaracademy.edu.in',
+      established: 2018,
+      owner_teacher_id: 'teacher-alok', // Alok Sharma is Owner & Director
+      user_role_in_institute: 'Director & Owner', // 'Director & Owner', 'Faculty Member'
+      user_permissions: {
+        can_manage_members: true,
+        can_create_sections: true,
+        can_manage_fees: true,
+        can_issue_marksheets: true
+      },
+
+      // Members (Teachers) Table with permissions
+      members: [
+        {
+          teacher_id: 'teacher-alok',
+          role: 'Director & Head of Mathematics',
+          permission_level: 'Owner / Full Admin',
+          assigned_subjects: ['Mathematics', 'Advanced Problem Solving'],
+          joined_date: 'Jan 2018',
+          assigned_sections: ['Class 10-A', 'Class 10-B', 'Class 12-PCM-A']
+        },
+        {
+          teacher_id: 'teacher-meenakshi',
+          role: 'Senior Faculty - Physics',
+          permission_level: 'Faculty / Subject Teacher',
+          assigned_subjects: ['Physics', 'Electrodynamics & Optics'],
+          joined_date: 'Mar 2019',
+          assigned_sections: ['Class 10-A', 'Class 10-B', 'Class 11-PCM-A', 'Class 12-PCM-A']
+        },
+        {
+          teacher_id: 'teacher-rashmi',
+          role: 'Visiting Faculty - Chemistry',
+          permission_level: 'Faculty / Subject Teacher',
+          assigned_subjects: ['Chemistry', 'Organic Chemistry'],
+          joined_date: 'Jul 2021',
+          assigned_sections: ['Class 10-A', 'Class 10-B', 'Class 11-PCM-A']
+        },
+        {
+          teacher_id: 'teacher-arindam',
+          role: 'Visiting Faculty - Pre-Medical Biology',
+          permission_level: 'Faculty / Subject Teacher',
+          assigned_subjects: ['Biology', 'Medical Foundation'],
+          joined_date: 'Sep 2022',
+          assigned_sections: ['Class 10-A', 'Pre-Medical Bio-1']
+        },
+        {
+          teacher_id: 'teacher-vikram',
+          role: 'Junior Faculty - STEM Lab & Practicals',
+          permission_level: 'Lab Instructor',
+          assigned_subjects: ['STEM Lab Experiments', 'Foundation Science'],
+          joined_date: 'Aug 2023',
+          assigned_sections: ['Class 10-A', 'Class 9-A']
+        }
+      ],
+
+      // Classes with Sections (e.g. Class-10-A, Class-10-B, Class-9-A)
+      // Inside coaching, multiple teachers teach different subjects in the same section!
+      classes_sections: [
+        {
+          id: 'sec-10-a',
+          class_name: 'Class 10',
+          section_name: 'Section A',
+          full_code: 'Class 10-A',
+          board: 'CBSE',
+          room: 'Lecture Hall A-1',
+          capacity: 35,
+          enrolled_count: 28,
+          // Subject-wise teachers assigned to Class 10-A
+          subject_faculty_map: [
+            { subject: 'Mathematics', teacher_id: 'teacher-alok', lectures_per_week: 4, schedule: 'Mon, Wed, Fri • 07:30 AM' },
+            { subject: 'Physics', teacher_id: 'teacher-meenakshi', lectures_per_week: 3, schedule: 'Tue, Thu, Sat • 07:30 AM' },
+            { subject: 'Chemistry', teacher_id: 'teacher-rashmi', lectures_per_week: 3, schedule: 'Mon, Wed, Fri • 09:00 AM' },
+            { subject: 'STEM Laboratory', teacher_id: 'teacher-vikram', lectures_per_week: 1, schedule: 'Sat • 10:00 AM' }
+          ],
+          student_ids: ['student-1', 'student-ext-1', 'student-ext-2', 'student-ext-3', 'student-ext-5']
+        },
+        {
+          id: 'sec-10-b',
+          class_name: 'Class 10',
+          section_name: 'Section B',
+          full_code: 'Class 10-B',
+          board: 'CBSE / ICSE',
+          room: 'Lecture Hall A-2',
+          capacity: 30,
+          enrolled_count: 24,
+          subject_faculty_map: [
+            { subject: 'Mathematics', teacher_id: 'teacher-alok', lectures_per_week: 4, schedule: 'Mon, Wed, Fri • 05:00 PM' },
+            { subject: 'Physics', teacher_id: 'teacher-meenakshi', lectures_per_week: 3, schedule: 'Tue, Thu, Sat • 05:00 PM' },
+            { subject: 'Chemistry', teacher_id: 'teacher-rashmi', lectures_per_week: 3, schedule: 'Mon, Wed, Fri • 06:30 PM' }
+          ],
+          student_ids: ['student-ext-4', 'student-ext-6', 'student-ext-7']
+        },
+        {
+          id: 'sec-9-a',
+          class_name: 'Class 9',
+          section_name: 'Section A',
+          full_code: 'Class 9-A',
+          board: 'CBSE',
+          room: 'Room B-2',
+          capacity: 25,
+          enrolled_count: 20,
+          subject_faculty_map: [
+            { subject: 'Foundation Mathematics', teacher_id: 'teacher-alok', lectures_per_week: 3, schedule: 'Sat & Sun • 10:00 AM' },
+            { subject: 'Integrated Science', teacher_id: 'teacher-vikram', lectures_per_week: 3, schedule: 'Sat & Sun • 11:30 AM' }
+          ],
+          student_ids: ['student-2']
+        },
+        {
+          id: 'sec-12-pcm-a',
+          class_name: 'Class 12',
+          section_name: 'Section PCM-A',
+          full_code: 'Class 12-PCM-A',
+          board: 'CBSE Science',
+          room: 'Senior Seminar Hall',
+          capacity: 30,
+          enrolled_count: 26,
+          subject_faculty_map: [
+            { subject: 'Calculus & Vectors', teacher_id: 'teacher-alok', lectures_per_week: 4, schedule: 'Daily • 06:00 PM' },
+            { subject: 'Electromagnetism & Modern Physics', teacher_id: 'teacher-meenakshi', lectures_per_week: 4, schedule: 'Daily • 07:30 PM' }
+          ],
+          student_ids: ['student-3']
+        }
+      ]
+    },
+
+    {
+      id: 'inst-apex',
+      name: 'Apex Science Hub',
+      tagline: 'Premier Board & NEET/JEE Coaching Center.',
+      code: 'APEX99',
+      logo_text: 'AH',
+      theme_color: '#0284C7',
+      address: 'Shop 12, Crystal Heights, FC Road, Pune – 411005',
+      phone: '+91 98220 12345',
+      email: 'info@apexsciencehub.in',
+      established: 2019,
+      owner_teacher_id: 'teacher-rashmi', // Dr. Rashmi Verma is Owner
+      user_role_in_institute: 'Visiting Senior Faculty (Maths)', // Er. Alok Sharma is Visiting Faculty here!
+      user_permissions: {
+        can_manage_members: false, // Cannot delete or invite members
+        can_create_sections: false,
+        can_manage_fees: false,
+        can_issue_marksheets: false
+      },
+
+      members: [
+        {
+          teacher_id: 'teacher-rashmi',
+          role: 'Director & Head of Chemistry',
+          permission_level: 'Owner / Full Admin',
+          assigned_subjects: ['Chemistry', 'Organic Chemistry'],
+          joined_date: 'Jan 2019',
+          assigned_sections: ['Class 10-A', 'Class 12-A']
+        },
+        {
+          teacher_id: 'teacher-alok',
+          role: 'Visiting Senior Faculty - Mathematics',
+          permission_level: 'Faculty / Subject Teacher',
+          assigned_subjects: ['Mathematics Core', 'Advanced Problem Solving'],
+          joined_date: 'Aug 2022',
+          assigned_sections: ['Class 10-A', 'Class 12-A']
+        }
+      ],
+
+      classes_sections: [
+        {
+          id: 'sec-apex-10-a',
+          class_name: 'Class 10',
+          section_name: 'Section A (Board Excellence)',
+          full_code: 'Class 10-A',
+          board: 'CBSE',
+          room: 'Hall Chem-1',
+          capacity: 30,
+          enrolled_count: 22,
+          subject_faculty_map: [
+            { subject: 'Mathematics', teacher_id: 'teacher-alok', lectures_per_week: 3, schedule: 'Tue, Thu, Sat • 04:00 PM' },
+            { subject: 'Chemistry', teacher_id: 'teacher-rashmi', lectures_per_week: 3, schedule: 'Tue, Thu, Sat • 05:30 PM' }
+          ],
+          student_ids: ['student-1', 'student-ext-7']
+        },
+        {
+          id: 'sec-apex-12-a',
+          class_name: 'Class 12',
+          section_name: 'Section A (JEE / Board)',
+          full_code: 'Class 12-A',
+          board: 'CBSE Science',
+          room: 'Hall Chem-2',
+          capacity: 25,
+          enrolled_count: 20,
+          subject_faculty_map: [
+            { subject: 'Advanced Mathematics', teacher_id: 'teacher-alok', lectures_per_week: 3, schedule: 'Mon, Wed, Fri • 06:00 PM' },
+            { subject: 'Organic Chemistry', teacher_id: 'teacher-rashmi', lectures_per_week: 3, schedule: 'Mon, Wed, Fri • 07:30 PM' }
+          ],
+          student_ids: ['student-3']
+        }
+      ]
+    }
+  ],
+
+  // ─── 4. ENROLLED STUDENTS (Master Directory Matching Student Portal) ────────
   students: [
     {
       id: 'student-1',
@@ -338,11 +402,10 @@ window.PARTNER_DATA = {
       guardian_name: 'Dr. Rameshwar Mehta (Uncle)',
       guardian_phone: '+91 97123 44556',
       guardian_phone_verified: true,
-      enrolled_batches: ['batch-10-m', 'batch-apex-10', 'batch-zen-med'],
       points: 1420,
       streak: 14,
-      attendance_percentage: 95.5,
-      fee_status: 'paid', // for current month
+      attendance_rate: 95.5,
+      fee_status: 'paid',
       avatar_initials: 'AM',
       avatar_bg: 'linear-gradient(135deg, #800020, #B45309)'
     },
@@ -359,10 +422,12 @@ window.PARTNER_DATA = {
       mother_name: 'Rekha Sharma',
       mother_phone: '+91 98333 44552',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-10-m'],
+      guardian_name: '—',
+      guardian_phone: '',
+      guardian_phone_verified: false,
       points: 1840,
       streak: 22,
-      attendance_percentage: 98.0,
+      attendance_rate: 98.0,
       fee_status: 'paid',
       avatar_initials: 'RS',
       avatar_bg: 'linear-gradient(135deg, #D97706, #B45309)'
@@ -380,10 +445,12 @@ window.PARTNER_DATA = {
       mother_name: 'Pooja Gupta',
       mother_phone: '+91 98777 11221',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-10-m'],
+      guardian_name: '—',
+      guardian_phone: '',
+      guardian_phone_verified: false,
       points: 1490,
       streak: 18,
-      attendance_percentage: 94.0,
+      attendance_rate: 94.0,
       fee_status: 'paid',
       avatar_initials: 'VG',
       avatar_bg: 'linear-gradient(135deg, #0284C7, #0369A1)'
@@ -401,10 +468,12 @@ window.PARTNER_DATA = {
       mother_name: 'Kavita Desai',
       mother_phone: '+91 98222 33442',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-10-m'],
+      guardian_name: '—',
+      guardian_phone: '',
+      guardian_phone_verified: false,
       points: 1380,
       streak: 11,
-      attendance_percentage: 92.5,
+      attendance_rate: 92.5,
       fee_status: 'paid',
       avatar_initials: 'TD',
       avatar_bg: 'linear-gradient(135deg, #059669, #047857)'
@@ -422,10 +491,12 @@ window.PARTNER_DATA = {
       mother_name: 'Madhuri Sen',
       mother_phone: '+91 98111 55662',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-10-m'],
+      guardian_name: '—',
+      guardian_phone: '',
+      guardian_phone_verified: false,
       points: 1260,
       streak: 9,
-      attendance_percentage: 89.0,
+      attendance_rate: 89.0,
       fee_status: 'pending',
       avatar_initials: 'RS',
       avatar_bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)'
@@ -443,10 +514,12 @@ window.PARTNER_DATA = {
       mother_name: 'Shalini Rao',
       mother_phone: '+91 97666 44332',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-10-m'],
+      guardian_name: '—',
+      guardian_phone: '',
+      guardian_phone_verified: false,
       points: 1180,
       streak: 7,
-      attendance_percentage: 91.0,
+      attendance_rate: 91.0,
       fee_status: 'paid',
       avatar_initials: 'AR',
       avatar_bg: 'linear-gradient(135deg, #DC2626, #B91C1C)'
@@ -464,10 +537,12 @@ window.PARTNER_DATA = {
       mother_name: 'Seema Joshi',
       mother_phone: '+91 98999 88772',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-10-m'],
+      guardian_name: '—',
+      guardian_phone: '',
+      guardian_phone_verified: false,
       points: 1050,
       streak: 5,
-      attendance_percentage: 86.5,
+      attendance_rate: 86.5,
       fee_status: 'overdue',
       avatar_initials: 'PJ',
       avatar_bg: 'linear-gradient(135deg, #475569, #334155)'
@@ -485,10 +560,12 @@ window.PARTNER_DATA = {
       mother_name: 'Sunita Mehta',
       mother_phone: '+91 98765 11223',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-hor-club'],
+      guardian_name: 'Dr. Rameshwar Mehta (Uncle)',
+      guardian_phone: '+91 97123 44556',
+      guardian_phone_verified: true,
       points: 1350,
       streak: 12,
-      attendance_percentage: 96.0,
+      attendance_rate: 96.0,
       fee_status: 'paid',
       avatar_initials: 'PM',
       avatar_bg: 'linear-gradient(135deg, #991B1B, #D97706)'
@@ -506,10 +583,12 @@ window.PARTNER_DATA = {
       mother_name: 'Sunita Mehta',
       mother_phone: '+91 98765 11223',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-12-s30'],
+      guardian_name: 'Dr. Rameshwar Mehta (Uncle)',
+      guardian_phone: '+91 97123 44556',
+      guardian_phone_verified: true,
       points: 1650,
       streak: 20,
-      attendance_percentage: 97.5,
+      attendance_rate: 97.5,
       fee_status: 'paid',
       avatar_initials: 'KM',
       avatar_bg: 'linear-gradient(135deg, #1E3A8A, #3B82F6)'
@@ -527,41 +606,60 @@ window.PARTNER_DATA = {
       mother_name: 'Bhavna Patel',
       mother_phone: '+91 98444 77882',
       mother_phone_verified: true,
-      enrolled_batches: ['batch-apex-10'],
+      guardian_name: '—',
+      guardian_phone: '',
+      guardian_phone_verified: false,
       points: 1780,
       streak: 20,
-      attendance_percentage: 99.0,
+      attendance_rate: 99.0,
       fee_status: 'paid',
       avatar_initials: 'AP',
       avatar_bg: 'linear-gradient(135deg, #0284C7, #0369A1)'
     }
   ],
 
-  // ─── 5. TODAY'S ATTENDANCE SESSIONS ─────────────────────────────────────────
-  today_sessions: [
+  // ─── 5. POINTS DISPATCHES (Audit Log) ───────────────────────────────────────
+  points_dispatches: [
     {
-      id: 'sess-today-1',
-      batch_id: 'batch-10-m',
-      date: '2026-10-19',
-      subject: 'Maths & Physics',
+      id: 'disp-101',
+      date: '18 Oct 2026',
+      context_type: 'private_batch', // 'private_batch' or 'coaching_section'
+      context_id: 'pbatch-10-m',
+      context_title: 'Class 10 Maths Morning Super 20',
+      teacher_id: 'teacher-alok',
       teacher_name: 'Er. Alok Sharma',
-      qr_code_token: 'STLR-QR-20261019-B10M-SECURE',
-      total_students: 24,
-      present_count: 22,
-      absent_count: 2,
-      checked_in_students: ['student-1', 'student-ext-1', 'student-ext-2', 'student-ext-3', 'student-ext-5']
+      student_id: 'student-1',
+      student_name: 'Aryan Mehta',
+      points: 150,
+      category: 'Excellence in Mathematics',
+      citation: 'Flawless proof in Quadratic Equations discriminant test.'
     },
     {
-      id: 'sess-today-2',
-      batch_id: 'batch-apex-10',
-      date: '2026-10-19',
-      subject: 'Chemistry',
-      teacher_name: 'Dr. Rashmi Verma',
-      qr_code_token: 'APEX-QR-20261019-B10-SECURE',
-      total_students: 22,
-      present_count: 20,
-      absent_count: 2,
-      checked_in_students: ['student-1', 'student-ext-7']
+      id: 'disp-102',
+      date: '17 Oct 2026',
+      context_type: 'coaching_section',
+      context_id: 'sec-10-a',
+      context_title: 'Stellar Academy • Class 10-A',
+      teacher_id: 'teacher-alok',
+      teacher_name: 'Er. Alok Sharma',
+      student_id: 'student-ext-1',
+      student_name: 'Rahul Sharma',
+      points: 120,
+      category: 'Problem Solving Speed',
+      citation: 'Solved all 5 bonus polynomial challenge questions in under 12 minutes.'
+    },
+    {
+      id: 'disp-103',
+      date: '16 Oct 2026',
+      context_type: 'private_batch',
+      context_id: 'pbatch-10-m',
+      teacher_id: 'teacher-alok',
+      teacher_name: 'Er. Alok Sharma',
+      student_id: 'student-ext-2',
+      student_name: 'Vivek Gupta',
+      points: 80,
+      category: 'Homework Diligence',
+      citation: 'Consistent 18-day study streak with neat homework formatting.'
     }
   ],
 
@@ -569,97 +667,78 @@ window.PARTNER_DATA = {
   syllabus_topics: [
     {
       id: 'syl-1',
-      batch_id: 'batch-10-m',
+      context_id: 'pbatch-10-m',
       subject: 'Mathematics',
       chapter_number: 1,
       chapter_name: 'Real Numbers',
       topic_name: 'Fundamental Theorem of Arithmetic & Proof of Irrationality',
       status: 'covered',
-      revised_students_count: 22,
-      assigned_teacher: 'Er. Alok Sharma'
+      revised_count: 17
     },
     {
       id: 'syl-2',
-      batch_id: 'batch-10-m',
+      context_id: 'pbatch-10-m',
       subject: 'Mathematics',
       chapter_number: 2,
       chapter_name: 'Polynomials',
-      topic_name: 'Geometrical Meaning of Zeroes & Relationship of Coefficients',
+      topic_name: 'Relationship between Zeroes and Coefficients of Quadratic Polynomials',
       status: 'covered',
-      revised_students_count: 20,
-      assigned_teacher: 'Er. Alok Sharma'
+      revised_count: 16
     },
     {
       id: 'syl-3',
-      batch_id: 'batch-10-m',
-      subject: 'Physics',
-      chapter_number: 1,
-      chapter_name: 'Light: Reflection & Refraction',
-      topic_name: 'Spherical Mirrors Ray Diagrams & Lens Formula Derivations',
-      status: 'covered',
-      revised_students_count: 19,
-      assigned_teacher: 'Dr. Meenakshi Soni'
-    },
-    {
-      id: 'syl-4',
-      batch_id: 'batch-10-m',
+      context_id: 'pbatch-10-m',
       subject: 'Mathematics',
       chapter_number: 4,
       chapter_name: 'Quadratic Equations',
-      topic_name: 'Completing Square Method & Quadratic Formula Applications',
+      topic_name: 'Quadratic Formula, Nature of Roots & Word Problems',
       status: 'in_progress',
-      revised_students_count: 14,
-      assigned_teacher: 'Er. Alok Sharma'
+      revised_count: 11
+    },
+    {
+      id: 'syl-4',
+      context_id: 'pbatch-10-m',
+      subject: 'Mathematics',
+      chapter_number: 5,
+      chapter_name: 'Arithmetic Progressions',
+      topic_name: 'nth Term of an AP and Sum of First n Terms',
+      status: 'upcoming',
+      revised_count: 2
     },
     {
       id: 'syl-5',
-      batch_id: 'batch-10-m',
-      subject: 'Physics',
-      chapter_number: 2,
-      chapter_name: 'Electricity & Circuits',
-      topic_name: 'Ohm\'s Law, Resistance in Series/Parallel Combinations',
-      status: 'upcoming',
-      revised_students_count: 4,
-      assigned_teacher: 'Dr. Meenakshi Soni'
+      context_id: 'sec-10-a',
+      subject: 'Mathematics',
+      chapter_number: 1,
+      chapter_name: 'Real Numbers',
+      topic_name: 'Fundamental Theorem of Arithmetic',
+      status: 'covered',
+      revised_count: 26
     },
     {
       id: 'syl-6',
-      batch_id: 'batch-apex-10',
-      subject: 'Chemistry',
+      context_id: 'sec-10-a',
+      subject: 'Physics',
       chapter_number: 1,
-      chapter_name: 'Chemical Reactions and Equations',
-      topic_name: 'Balancing Redox Equations, Types of Reactions & Rancidity',
+      chapter_name: 'Light: Reflection & Refraction',
+      topic_name: 'Spherical Mirrors Ray Diagrams & Lens Formula',
       status: 'covered',
-      revised_students_count: 21,
-      assigned_teacher: 'Dr. Rashmi Verma'
-    },
-    {
-      id: 'syl-7',
-      batch_id: 'batch-apex-10',
-      subject: 'Chemistry',
-      chapter_number: 2,
-      chapter_name: 'Acids, Bases and Salts',
-      topic_name: 'pH Scale Dynamics, Chlor-Alkali Process & Plaster of Paris',
-      status: 'in_progress',
-      revised_students_count: 15,
-      assigned_teacher: 'Dr. Rashmi Verma'
+      revised_count: 24
     }
   ],
 
-  // ─── 7. RECENT TESTS & ASSESSMENTS ─────────────────────────────────────────
+  // ─── 7. TESTS & ASSESSMENTS ────────────────────────────────────────────────
   tests: [
     {
       id: 'test-1',
-      batch_id: 'batch-10-m',
+      context_id: 'pbatch-10-m',
       title: 'Polynomials & Real Numbers Grand Test',
       subject: 'Mathematics',
       max_marks: 50,
       conducted_date: '2026-10-12',
-      conducted_by: 'Er. Alok Sharma',
       class_average: 41.2,
       highest_score: 50,
-      submissions_count: 24,
-      scores: [
+      submissions: [
         { student_id: 'student-ext-1', name: 'Rahul Sharma', marks: 50, rank: 1 },
         { student_id: 'student-ext-2', name: 'Vivek Gupta', marks: 46, rank: 2 },
         { student_id: 'student-1', name: 'Aryan Mehta', marks: 44, rank: 3 },
@@ -668,46 +747,27 @@ window.PARTNER_DATA = {
     },
     {
       id: 'test-2',
-      batch_id: 'batch-10-m',
-      title: 'Light: Reflection & Mirror Equations Quiz',
-      subject: 'Physics',
-      max_marks: 40,
-      conducted_date: '2026-10-05',
-      conducted_by: 'Dr. Meenakshi Soni',
-      class_average: 33.5,
-      highest_score: 40,
-      submissions_count: 23,
-      scores: [
-        { student_id: 'student-ext-1', name: 'Rahul Sharma', marks: 40, rank: 1 },
-        { student_id: 'student-1', name: 'Aryan Mehta', marks: 37, rank: 2 },
-        { student_id: 'student-ext-2', name: 'Vivek Gupta', marks: 36, rank: 3 }
-      ]
-    },
-    {
-      id: 'test-3',
-      batch_id: 'batch-apex-10',
-      title: 'Chemical Reactions & Stoichiometry Test',
-      subject: 'Chemistry',
-      max_marks: 50,
-      conducted_date: '2026-10-14',
-      conducted_by: 'Dr. Rashmi Verma',
-      class_average: 42.0,
-      highest_score: 49,
-      submissions_count: 22,
-      scores: [
-        { student_id: 'student-ext-7', name: 'Ananya Patel', marks: 49, rank: 1 },
-        { student_id: 'student-1', name: 'Aryan Mehta', marks: 45, rank: 2 }
+      context_id: 'sec-10-a',
+      title: 'Class 10-A Term 1 Mathematics Prelims',
+      subject: 'Mathematics',
+      max_marks: 80,
+      conducted_date: '2026-10-10',
+      class_average: 68.4,
+      highest_score: 80,
+      submissions: [
+        { student_id: 'student-ext-1', name: 'Rahul Sharma', marks: 80, rank: 1 },
+        { student_id: 'student-1', name: 'Aryan Mehta', marks: 74, rank: 2 },
+        { student_id: 'student-ext-2', name: 'Vivek Gupta', marks: 72, rank: 3 }
       ]
     }
   ],
 
-  // ─── 8. FEE INVOICES & REVENUE LEDGER ───────────────────────────────────────
+  // ─── 8. FEE INVOICES & LEDGER ──────────────────────────────────────────────
   invoices: [
     {
       id: 'inv-101',
-      invoice_no: 'INV-STLR-101',
-      operator_id: 'op-stellar',
-      batch_id: 'batch-10-m',
+      invoice_no: 'INV-ALOK-101',
+      context_id: 'pbatch-10-m',
       student_id: 'student-1',
       student_name: 'Aryan Mehta',
       parent_phone: '+91 98111 22334',
@@ -716,13 +776,12 @@ window.PARTNER_DATA = {
       status: 'paid',
       paid_date: '2026-10-02',
       payment_mode: 'UPI (GPay)',
-      receipt_ref: 'STLR-REC-9941'
+      receipt_ref: 'ALOK-REC-7712'
     },
     {
       id: 'inv-102',
-      invoice_no: 'INV-STLR-102',
-      operator_id: 'op-stellar',
-      batch_id: 'batch-10-m',
+      invoice_no: 'INV-ALOK-102',
+      context_id: 'pbatch-10-m',
       student_id: 'student-ext-4',
       student_name: 'Rohan Sen',
       parent_phone: '+91 98111 55660',
@@ -735,9 +794,8 @@ window.PARTNER_DATA = {
     },
     {
       id: 'inv-103',
-      invoice_no: 'INV-STLR-103',
-      operator_id: 'op-stellar',
-      batch_id: 'batch-10-m',
+      invoice_no: 'INV-ALOK-103',
+      context_id: 'pbatch-10-m',
       student_id: 'student-ext-6',
       student_name: 'Parth Joshi',
       parent_phone: '+91 98999 88770',
@@ -747,116 +805,6 @@ window.PARTNER_DATA = {
       paid_date: null,
       payment_mode: null,
       receipt_ref: null
-    },
-    {
-      id: 'inv-104',
-      invoice_no: 'INV-APEX-201',
-      operator_id: 'op-apex',
-      batch_id: 'batch-apex-10',
-      student_id: 'student-1',
-      student_name: 'Aryan Mehta',
-      parent_phone: '+91 98111 22334',
-      month: 'October 2026',
-      amount: 1800,
-      status: 'paid',
-      paid_date: '2026-10-04',
-      payment_mode: 'UPI (PhonePe)',
-      receipt_ref: 'APEX-REC-8812'
-    }
-  ],
-
-  // ─── 9. ACADEMIC HONORS & POINTS DISPATCH AUDIT LOG ─────────────────────────
-  points_dispatches: [
-    {
-      id: 'pnt-disp-1',
-      date: '18 Oct 2026',
-      operator_id: 'op-stellar',
-      batch_id: 'batch-10-m',
-      awarded_by: 'Er. Alok Sharma',
-      student_id: 'student-1',
-      student_name: 'Aryan Mehta',
-      points: 150,
-      category: 'Excellence in Mathematics',
-      reason: 'Perfect proof derivation in Quadratic Roots prelim assessment.'
-    },
-    {
-      id: 'pnt-disp-2',
-      date: '17 Oct 2026',
-      operator_id: 'op-stellar',
-      batch_id: 'batch-10-m',
-      awarded_by: 'Dr. Meenakshi Soni',
-      student_id: 'student-ext-1',
-      student_name: 'Rahul Sharma',
-      points: 120,
-      category: 'Physics Mastery',
-      reason: 'Top scorer in Spherical Mirror ray diagram formulation.'
-    },
-    {
-      id: 'pnt-disp-3',
-      date: '16 Oct 2026',
-      operator_id: 'op-stellar',
-      batch_id: 'batch-10-m',
-      awarded_by: 'Prof. Vikramaditya Sen',
-      student_id: 'student-ext-2',
-      student_name: 'Vivek Gupta',
-      points: 80,
-      category: 'Consistent Focus',
-      reason: 'Assisted 3 peers during STEM Lab Lens refraction experiment.'
-    },
-    {
-      id: 'pnt-disp-4',
-      date: '15 Oct 2026',
-      operator_id: 'op-apex',
-      batch_id: 'batch-apex-10',
-      awarded_by: 'Dr. Rashmi Verma',
-      student_id: 'student-1',
-      student_name: 'Aryan Mehta',
-      points: 100,
-      category: 'Chemistry Honors',
-      reason: 'Rapid chemical reaction balancing in oral viva.'
-    }
-  ],
-
-  // ─── 10. ISSUED ACADEMIC MARKSHEETS ────────────────────────────────────────
-  issued_marksheets: [
-    {
-      id: 'doc-1',
-      ref: 'VLR-2026-SA101',
-      operator_id: 'op-stellar',
-      batch_id: 'batch-10-m',
-      student_id: 'student-1',
-      student_name: 'Aryan Mehta',
-      roll: 'SA-101',
-      exam_term: 'Mid-Term Board Assessment 2026',
-      issue_date: '10 Oct 2026',
-      overall_percentage: 91.5,
-      grade: 'A1',
-      status: 'Verified & Signed',
-      director_signature: 'Er. Alok Sharma, B.Tech IIT Delhi',
-      breakdown: [
-        { subject: 'Mathematics Core', marks: 94, max: 100, grade: 'A1' },
-        { subject: 'Physics Theory & Numerical', marks: 89, max: 100, grade: 'A1' },
-        { subject: 'STEM Laboratory Practicals', marks: 95, max: 100, grade: 'A1' }
-      ]
-    },
-    {
-      id: 'doc-2',
-      ref: 'VLR-2026-AC902',
-      operator_id: 'op-apex',
-      batch_id: 'batch-apex-10',
-      student_id: 'student-1',
-      student_name: 'Aryan Mehta',
-      roll: 'AC-101',
-      exam_term: 'Chemistry Semester Prelims 2026',
-      issue_date: '12 Oct 2026',
-      overall_percentage: 90.0,
-      grade: 'A1',
-      status: 'Verified & Signed',
-      director_signature: 'Dr. Rashmi Verma, Ph.D Chemistry',
-      breakdown: [
-        { subject: 'Chemical Reactions & Equations', marks: 46, max: 50, grade: 'A1' },
-        { subject: 'Acids, Bases & Salts', marks: 44, max: 50, grade: 'A1' }
-      ]
     }
   ]
 };
