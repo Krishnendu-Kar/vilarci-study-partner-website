@@ -630,6 +630,193 @@
     </div>
   </div>
 
+  <!-- ─── MODAL: ADD STUDENT TO BATCH & INVITE LINK ─────────────────────── -->
+  <div class="modal-overlay" id="modalAddStudentToBatch">
+    <div class="modal-window" style="max-width:620px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="modalAddStudentTitle">+ Add Student to Batch</h3>
+          <span class="text-xs text-muted" id="modalAddStudentSubtitle">Enrolling into Batch</span>
+        </div>
+        <button type="button" class="modal-close-btn" data-close-modal="modalAddStudentToBatch">&times;</button>
+      </div>
+
+      <!-- Mode Switcher: Invite Link vs Manual Registration -->
+      <div style="padding:12px 22px 0 22px; background:var(--surface-muted); border-bottom:1px solid var(--border);">
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="modal-tab-btn active" id="tabBtnStudentInviteLink" data-student-modal-tab="invite_link">
+            🔗 Batch Invite Link &amp; QR
+          </button>
+          <button type="button" class="modal-tab-btn" id="tabBtnStudentManualAdd" data-student-modal-tab="manual_add">
+            ✍️ Direct Registration Form
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- SECTION 1: BATCH INVITE LINK & QR CODE -->
+        <div id="modalSecInviteLink" class="modal-tab-pane active">
+          <div style="background:var(--primary-light); border:1px solid rgba(128,0,32,0.18); border-radius:var(--radius-md); padding:14px; margin-bottom:18px;">
+            <div style="font-weight:700; color:var(--primary); font-size:13.5px; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+              <span>⚡ Self-Enrollment with Invite Link</span>
+              <span class="badge badge-success" style="font-size:10px;">Automated</span>
+            </div>
+            <p class="text-xs text-muted" style="margin:0; line-height:1.45;">
+              Share this unique batch link with students and parents. When a student opens the link or enters the join code on <strong>Vilarci Study</strong>, they are automatically enrolled into this batch roster.
+            </p>
+          </div>
+
+          <!-- Shareable Link Input with Copy & WhatsApp -->
+          <div class="form-group">
+            <label class="form-label">Batch Shareable Invite Link:</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="inpBatchInviteLink" class="form-input font-mono text-xs" readonly value="https://study.vilarci.in/join?batch=pbatch-10-m&amp;code=VLR-M10-8839">
+              <button type="button" class="btn btn-primary btn-sm" id="btnCopyBatchInviteLink" style="white-space:nowrap;">📋 Copy Link</button>
+              <a href="#" target="_blank" class="btn btn-outline btn-sm" id="btnWhatsappShareBatchLink" style="white-space:nowrap; color:#059669; border-color:#059669; font-weight:700;">💬 WhatsApp</a>
+            </div>
+          </div>
+
+          <!-- Batch Join Code & QR Graphic -->
+          <div style="display:grid; grid-template-columns:1fr 140px; gap:16px; align-items:center; background:var(--surface-muted); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; margin-bottom:18px;">
+            <div>
+              <div style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--text-muted); margin-bottom:4px;">Unique Batch Join Code:</div>
+              <div style="font-family:var(--font-mono); font-size:24px; font-weight:800; color:var(--primary); letter-spacing:2px;" id="dispBatchJoinCode">VLR-M10-8839</div>
+              <p class="text-xs text-muted" style="margin-top:6px; line-height:1.4;">
+                Students can also type this 8-character code in the <em>"Join Classroom Batch"</em> screen on the Vilarci Study portal.
+              </p>
+              <button type="button" class="btn btn-outline btn-sm" id="btnCopyBatchJoinCode" style="margin-top:8px;">📋 Copy Join Code</button>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; text-align:center;">
+              <div style="width:105px; height:105px; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-subtle);">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
+                  <rect x="5" y="5" width="28" height="28" fill="#800020" rx="2"/>
+                  <rect x="9" y="9" width="20" height="20" fill="#ffffff" rx="1"/>
+                  <rect x="13" y="13" width="12" height="12" fill="#800020" rx="1"/>
+                  <rect x="67" y="5" width="28" height="28" fill="#800020" rx="2"/>
+                  <rect x="71" y="9" width="20" height="20" fill="#ffffff" rx="1"/>
+                  <rect x="75" y="13" width="12" height="12" fill="#800020" rx="1"/>
+                  <rect x="5" y="67" width="28" height="28" fill="#800020" rx="2"/>
+                  <rect x="9" y="71" width="20" height="20" fill="#ffffff" rx="1"/>
+                  <rect x="13" y="75" width="12" height="12" fill="#800020" rx="1"/>
+                  <rect x="38" y="12" width="6" height="6" fill="#800020"/>
+                  <rect x="48" y="12" width="6" height="6" fill="#800020"/>
+                  <rect x="38" y="44" width="8" height="8" fill="#D97706"/>
+                  <rect x="52" y="44" width="8" height="8" fill="#800020"/>
+                  <rect x="40" y="62" width="6" height="6" fill="#800020"/>
+                  <rect x="54" y="60" width="8" height="8" fill="#800020"/>
+                  <rect x="42" y="76" width="6" height="6" fill="#800020"/>
+                </svg>
+              </div>
+              <span class="text-xs text-muted" style="font-size:10.5px; margin-top:5px; font-weight:600;">Scan to Join</span>
+            </div>
+          </div>
+
+          <!-- Interactive Simulation Banner -->
+          <div style="border-top:1px dashed var(--border); padding-top:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="font-size:13px;">Test Student Self-Enrollment (Demo Simulation)</strong>
+              <span class="badge badge-success">Interactive Demo</span>
+            </div>
+            <p class="text-xs text-muted" style="margin-bottom:12px;">
+              Click below to simulate what happens when a student receives this link and confirms batch enrollment on their device:
+            </p>
+            <button type="button" class="btn btn-outline" id="btnSimulateStudentJoinLink" style="width:100%; border-color:var(--primary); color:var(--primary); font-weight:700; padding:10px;">
+              ✨ Simulate Student Joining via Invite Link
+            </button>
+          </div>
+        </div>
+
+        <!-- SECTION 2: MANUAL DIRECT REGISTRATION FORM -->
+        <div id="modalSecManualAdd" class="modal-tab-pane" style="display:none;">
+          <form id="formManualAddStudent">
+            <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label class="form-label">Student Full Name:</label>
+                <input type="text" id="inpNewStudentName" class="form-input" placeholder="e.g. Ishita Sengupta" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Roll Number:</label>
+                <input type="text" id="inpNewStudentRoll" class="form-input font-mono font-bold" placeholder="e.g. SA-110" required>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label class="form-label">Class / Grade:</label>
+                <input type="text" id="inpNewStudentGrade" class="form-input" value="Class 10" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Academic Board:</label>
+                <select id="inpNewStudentBoard" class="form-select">
+                  <option value="CBSE">CBSE</option>
+                  <option value="ICSE">ICSE</option>
+                  <option value="State Board">State Board</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="background:var(--surface-muted); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:12px; font-weight:800; text-transform:uppercase; color:var(--text-muted);">
+                  Verified Parent &amp; Guardian Contacts
+                </span>
+                <span class="badge badge-success" style="font-size:9.5px;">OTP Verified System</span>
+              </div>
+
+              <!-- Father's Info -->
+              <div style="margin-bottom:12px;">
+                <label class="form-label" style="font-size:11.5px; margin-bottom:4px;">Father's Name &amp; Verified Mobile:</label>
+                <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px;">
+                  <input type="text" id="inpNewStudentFatherName" class="form-input" placeholder="Father's Name (e.g. Anirban Sengupta)" required>
+                  <input type="tel" id="inpNewStudentFatherPhone" class="form-input" placeholder="+91 98301 22334" required>
+                </div>
+              </div>
+
+              <!-- Mother's Info -->
+              <div style="margin-bottom:12px;">
+                <label class="form-label" style="font-size:11.5px; margin-bottom:4px;">Mother's Name &amp; Verified Mobile:</label>
+                <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px;">
+                  <input type="text" id="inpNewStudentMotherName" class="form-input" placeholder="Mother's Name (e.g. Nandita Sengupta)" required>
+                  <input type="tel" id="inpNewStudentMotherPhone" class="form-input" placeholder="+91 98301 55667" required>
+                </div>
+              </div>
+
+              <!-- Guardian's Info (Optional) -->
+              <div>
+                <label class="form-label" style="font-size:11.5px; margin-bottom:4px;">Guardian's Name &amp; Mobile (Optional):</label>
+                <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:10px;">
+                  <input type="text" id="inpNewStudentGuardianName" class="form-input" placeholder="Guardian's Name (Optional)">
+                  <input type="tel" id="inpNewStudentGuardianPhone" class="form-input" placeholder="+91 ... (Optional)">
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label class="form-label">Initial Tuition Fee Status:</label>
+                <select id="inpNewStudentFeeStatus" class="form-select">
+                  <option value="paid">PAID (Settled for current month)</option>
+                  <option value="pending" selected>PENDING (Invoice to be issued)</option>
+                  <option value="overdue">OVERDUE</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Welcome Academic Points:</label>
+                <input type="number" id="inpNewStudentPoints" class="form-input" value="500" min="0" max="5000">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px; padding:11px;">
+              Enroll Student in Batch ➜
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- ─── MODAL: INVITE TEACHER TO COACHING ──────────────────────────────── -->
   <div class="modal-overlay" id="modalInviteTeacher">
     <div class="modal-window">

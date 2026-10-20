@@ -68,6 +68,9 @@ Whether a teacher enters one of their **own private batches** or a **coaching se
    - Master directory of enrolled students (matching profiles from the Vilarci Study Student Portal: *Aryan Mehta*, *Rahul Sharma*, *Vivek Gupta*, *Tanvi Desai*, etc.).
    - Displays student roll numbers, learning points, study streaks, attendance %, and fee status.
    - Parent / Guardian contact records: **Father's Name & Verified Phone** (with one-click WhatsApp message link), **Mother's Phone**, and **Guardian Phone**.
+   - **`+ Add Student to Batch` Modal & Dual Enrollment Engine**:
+     - **Mechanism A (Automated Invite Link & QR)**: Every batch generates a deterministic unique invite link (`https://study.vilarci.in/join?batch=<batch_id>&code=<code_hash>`) and QR code. Students scanning or clicking join are immediately admitted into the batch with parent verified contacts. Includes an interactive demo simulation runner (`Simulate Student Joining via Invite Link`).
+     - **Mechanism B (Manual Direct Registration)**: Teachers can directly onboard students, auto-suggesting roll numbers (`SA-110`), capturing OTP-verified Father & Mother contacts, initial fee status, and welcoming them with milestone points.
 2. **📋 Daily Attendance & QR Terminal**:
    - **Live Rotating QR Code**: Projected on screen/tablet. Students scan via their mobile portal to claim **+10 learning points**.
    - **Rapid Attendance Roster**: One-click toggles: `Present [P]`, `Late [L]`, `Absent [A]`, plus `✓ Mark All Present`.

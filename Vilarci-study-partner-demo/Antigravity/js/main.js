@@ -1149,6 +1149,275 @@
     if (openInviteBtn) {
       openInviteBtn.onclick = function () { openModal('modalInviteTeacher'); };
     }
+
+    // Add Student to Batch Modal
+    var openAddStudentBtn = document.getElementById('btnOpenAddStudentToBatch');
+    if (openAddStudentBtn) {
+      openAddStudentBtn.onclick = function () {
+        openAddStudentModal();
+      };
+    }
+
+    // Modal Tab Switching inside Add Student Modal
+    document.querySelectorAll('[data-student-modal-tab]').forEach(function (tabBtn) {
+      tabBtn.onclick = function () {
+        var target = this.getAttribute('data-student-modal-tab');
+        document.querySelectorAll('[data-student-modal-tab]').forEach(function (b) { b.classList.remove('active'); });
+        this.classList.add('active');
+
+        var secInvite = document.getElementById('modalSecInviteLink');
+        var secManual = document.getElementById('modalSecManualAdd');
+        if (target === 'invite_link') {
+          if (secInvite) secInvite.style.display = 'block';
+          if (secManual) secManual.style.display = 'none';
+        } else {
+          if (secInvite) secInvite.style.display = 'none';
+          if (secManual) secManual.style.display = 'block';
+        }
+      };
+    });
+
+    // Copy Invite Link
+    var btnCopyLink = document.getElementById('btnCopyBatchInviteLink');
+    if (btnCopyLink) {
+      btnCopyLink.onclick = function () {
+        var inp = document.getElementById('inpBatchInviteLink');
+        if (!inp) return;
+        copyTextToClipboard(inp.value);
+        btnCopyLink.textContent = '✓ Copied!';
+        showToast('Batch invite link copied to clipboard!', 'success');
+        setTimeout(function () { btnCopyLink.textContent = '📋 Copy Link'; }, 2000);
+      };
+    }
+
+    // Copy Join Code
+    var btnCopyCode = document.getElementById('btnCopyBatchJoinCode');
+    if (btnCopyCode) {
+      btnCopyCode.onclick = function () {
+        var disp = document.getElementById('dispBatchJoinCode');
+        if (!disp) return;
+        copyTextToClipboard(disp.textContent.trim());
+        btnCopyCode.textContent = '✓ Copied!';
+        showToast('Batch join code copied to clipboard!', 'success');
+        setTimeout(function () { btnCopyCode.textContent = '📋 Copy Join Code'; }, 2000);
+      };
+    }
+
+    // Simulate Student Joining via Invite Link
+    var btnSimJoin = document.getElementById('btnSimulateStudentJoinLink');
+    if (btnSimJoin) {
+      btnSimJoin.onclick = function () {
+        var deckData = getActiveDeckData();
+        if (!deckData) return;
+
+        var mockJoiners = [
+          { name: 'Ishita Sengupta', father: 'Anirban Sengupta', fPhone: '+91 98301 22334', mother: 'Nandita Sengupta', mPhone: '+91 98301 55667' },
+          { name: 'Devansh Roy', father: 'Subhash Roy', fPhone: '+91 98311 44556', mother: 'Aparna Roy', mPhone: '+91 98311 99887' },
+          { name: 'Pooja Banerjee', father: 'Souvik Banerjee', fPhone: '+91 98322 11223', mother: 'Mousumi Banerjee', mPhone: '+91 98322 33445' },
+          { name: 'Aniket Mukherjee', father: 'Debashis Mukherjee', fPhone: '+91 98303 66778', mother: 'Sharmila Mukherjee', mPhone: '+91 98303 77889' },
+          { name: 'Siddharth Varma', father: 'Harish Varma', fPhone: '+91 98304 88990', mother: 'Geeta Varma', mPhone: '+91 98304 99001' },
+          { name: 'Kavya Nair', father: 'Rajan Nair', fPhone: '+91 98450 11223', mother: 'Lakshmi Nair', mPhone: '+91 98450 33445' }
+        ];
+
+        // Find one not currently in STATE.students
+        var candidate = mockJoiners.find(function (m) {
+          return !(STATE.students || []).some(function (s) { return s.name.toLowerCase() === m.name.toLowerCase(); });
+        });
+
+        if (!candidate) {
+          var randIdx = Math.floor(Math.random() * 900) + 100;
+          candidate = {
+            name: 'New Scholar #' + randIdx,
+            father: 'Guardian ' + randIdx,
+            fPhone: '+91 98399 ' + randIdx + '11',
+            mother: 'Parent ' + randIdx,
+            mPhone: '+91 98399 ' + randIdx + '22'
+          };
+        }
+
+        var maxRollNum = 100;
+        (STATE.students || []).forEach(function (s) {
+          if (s.roll) {
+            var match = s.roll.match(/\d+/);
+            if (match) {
+              var num = parseInt(match[0], 10);
+              if (num > maxRollNum) maxRollNum = num;
+            }
+          }
+        });
+        var newRoll = 'SA-' + (maxRollNum + 1);
+
+        var newStudentId = 'student-link-' + Date.now();
+        var initials = candidate.name.split(' ').map(function (w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
+        var avatarColors = ['#800020', '#D97706', '#059669', '#0284C7', '#7C3AED', '#DC2626'];
+        var randomBg = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+
+        var newStudentObj = {
+          id: newStudentId,
+          name: candidate.name,
+          roll: newRoll,
+          grade: deckData.rawObj.grade || deckData.rawObj.class_name || 'Class 10',
+          board: deckData.rawObj.board || 'CBSE',
+          phone: candidate.fPhone,
+          father_name: candidate.father,
+          father_phone: candidate.fPhone,
+          father_phone_verified: true,
+          mother_name: candidate.mother,
+          mother_phone: candidate.mPhone,
+          mother_phone_verified: true,
+          guardian_name: '—',
+          guardian_phone: '',
+          guardian_phone_verified: false,
+          points: 500,
+          streak: 1,
+          attendance_rate: 100.0,
+          fee_status: 'paid',
+          avatar_initials: initials,
+          avatar_bg: randomBg
+        };
+
+        STATE.students.push(newStudentObj);
+
+        // Enroll into current batch/section
+        if (activeDeckContext.type === 'private_batch') {
+          var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === activeDeckContext.id; });
+          if (pbatch) {
+            if (!pbatch.student_ids) pbatch.student_ids = [];
+            pbatch.student_ids.unshift(newStudentId);
+            pbatch.enrolled_count = pbatch.student_ids.length;
+          }
+        } else {
+          var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeDeckContext.parentCoachingId; });
+          if (inst) {
+            var sec = (inst.classes_sections || []).find(function (s) { return s.id === activeDeckContext.id; });
+            if (sec) {
+              if (!sec.student_ids) sec.student_ids = [];
+              sec.student_ids.unshift(newStudentId);
+              sec.enrolled_count = sec.student_ids.length;
+            }
+          }
+        }
+
+        saveState();
+        closeModal('modalAddStudentToBatch');
+
+        // Refresh deck view immediately
+        var updatedDeck = getActiveDeckData();
+        var countEl = document.getElementById('deckStudentCountPill');
+        if (countEl) countEl.textContent = updatedDeck.studentIds.length;
+        renderDeckStudentsRoster(updatedDeck);
+        renderDeckAttendance(updatedDeck);
+        renderDeckPoints(updatedDeck);
+        renderDeckFees(updatedDeck);
+
+        showToast('🎉 ' + candidate.name + ' (' + newRoll + ') joined ' + deckData.title + ' via Invite Link!', 'success');
+      };
+    }
+  }
+
+  function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () {});
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+
+  function openAddStudentModal() {
+    var deckData = getActiveDeckData();
+    if (!deckData) return;
+
+    // Header Title & Subtitle
+    var titleEl = document.getElementById('modalAddStudentTitle');
+    if (titleEl) titleEl.textContent = '+ Add Student to ' + deckData.title;
+
+    var subEl = document.getElementById('modalAddStudentSubtitle');
+    if (subEl) subEl.textContent = 'Enrolling into ' + deckData.gradeText;
+
+    // Derive or retrieve stable Join Code
+    var joinCode = '';
+    if (deckData.isPrivate) {
+      var pbatch = deckData.rawObj;
+      if (!pbatch.join_code) {
+        var gradeInitial = (pbatch.grade || 'C10').replace(/[^0-9]/g, '') || '10';
+        pbatch.join_code = 'VLR-M' + gradeInitial + '-' + (Math.floor(1000 + Math.random() * 9000));
+        saveState();
+      }
+      joinCode = pbatch.join_code;
+    } else {
+      var sec = deckData.rawObj;
+      var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeDeckContext.parentCoachingId; });
+      var instCode = inst ? (inst.code || 'COACH') : 'COACH';
+      joinCode = instCode + '-' + (sec.section_name || sec.class_name || 'SEC').replace(/[^a-zA-Z0-9]/g, '').slice(-3).toUpperCase();
+    }
+
+    var dispCodeEl = document.getElementById('dispBatchJoinCode');
+    if (dispCodeEl) dispCodeEl.textContent = joinCode;
+
+    // Shareable Link
+    var inviteLink = 'https://study.vilarci.in/join?batch=' + encodeURIComponent(activeDeckContext.id) + '&code=' + encodeURIComponent(joinCode);
+    var inpLink = document.getElementById('inpBatchInviteLink');
+    if (inpLink) inpLink.value = inviteLink;
+
+    // WhatsApp Share Link
+    var waBtn = document.getElementById('btnWhatsappShareBatchLink');
+    if (waBtn) {
+      var waText = '🎓 *Invitation to join ' + deckData.title + '* on Vilarci Study!\n\n' +
+                   '👉 Tap this link to enroll directly:\n' + inviteLink + '\n\n' +
+                   '🔑 Batch Join Code: *' + joinCode + '*';
+      waBtn.href = 'https://wa.me/?text=' + encodeURIComponent(waText);
+    }
+
+    // Auto-suggest next roll number (SA-XXX)
+    var maxRollNum = 100;
+    (STATE.students || []).forEach(function (s) {
+      if (s.roll) {
+        var match = s.roll.match(/\d+/);
+        if (match) {
+          var num = parseInt(match[0], 10);
+          if (num > maxRollNum) maxRollNum = num;
+        }
+      }
+    });
+    var nextRoll = 'SA-' + (maxRollNum + 1);
+    var rollInput = document.getElementById('inpNewStudentRoll');
+    if (rollInput) rollInput.value = nextRoll;
+
+    var gradeInput = document.getElementById('inpNewStudentGrade');
+    if (gradeInput) gradeInput.value = deckData.rawObj.grade || deckData.rawObj.class_name || 'Class 10';
+
+    var boardSelect = document.getElementById('inpNewStudentBoard');
+    if (boardSelect) {
+      var bVal = (deckData.rawObj.board || 'CBSE').includes('ICSE') ? 'ICSE' : 'CBSE';
+      boardSelect.value = bVal;
+    }
+
+    // Reset manual registration inputs
+    var nameInput = document.getElementById('inpNewStudentName');
+    if (nameInput) nameInput.value = '';
+    var fName = document.getElementById('inpNewStudentFatherName');
+    if (fName) fName.value = '';
+    var fPhone = document.getElementById('inpNewStudentFatherPhone');
+    if (fPhone) fPhone.value = '';
+    var mName = document.getElementById('inpNewStudentMotherName');
+    if (mName) mName.value = '';
+    var mPhone = document.getElementById('inpNewStudentMotherPhone');
+    if (mPhone) mPhone.value = '';
+    var gName = document.getElementById('inpNewStudentGuardianName');
+    if (gName) gName.value = '';
+    var gPhone = document.getElementById('inpNewStudentGuardianPhone');
+    if (gPhone) gPhone.value = '';
+
+    // Switch to Invite Link tab by default
+    var tabInvite = document.getElementById('tabBtnStudentInviteLink');
+    if (tabInvite) tabInvite.click();
+
+    openModal('modalAddStudentToBatch');
   }
 
   function openModal(id) {
@@ -1307,6 +1576,95 @@
         formInviteTeacher.reset();
         renderCoachingMembers(inst);
         showToast('Invited ' + teacherName + ' to ' + inst.name + ' as ' + role, 'success');
+      };
+    }
+
+    // 4. Manual Direct Add Student to Current Batch Form
+    var formManualAdd = document.getElementById('formManualAddStudent');
+    if (formManualAdd) {
+      formManualAdd.onsubmit = function (e) {
+        e.preventDefault();
+        var deckData = getActiveDeckData();
+        if (!deckData) return;
+
+        var name = document.getElementById('inpNewStudentName').value.trim();
+        var roll = document.getElementById('inpNewStudentRoll').value.trim();
+        var grade = document.getElementById('inpNewStudentGrade').value.trim();
+        var board = document.getElementById('inpNewStudentBoard').value;
+        var fName = document.getElementById('inpNewStudentFatherName').value.trim();
+        var fPhone = document.getElementById('inpNewStudentFatherPhone').value.trim();
+        var mName = document.getElementById('inpNewStudentMotherName').value.trim();
+        var mPhone = document.getElementById('inpNewStudentMotherPhone').value.trim();
+        var gName = document.getElementById('inpNewStudentGuardianName').value.trim() || '—';
+        var gPhone = document.getElementById('inpNewStudentGuardianPhone').value.trim() || '';
+        var feeStatus = document.getElementById('inpNewStudentFeeStatus').value;
+        var points = parseInt(document.getElementById('inpNewStudentPoints').value, 10) || 500;
+
+        var studentId = 'student-manual-' + Date.now();
+        var initials = name.split(' ').map(function (w) { return w[0]; }).join('').substring(0, 2).toUpperCase();
+        var avatarColors = ['#800020', '#D97706', '#059669', '#0284C7', '#7C3AED', '#DC2626'];
+        var randomBg = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+
+        var newStudent = {
+          id: studentId,
+          name: name,
+          roll: roll,
+          grade: grade,
+          board: board,
+          phone: fPhone,
+          father_name: fName,
+          father_phone: fPhone,
+          father_phone_verified: true,
+          mother_name: mName,
+          mother_phone: mPhone,
+          mother_phone_verified: true,
+          guardian_name: gName,
+          guardian_phone: gPhone,
+          guardian_phone_verified: !!gPhone,
+          points: points,
+          streak: 1,
+          attendance_rate: 100.0,
+          fee_status: feeStatus,
+          avatar_initials: initials,
+          avatar_bg: randomBg
+        };
+
+        STATE.students.push(newStudent);
+
+        // Add to active batch / coaching section
+        if (activeDeckContext.type === 'private_batch') {
+          var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === activeDeckContext.id; });
+          if (pbatch) {
+            if (!pbatch.student_ids) pbatch.student_ids = [];
+            pbatch.student_ids.unshift(studentId);
+            pbatch.enrolled_count = pbatch.student_ids.length;
+          }
+        } else {
+          var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeDeckContext.parentCoachingId; });
+          if (inst) {
+            var sec = (inst.classes_sections || []).find(function (s) { return s.id === activeDeckContext.id; });
+            if (sec) {
+              if (!sec.student_ids) sec.student_ids = [];
+              sec.student_ids.unshift(studentId);
+              sec.enrolled_count = sec.student_ids.length;
+            }
+          }
+        }
+
+        saveState();
+        closeModal('modalAddStudentToBatch');
+        formManualAdd.reset();
+
+        // Refresh batch deck views
+        var updatedDeck = getActiveDeckData();
+        var countEl = document.getElementById('deckStudentCountPill');
+        if (countEl) countEl.textContent = updatedDeck.studentIds.length;
+        renderDeckStudentsRoster(updatedDeck);
+        renderDeckAttendance(updatedDeck);
+        renderDeckPoints(updatedDeck);
+        renderDeckFees(updatedDeck);
+
+        showToast('🎉 Enrolled ' + name + ' (' + roll + ') in ' + deckData.title + '!', 'success');
       };
     }
   }
