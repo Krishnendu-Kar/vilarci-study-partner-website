@@ -90,6 +90,15 @@ window.TEACHER_PORTAL_DATA = {
       subject: 'Mathematics',
       room: 'Orbit Home Studio A',
       schedule: 'Mon, Wed, Fri • 07:30 AM – 09:00 AM',
+      weekly_schedule: {
+        "fri": "07:30 AM - 09:00 AM",
+        "mon": "07:30 AM - 09:00 AM",
+        "sat": "Closed",
+        "sun": "Closed",
+        "thu": "Closed",
+        "tue": "Closed",
+        "wed": "07:30 AM - 09:00 AM"
+      },
       monthly_fee: 2500,
       capacity: 20,
       enrolled_count: 18,
@@ -105,6 +114,15 @@ window.TEACHER_PORTAL_DATA = {
       subject: 'Mathematics',
       room: 'Orbit Home Studio B',
       schedule: 'Tue, Thu, Sat • 05:00 PM – 06:30 PM',
+      weekly_schedule: {
+        "fri": "Closed",
+        "mon": "Closed",
+        "sat": "05:00 PM - 06:30 PM",
+        "sun": "Closed",
+        "thu": "05:00 PM - 06:30 PM",
+        "tue": "05:00 PM - 06:30 PM",
+        "wed": "Closed"
+      },
       monthly_fee: 2500,
       capacity: 25,
       enrolled_count: 15,
@@ -120,6 +138,15 @@ window.TEACHER_PORTAL_DATA = {
       subject: 'Olympiad Mathematics',
       room: 'Orbit Home Studio A',
       schedule: 'Sun • 09:00 AM – 11:30 AM',
+      weekly_schedule: {
+        "fri": "Closed",
+        "mon": "Closed",
+        "sat": "Closed",
+        "sun": "09:00 AM - 11:30 AM",
+        "thu": "Closed",
+        "tue": "Closed",
+        "wed": "Closed"
+      },
       monthly_fee: 1800,
       capacity: 15,
       enrolled_count: 12,
@@ -135,6 +162,15 @@ window.TEACHER_PORTAL_DATA = {
       subject: 'Mathematics & Calculus',
       room: 'Senior Seminar Room',
       schedule: 'Daily • 06:00 PM – 07:30 PM',
+      weekly_schedule: {
+        "fri": "06:00 PM - 07:30 PM",
+        "mon": "06:00 PM - 07:30 PM",
+        "sat": "06:00 PM - 07:30 PM",
+        "sun": "Closed",
+        "thu": "06:00 PM - 07:30 PM",
+        "tue": "06:00 PM - 07:30 PM",
+        "wed": "06:00 PM - 07:30 PM"
+      },
       monthly_fee: 3500,
       capacity: 30,
       enrolled_count: 22,
@@ -150,6 +186,15 @@ window.TEACHER_PORTAL_DATA = {
       subject: 'Mathematics',
       room: 'Senior Seminar Room',
       schedule: 'Mon, Wed, Fri • 04:00 PM – 05:30 PM',
+      weekly_schedule: {
+        "fri": "04:00 PM - 05:30 PM",
+        "mon": "04:00 PM - 05:30 PM",
+        "sat": "Closed",
+        "sun": "Closed",
+        "thu": "Closed",
+        "tue": "Closed",
+        "wed": "04:00 PM - 05:30 PM"
+      },
       monthly_fee: 3000,
       capacity: 20,
       enrolled_count: 16,
@@ -165,6 +210,15 @@ window.TEACHER_PORTAL_DATA = {
       subject: 'Foundation Maths',
       room: 'Junior Discovery Room',
       schedule: 'Sat & Sun • 11:00 AM – 12:30 PM',
+      weekly_schedule: {
+        "fri": "Closed",
+        "mon": "Closed",
+        "sat": "11:00 AM - 12:30 PM",
+        "sun": "11:00 AM - 12:30 PM",
+        "thu": "Closed",
+        "tue": "Closed",
+        "wed": "Closed"
+      },
       monthly_fee: 2000,
       capacity: 20,
       enrolled_count: 14,
@@ -406,6 +460,17 @@ window.TEACHER_PORTAL_DATA = {
       streak: 14,
       attendance_rate: 95.5,
       fee_status: 'paid',
+      custom_monthly_fee: 2500,
+      admission_start_month: '2026-06',
+      course_end_month: '2027-03',
+      fee_ledger: {
+        '2026-06': { status: 'paid', amount: 2500, paid_date: '04 Jun 2026', payment_mode: 'UPI (Google Pay)', receipt_ref: 'REC-2606-01' },
+        '2026-07': { status: 'paid', amount: 2500, paid_date: '03 Jul 2026', payment_mode: 'UPI (Google Pay)', receipt_ref: 'REC-2607-01' },
+        '2026-08': { status: 'paid', amount: 2500, paid_date: '05 Aug 2026', payment_mode: 'Cash', receipt_ref: 'REC-2608-01' },
+        '2026-09': { status: 'paid', amount: 2500, paid_date: '02 Sep 2026', payment_mode: 'UPI (Google Pay)', receipt_ref: 'REC-2609-01' },
+        '2026-10': { status: 'paid', amount: 2500, paid_date: '02 Oct 2026', payment_mode: 'UPI (Google Pay)', receipt_ref: 'REC-2610-01' },
+        '2026-11': { status: 'pending', amount: 2500, paid_date: null, payment_mode: null, receipt_ref: null }
+      },
       avatar_initials: 'AM',
       avatar_bg: 'linear-gradient(135deg, #800020, #B45309)'
     },
@@ -429,6 +494,17 @@ window.TEACHER_PORTAL_DATA = {
       streak: 22,
       attendance_rate: 98.0,
       fee_status: 'paid',
+      custom_monthly_fee: 2500,
+      admission_start_month: '2026-06',
+      course_end_month: '2027-03',
+      fee_ledger: {
+        '2026-06': { status: 'paid', amount: 2500, paid_date: '02 Jun 2026', payment_mode: 'UPI (PhonePe)', receipt_ref: 'REC-2606-04' },
+        '2026-07': { status: 'paid', amount: 2500, paid_date: '01 Jul 2026', payment_mode: 'UPI (PhonePe)', receipt_ref: 'REC-2607-04' },
+        '2026-08': { status: 'paid', amount: 2500, paid_date: '02 Aug 2026', payment_mode: 'UPI (PhonePe)', receipt_ref: 'REC-2608-04' },
+        '2026-09': { status: 'paid', amount: 2500, paid_date: '01 Sep 2026', payment_mode: 'Cash', receipt_ref: 'REC-2609-04' },
+        '2026-10': { status: 'paid', amount: 2500, paid_date: '04 Oct 2026', payment_mode: 'Cash', receipt_ref: 'REC-2610-04' },
+        '2026-11': { status: 'pending', amount: 2500, paid_date: null, payment_mode: null, receipt_ref: null }
+      },
       avatar_initials: 'RS',
       avatar_bg: 'linear-gradient(135deg, #D97706, #B45309)'
     },
@@ -452,6 +528,17 @@ window.TEACHER_PORTAL_DATA = {
       streak: 18,
       attendance_rate: 94.0,
       fee_status: 'paid',
+      custom_monthly_fee: 2200,
+      admission_start_month: '2026-06',
+      course_end_month: '2027-03',
+      fee_ledger: {
+        '2026-06': { status: 'paid', amount: 2200, paid_date: '05 Jun 2026', payment_mode: 'UPI (Paytm)', receipt_ref: 'REC-2606-05' },
+        '2026-07': { status: 'paid', amount: 2200, paid_date: '05 Jul 2026', payment_mode: 'UPI (Paytm)', receipt_ref: 'REC-2607-05' },
+        '2026-08': { status: 'paid', amount: 2200, paid_date: '06 Aug 2026', payment_mode: 'UPI (Paytm)', receipt_ref: 'REC-2608-05' },
+        '2026-09': { status: 'paid', amount: 2200, paid_date: '04 Sep 2026', payment_mode: 'UPI (Paytm)', receipt_ref: 'REC-2609-05' },
+        '2026-10': { status: 'paid', amount: 2200, paid_date: '06 Oct 2026', payment_mode: 'UPI (Paytm)', receipt_ref: 'REC-2610-05' },
+        '2026-11': { status: 'pending', amount: 2200, paid_date: null, payment_mode: null, receipt_ref: null }
+      },
       avatar_initials: 'VG',
       avatar_bg: 'linear-gradient(135deg, #0284C7, #0369A1)'
     },
@@ -475,6 +562,16 @@ window.TEACHER_PORTAL_DATA = {
       streak: 11,
       attendance_rate: 92.5,
       fee_status: 'paid',
+      custom_monthly_fee: 2000,
+      admission_start_month: '2026-07',
+      course_end_month: '2027-03',
+      fee_ledger: {
+        '2026-07': { status: 'paid', amount: 2000, paid_date: '08 Jul 2026', payment_mode: 'Net Banking', receipt_ref: 'REC-2607-06' },
+        '2026-08': { status: 'paid', amount: 2000, paid_date: '05 Aug 2026', payment_mode: 'Net Banking', receipt_ref: 'REC-2608-06' },
+        '2026-09': { status: 'paid', amount: 2000, paid_date: '05 Sep 2026', payment_mode: 'Net Banking', receipt_ref: 'REC-2609-06' },
+        '2026-10': { status: 'paid', amount: 2000, paid_date: '05 Oct 2026', payment_mode: 'Net Banking', receipt_ref: 'REC-2610-06' },
+        '2026-11': { status: 'pending', amount: 2000, paid_date: null, payment_mode: null, receipt_ref: null }
+      },
       avatar_initials: 'TD',
       avatar_bg: 'linear-gradient(135deg, #059669, #047857)'
     },
@@ -498,6 +595,15 @@ window.TEACHER_PORTAL_DATA = {
       streak: 9,
       attendance_rate: 89.0,
       fee_status: 'pending',
+      custom_monthly_fee: 2500,
+      admission_start_month: '2026-08',
+      course_end_month: '2027-03',
+      fee_ledger: {
+        '2026-08': { status: 'paid', amount: 2500, paid_date: '12 Aug 2026', payment_mode: 'UPI (GPay)', receipt_ref: 'REC-2608-07' },
+        '2026-09': { status: 'paid', amount: 2500, paid_date: '10 Sep 2026', payment_mode: 'UPI (GPay)', receipt_ref: 'REC-2609-07' },
+        '2026-10': { status: 'pending', amount: 2500, paid_date: null, payment_mode: null, receipt_ref: null },
+        '2026-11': { status: 'pending', amount: 2500, paid_date: null, payment_mode: null, receipt_ref: null }
+      },
       avatar_initials: 'RS',
       avatar_bg: 'linear-gradient(135deg, #7C3AED, #6D28D9)'
     },
@@ -521,6 +627,15 @@ window.TEACHER_PORTAL_DATA = {
       streak: 7,
       attendance_rate: 91.0,
       fee_status: 'paid',
+      custom_monthly_fee: 2400,
+      admission_start_month: '2026-08',
+      course_end_month: '2027-03',
+      fee_ledger: {
+        '2026-08': { status: 'paid', amount: 2400, paid_date: '09 Aug 2026', payment_mode: 'UPI (PhonePe)', receipt_ref: 'REC-2608-08' },
+        '2026-09': { status: 'paid', amount: 2400, paid_date: '08 Sep 2026', payment_mode: 'UPI (PhonePe)', receipt_ref: 'REC-2609-08' },
+        '2026-10': { status: 'paid', amount: 2400, paid_date: '08 Oct 2026', payment_mode: 'UPI (PhonePe)', receipt_ref: 'REC-2610-08' },
+        '2026-11': { status: 'pending', amount: 2400, paid_date: null, payment_mode: null, receipt_ref: null }
+      },
       avatar_initials: 'AR',
       avatar_bg: 'linear-gradient(135deg, #DC2626, #B91C1C)'
     },
@@ -543,7 +658,15 @@ window.TEACHER_PORTAL_DATA = {
       points: 1050,
       streak: 5,
       attendance_rate: 86.5,
-      fee_status: 'overdue',
+      fee_status: 'pending',
+      custom_monthly_fee: 2500,
+      admission_start_month: '2026-09',
+      course_end_month: '2027-03',
+      fee_ledger: {
+        '2026-09': { status: 'paid', amount: 2500, paid_date: '14 Sep 2026', payment_mode: 'Cash', receipt_ref: 'REC-2609-09' },
+        '2026-10': { status: 'pending', amount: 2500, paid_date: null, payment_mode: null, receipt_ref: null },
+        '2026-11': { status: 'pending', amount: 2500, paid_date: null, payment_mode: null, receipt_ref: null }
+      },
       avatar_initials: 'PJ',
       avatar_bg: 'linear-gradient(135deg, #475569, #334155)'
     },
@@ -663,7 +786,7 @@ window.TEACHER_PORTAL_DATA = {
     }
   ],
 
-  // ─── 6. SYLLABUS TOPICS MANAGER ────────────────────────────────────────────
+  // ─── 6. SYLLABUS TOPICS MANAGER (Planned Target vs Reality) ───────────────
   syllabus_topics: [
     {
       id: 'syl-1',
@@ -672,6 +795,10 @@ window.TEACHER_PORTAL_DATA = {
       chapter_number: 1,
       chapter_name: 'Real Numbers',
       topic_name: 'Fundamental Theorem of Arithmetic & Proof of Irrationality',
+      planned_target_date: '2026-07-15',
+      actual_completion_date: '2026-07-15',
+      variance_status: 'on_schedule',
+      variance_text: '🟢 On Schedule (Completed on Target)',
       status: 'covered',
       revised_count: 17
     },
@@ -682,6 +809,10 @@ window.TEACHER_PORTAL_DATA = {
       chapter_number: 2,
       chapter_name: 'Polynomials',
       topic_name: 'Relationship between Zeroes and Coefficients of Quadratic Polynomials',
+      planned_target_date: '2026-08-10',
+      actual_completion_date: '2026-08-17',
+      variance_status: 'delayed',
+      variance_text: '🔴 Completed 7 Days Delayed',
       status: 'covered',
       revised_count: 16
     },
@@ -692,8 +823,12 @@ window.TEACHER_PORTAL_DATA = {
       chapter_number: 4,
       chapter_name: 'Quadratic Equations',
       topic_name: 'Quadratic Formula, Nature of Roots & Word Problems',
-      status: 'in_progress',
-      revised_count: 11
+      planned_target_date: '2026-09-25',
+      actual_completion_date: '2026-10-04',
+      variance_status: 'delayed',
+      variance_text: '🔴 Completed 9 Days Delayed',
+      status: 'covered',
+      revised_count: 14
     },
     {
       id: 'syl-4',
@@ -702,51 +837,124 @@ window.TEACHER_PORTAL_DATA = {
       chapter_number: 5,
       chapter_name: 'Arithmetic Progressions',
       topic_name: 'nth Term of an AP and Sum of First n Terms',
-      status: 'upcoming',
-      revised_count: 2
+      planned_target_date: '2026-10-25',
+      actual_completion_date: null,
+      variance_status: 'in_progress',
+      variance_text: '🟡 In Progress (Target: 25 Oct)',
+      status: 'in_progress',
+      revised_count: 8
     },
     {
       id: 'syl-5',
+      context_id: 'pbatch-10-m',
+      subject: 'Mathematics',
+      chapter_number: 6,
+      chapter_name: 'Triangles & Similarity',
+      topic_name: 'Basic Proportionality Theorem (Thales) & Criterion for Similarity',
+      planned_target_date: '2026-11-20',
+      actual_completion_date: null,
+      variance_status: 'upcoming',
+      variance_text: '⚪ Upcoming (Target: 20 Nov)',
+      status: 'upcoming',
+      revised_count: 0
+    },
+    {
+      id: 'syl-6',
       context_id: 'sec-10-a',
       subject: 'Mathematics',
       chapter_number: 1,
       chapter_name: 'Real Numbers',
       topic_name: 'Fundamental Theorem of Arithmetic',
+      planned_target_date: '2026-07-20',
+      actual_completion_date: '2026-07-20',
+      variance_status: 'on_schedule',
+      variance_text: '🟢 On Schedule',
       status: 'covered',
       revised_count: 26
     },
     {
-      id: 'syl-6',
+      id: 'syl-7',
       context_id: 'sec-10-a',
       subject: 'Physics',
       chapter_number: 1,
       chapter_name: 'Light: Reflection & Refraction',
       topic_name: 'Spherical Mirrors Ray Diagrams & Lens Formula',
+      planned_target_date: '2026-08-15',
+      actual_completion_date: '2026-08-20',
+      variance_status: 'delayed',
+      variance_text: '🔴 5 Days Delayed',
       status: 'covered',
       revised_count: 24
     }
   ],
 
-  // ─── 7. TESTS & ASSESSMENTS ────────────────────────────────────────────────
+  // ─── 7. TESTS & ASSESSMENTS (Multiple Tests with Complete Student Scorecards) ─
   tests: [
     {
       id: 'test-1',
       context_id: 'pbatch-10-m',
-      title: 'Polynomials & Real Numbers Grand Test',
+      title: 'Polynomials & Real Numbers Comprehensive Exam',
       subject: 'Mathematics',
       max_marks: 50,
-      conducted_date: '2026-10-12',
-      class_average: 41.2,
+      conducted_date: '2026-08-22',
+      class_average: 41.8,
       highest_score: 50,
+      lowest_score: 34,
+      pass_rate: 100,
       submissions: [
-        { student_id: 'student-ext-1', name: 'Rahul Sharma', marks: 50, rank: 1 },
-        { student_id: 'student-ext-2', name: 'Vivek Gupta', marks: 46, rank: 2 },
-        { student_id: 'student-1', name: 'Aryan Mehta', marks: 44, rank: 3 },
-        { student_id: 'student-ext-3', name: 'Tanvi Desai', marks: 42, rank: 4 }
+        { student_id: 'student-ext-1', name: 'Rahul Sharma', roll: 'SA-104', marks: 50, rank: 1, status: 'present', weak_topics: 'None (Flawless)' },
+        { student_id: 'student-ext-2', name: 'Vivek Gupta', roll: 'SA-105', marks: 46, rank: 2, status: 'present', weak_topics: 'Irrational proofs algebraic phrasing' },
+        { student_id: 'student-1', name: 'Aryan Mehta', roll: 'SA-101', marks: 44, rank: 3, status: 'present', weak_topics: 'Discriminant coefficient roots' },
+        { student_id: 'student-ext-3', name: 'Tanvi Desai', roll: 'SA-106', marks: 42, rank: 4, status: 'present', weak_topics: 'Zeroes relation signs' },
+        { student_id: 'student-ext-5', name: 'Aditi Rao', roll: 'SA-108', marks: 40, rank: 5, status: 'present', weak_topics: 'Euclid division lemma remainder' },
+        { student_id: 'student-ext-4', name: 'Rohan Sen', roll: 'SA-107', marks: 38, rank: 6, status: 'present', weak_topics: 'Factorization speed' },
+        { student_id: 'student-ext-6', name: 'Parth Joshi', roll: 'SA-109', marks: 34, rank: 7, status: 'present', weak_topics: 'Fundamental theorem of arithmetic' }
       ]
     },
     {
       id: 'test-2',
+      context_id: 'pbatch-10-m',
+      title: 'Quadratic Equations & Discriminant Mastery Test',
+      subject: 'Mathematics',
+      max_marks: 40,
+      conducted_date: '2026-09-28',
+      class_average: 35.1,
+      highest_score: 40,
+      lowest_score: 28,
+      pass_rate: 100,
+      submissions: [
+        { student_id: 'student-ext-1', name: 'Rahul Sharma', roll: 'SA-104', marks: 40, rank: 1, status: 'present', weak_topics: 'Mastered' },
+        { student_id: 'student-1', name: 'Aryan Mehta', roll: 'SA-101', marks: 38, rank: 2, status: 'present', weak_topics: 'Time taken in speed speed' },
+        { student_id: 'student-ext-2', name: 'Vivek Gupta', roll: 'SA-105', marks: 36, rank: 3, status: 'present', weak_topics: 'Completing square sign error' },
+        { student_id: 'student-ext-3', name: 'Tanvi Desai', roll: 'SA-106', marks: 35, rank: 4, status: 'present', weak_topics: 'Roots conditions when b^2-4ac = 0' },
+        { student_id: 'student-ext-5', name: 'Aditi Rao', roll: 'SA-108', marks: 34, rank: 5, status: 'present', weak_topics: 'Word problem translation' },
+        { student_id: 'student-ext-4', name: 'Rohan Sen', roll: 'SA-107', marks: 30, rank: 6, status: 'present', weak_topics: 'Quadratic formula fractions' },
+        { student_id: 'student-ext-6', name: 'Parth Joshi', roll: 'SA-109', marks: 28, rank: 7, status: 'present', weak_topics: 'Nature of roots case 2' }
+      ]
+    },
+    {
+      id: 'test-3',
+      context_id: 'pbatch-10-m',
+      title: 'Arithmetic Progressions Diagnostic Quiz',
+      subject: 'Mathematics',
+      max_marks: 25,
+      conducted_date: '2026-10-16',
+      class_average: 21.6,
+      highest_score: 25,
+      lowest_score: 17,
+      pass_rate: 100,
+      submissions: [
+        { student_id: 'student-ext-1', name: 'Rahul Sharma', roll: 'SA-104', marks: 25, rank: 1, status: 'present', weak_topics: 'Perfect' },
+        { student_id: 'student-1', name: 'Aryan Mehta', roll: 'SA-101', marks: 24, rank: 2, status: 'present', weak_topics: 'Sum of n terms calculation' },
+        { student_id: 'student-ext-2', name: 'Vivek Gupta', roll: 'SA-105', marks: 23, rank: 3, status: 'present', weak_topics: 'AP negative common difference' },
+        { student_id: 'student-ext-3', name: 'Tanvi Desai', roll: 'SA-106', marks: 22, rank: 4, status: 'present', weak_topics: 'First term finding from T5 & T9' },
+        { student_id: 'student-ext-5', name: 'Aditi Rao', roll: 'SA-108', marks: 21, rank: 5, status: 'present', weak_topics: 'AP application word problem' },
+        { student_id: 'student-ext-4', name: 'Rohan Sen', roll: 'SA-107', marks: 19, rank: 6, status: 'present', weak_topics: 'Formula memory nth term' },
+        { student_id: 'student-ext-6', name: 'Parth Joshi', roll: 'SA-109', marks: 17, rank: 7, status: 'present', weak_topics: 'Common difference identification' }
+      ]
+    },
+    {
+      id: 'test-4',
       context_id: 'sec-10-a',
       title: 'Class 10-A Term 1 Mathematics Prelims',
       subject: 'Mathematics',
@@ -754,10 +962,12 @@ window.TEACHER_PORTAL_DATA = {
       conducted_date: '2026-10-10',
       class_average: 68.4,
       highest_score: 80,
+      lowest_score: 52,
+      pass_rate: 96,
       submissions: [
-        { student_id: 'student-ext-1', name: 'Rahul Sharma', marks: 80, rank: 1 },
-        { student_id: 'student-1', name: 'Aryan Mehta', marks: 74, rank: 2 },
-        { student_id: 'student-ext-2', name: 'Vivek Gupta', marks: 72, rank: 3 }
+        { student_id: 'student-ext-1', name: 'Rahul Sharma', roll: 'SA-104', marks: 80, rank: 1, status: 'present', weak_topics: 'None' },
+        { student_id: 'student-1', name: 'Aryan Mehta', roll: 'SA-101', marks: 74, rank: 2, status: 'present', weak_topics: 'Calculus concept intro' },
+        { student_id: 'student-ext-2', name: 'Vivek Gupta', roll: 'SA-105', marks: 72, rank: 3, status: 'present', weak_topics: 'Geometry proofs' }
       ]
     }
   ],

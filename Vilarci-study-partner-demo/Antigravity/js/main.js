@@ -252,7 +252,7 @@
                 '<span class="pill pill-muted">' + b.subject + '</span>' +
               '</div>' +
             '</div>' +
-            '<button type="button" class="btn btn-outline btn-sm btn-rename-batch" data-rename-pbatch-id="' + b.id + '" title="Rename or edit batch">✏️ Rename</button>' +
+            '<button type="button" class="btn btn-outline btn-sm btn-rename-batch" data-rename-pbatch-id="' + b.id + '" title="Rename or edit batch">✏️</button>' +
           '</div>' +
           '<div class="batch-meta-line">⏱️ ' + b.schedule + '</div>' +
           '<div class="batch-meta-line">🏛️ ' + b.room + '</div>' +
@@ -607,6 +607,10 @@
 
   // ─── WORKSPACE 4: UNIFIED BATCH & SECTION COMMAND DECK ─────────────────────
   // When a teacher clicks ANY batch (private batch OR coaching section), they enter this deck!
+  // The layout transforms the top navigation bar into a focused Left Sidebar!
+  var activeTestId = null;
+  var selectedFeeMonth = '2026-10';
+
   function enterBatchDeck(type, id, parentCoachingId) {
     activeDeckContext = {
       type: type, // 'private_batch' or 'coaching_section'
@@ -614,6 +618,18 @@
       parentCoachingId: parentCoachingId
     };
 
+    document.body.classList.add('in-batch-deck');
+    renderCurrentWorkspace();
+  }
+
+  function exitBatchDeck() {
+    document.body.classList.remove('in-batch-deck');
+    var sidebar = document.getElementById('deckSidebar');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    var backdrop = document.getElementById('deckSidebarBackdrop');
+    if (backdrop) backdrop.classList.remove('active');
+
+    activeDeckContext = null;
     renderCurrentWorkspace();
   }
 
@@ -623,6 +639,20 @@
     if (activeDeckContext.type === 'private_batch') {
       var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === activeDeckContext.id; });
       if (!pbatch) return null;
+
+      // Ensure default weekly schedule exists in requested schema
+      if (!pbatch.weekly_schedule) {
+        pbatch.weekly_schedule = {
+          "fri": "07:30 AM - 09:00 AM",
+          "mon": "07:30 AM - 09:00 AM",
+          "sat": "Closed",
+          "sun": "Closed",
+          "thu": "Closed",
+          "tue": "Closed",
+          "wed": "07:30 AM - 09:00 AM"
+        };
+      }
+
       return {
         isPrivate: true,
         title: pbatch.name,
@@ -638,6 +668,19 @@
       if (!inst) return null;
       var sec = (inst.classes_sections || []).find(function (s) { return s.id === activeDeckContext.id; });
       if (!sec) return null;
+
+      if (!sec.weekly_schedule) {
+        sec.weekly_schedule = {
+          "fri": "09:00 AM - 05:00 PM",
+          "mon": "09:00 AM - 05:00 PM",
+          "sat": "09:00 AM - 02:00 PM",
+          "sun": "Closed",
+          "thu": "09:00 AM - 05:00 PM",
+          "tue": "09:00 AM - 05:00 PM",
+          "wed": "09:00 AM - 05:00 PM"
+        };
+      }
+
       return {
         isPrivate: false,
         title: inst.name + ' • ' + sec.full_code,
@@ -655,7 +698,10 @@
     var deckData = getActiveDeckData();
     if (!deckData) return;
 
-    // Header values
+    // Ensure body has in-batch-deck class
+    document.body.classList.add('in-batch-deck');
+
+    // Populate Sidebar Batch Metadata
     var titleEl = document.getElementById('deckTitleDisplay');
     if (titleEl) titleEl.textContent = deckData.title;
 
@@ -668,22 +714,63 @@
     var metaEl = document.getElementById('deckMetaDisplay');
     if (metaEl) metaEl.textContent = deckData.metaText;
 
+    var roomEl = document.getElementById('deckRoomDisplay');
+    if (roomEl) roomEl.textContent = '📍 Room: ' + (deckData.rawObj.room || 'Studio A');
+
     var countEl = document.getElementById('deckStudentCountPill');
     if (countEl) countEl.textContent = deckData.studentIds.length;
 
-    // Breadcrumb
-    if (deckData.isPrivate) {
-      updateBreadcrumb(['Workspace', 'My Private Batches', deckData.title]);
-    } else {
-      updateBreadcrumb(['Workspace', 'Coaching Institutes', deckData.title]);
+    var testCountEl = document.getElementById('sidebarTestCountPill');
+    if (testCountEl) {
+      var bTests = (STATE.tests || []).filter(function (t) { return t.context_id === activeDeckContext.id; });
+      testCountEl.textContent = bTests.length;
     }
 
-    // Exit Button
+    // Populate Sidebar Educator Profile
+    var teacher = getActiveTeacher();
+    var sbAvatar = document.getElementById('sidebarTeacherAvatar');
+    if (sbAvatar) {
+      sbAvatar.textContent = teacher.photo_initials;
+      sbAvatar.style.backgroundColor = teacher.avatar_bg || 'var(--primary)';
+    }
+    var sbName = document.getElementById('sidebarTeacherName');
+    if (sbName) sbName.textContent = teacher.name;
+    var sbSubj = document.getElementById('sidebarTeacherSubject');
+    if (sbSubj) sbSubj.textContent = teacher.primary_subject + ' Specialist';
+
+    // Populate Mobile Top Header
+    var mobTitle = document.getElementById('deckMobileTitleText');
+    if (mobTitle) mobTitle.textContent = deckData.title;
+
+    // Wire Exit Buttons
     var exitBtn = document.getElementById('btnExitBatchDeck');
-    if (exitBtn) {
-      exitBtn.onclick = function () {
-        activeDeckContext = null;
-        renderCurrentWorkspace();
+    if (exitBtn) exitBtn.onclick = exitBatchDeck;
+
+    var mobExitBtn = document.getElementById('btnDeckMobileExitBtn');
+    if (mobExitBtn) mobExitBtn.onclick = exitBatchDeck;
+
+    // Wire Mobile Drawer
+    var mobToggle = document.getElementById('btnDeckMobileToggleSidebar');
+    var sidebar = document.getElementById('deckSidebar');
+    var backdrop = document.getElementById('deckSidebarBackdrop');
+    var closeMob = document.getElementById('btnDeckCloseSidebarMobile');
+
+    if (mobToggle && sidebar && backdrop) {
+      mobToggle.onclick = function () {
+        sidebar.classList.add('mobile-open');
+        backdrop.classList.add('active');
+      };
+    }
+    if (closeMob && sidebar && backdrop) {
+      closeMob.onclick = function () {
+        sidebar.classList.remove('mobile-open');
+        backdrop.classList.remove('active');
+      };
+    }
+    if (backdrop && sidebar) {
+      backdrop.onclick = function () {
+        sidebar.classList.remove('mobile-open');
+        backdrop.classList.remove('active');
       };
     }
 
@@ -692,10 +779,17 @@
   }
 
   function setupDeckSubTabs(initialTab) {
-    var tabs = document.querySelectorAll('#batchDeckNavTabs .deck-tab-btn');
-    tabs.forEach(function (tab) {
-      tab.onclick = function () {
+    var navItems = document.querySelectorAll('#batchDeckNavTabs .deck-nav-item');
+    navItems.forEach(function (btn) {
+      btn.onclick = function () {
         var tabId = this.getAttribute('data-deck-tab');
+        
+        // Close mobile drawer on item tap
+        var sidebar = document.getElementById('deckSidebar');
+        var backdrop = document.getElementById('deckSidebarBackdrop');
+        if (sidebar) sidebar.classList.remove('mobile-open');
+        if (backdrop) backdrop.classList.remove('active');
+
         switchDeckSubTab(tabId);
       };
     });
@@ -703,8 +797,8 @@
   }
 
   function switchDeckSubTab(tabId) {
-    var tabs = document.querySelectorAll('#batchDeckNavTabs .deck-tab-btn');
-    tabs.forEach(function (t) {
+    var navItems = document.querySelectorAll('#batchDeckNavTabs .deck-nav-item');
+    navItems.forEach(function (t) {
       t.classList.toggle('active', t.getAttribute('data-deck-tab') === tabId);
     });
 
@@ -735,7 +829,7 @@
     }
   }
 
-  // ─── DECK SUB-TAB 1: STUDENTS ROSTER ───────────────────────────────────────
+  // ─── DECK SUB-TAB 1: STUDENTS ROSTER (With Delete / Left Tuition) ───────────
   function renderDeckStudentsRoster(deckData) {
     var tbody = document.getElementById('deckStudentsTableBody');
     if (!tbody) return;
@@ -780,18 +874,57 @@
           '<td><strong>' + s.attendance_rate + '%</strong></td>' +
           '<td>' + feeBadge + '</td>' +
           '<td>' +
-            '<button type="button" class="btn btn-outline btn-sm btn-deck-award-single" data-student-id="' + s.id + '">🏅 Award Points</button>' +
+            '<div style="display:flex; gap:6px; align-items:center;">' +
+              '<button type="button" class="btn btn-outline btn-sm btn-deck-award-single" data-student-id="' + s.id + '">🏅 Points</button>' +
+              '<button type="button" class="btn btn-outline btn-sm btn-deck-delete-student" data-student-id="' + s.id + '" style="color:var(--danger); border-color:rgba(220,38,38,0.3);" title="Remove student if left tuition">🗑️ Remove</button>' +
+            '</div>' +
           '</td>' +
         '</tr>'
       );
     }).join('');
 
+    // Award Points Button
     tbody.querySelectorAll('.btn-deck-award-single').forEach(function (btn) {
       btn.onclick = function () {
         var sId = this.getAttribute('data-student-id');
         switchDeckSubTab('points');
         var select = document.getElementById('deckAwardStudentSelect');
         if (select) select.value = sId;
+      };
+    });
+
+    // Delete Student (Left Tuition) Button
+    tbody.querySelectorAll('.btn-deck-delete-student').forEach(function (btn) {
+      btn.onclick = function () {
+        var sId = this.getAttribute('data-student-id');
+        var student = (STATE.students || []).find(function (st) { return st.id === sId; });
+        var studentName = student ? student.name : 'Student';
+
+        if (confirm('Are you sure you want to remove ' + studentName + ' from ' + deckData.title + '?\n\nThis will unenroll the student if they left tuition.')) {
+          if (activeDeckContext.type === 'private_batch') {
+            var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === activeDeckContext.id; });
+            if (pbatch && pbatch.student_ids) {
+              pbatch.student_ids = pbatch.student_ids.filter(function (id) { return id !== sId; });
+              pbatch.enrolled_count = pbatch.student_ids.length;
+            }
+          } else {
+            var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeDeckContext.parentCoachingId; });
+            if (inst) {
+              var sec = (inst.classes_sections || []).find(function (s) { return s.id === activeDeckContext.id; });
+              if (sec && sec.student_ids) {
+                sec.student_ids = sec.student_ids.filter(function (id) { return id !== sId; });
+                sec.enrolled_count = sec.student_ids.length;
+              }
+            }
+          }
+
+          saveState();
+          var updatedDeck = getActiveDeckData();
+          var countEl = document.getElementById('deckStudentCountPill');
+          if (countEl) countEl.textContent = updatedDeck.studentIds.length;
+          renderDeckStudentsRoster(updatedDeck);
+          showToast('Removed ' + studentName + ' from batch (Left Tuition).', 'info');
+        }
       };
     });
   }
@@ -962,155 +1095,744 @@
     showToast('Awarded +' + points + ' pts to ' + student.name + '! Standings updated live.', 'success');
   }
 
-  // ─── DECK SUB-TAB 4: TESTS & MARKS ─────────────────────────────────────────
+  // ─── DECK SUB-TAB 4: TESTS & MARKS (Multiple Tests & Every Student) ──────
   function renderDeckTests(deckData) {
-    var container = document.getElementById('deckTestsContainer');
-    if (!container) return;
+    var chipsRow = document.getElementById('deckTestChipsRow');
+    var detailArea = document.getElementById('deckTestDetailArea');
+    if (!chipsRow || !detailArea) return;
 
     var tests = (STATE.tests || []).filter(function (t) { return t.context_id === activeDeckContext.id; });
+
+    // Update test counter pill in sidebar
+    var testCountEl = document.getElementById('sidebarTestCountPill');
+    if (testCountEl) testCountEl.textContent = tests.length;
+
     if (tests.length === 0) {
-      container.innerHTML = '<div class="card p-24 text-center text-muted">No tests scheduled yet for this batch. Click "+ Schedule New Test" above.</div>';
+      chipsRow.innerHTML = '';
+      detailArea.innerHTML = (
+        '<div class="card p-24 text-center text-muted" style="padding:40px 20px;">' +
+          '<h3 style="font-size:17px; font-weight:700; margin-bottom:6px;">No tests scheduled yet for this batch</h3>' +
+          '<p class="text-xs text-muted" style="margin-bottom:16px;">Schedule tests, record marks, and maintain diagnostic student scorecards.</p>' +
+          '<button type="button" class="btn btn-primary" onclick="openModal(\'modalScheduleNewTest\')">+ Schedule First Test</button>' +
+        '</div>'
+      );
       return;
     }
 
-    container.innerHTML = tests.map(function (t) {
+    if (!activeTestId || !tests.some(function (t) { return t.id === activeTestId; })) {
+      activeTestId = tests[0].id;
+    }
+
+    // Render Test Selector Chips
+    chipsRow.innerHTML = tests.map(function (t) {
+      var isActive = t.id === activeTestId;
       return (
-        '<div class="card">' +
-          '<div class="card-header">' +
-            '<div>' +
-              '<h3 class="card-title">' + t.title + '</h3>' +
-              '<span class="card-subtitle">Conducted: ' + t.conducted_date + ' &bull; Max Marks: ' + t.max_marks + ' &bull; Class Avg: ' + t.class_average + '</span>' +
-            '</div>' +
-            '<span class="badge badge-success">High Score: ' + t.highest_score + ' / ' + t.max_marks + '</span>' +
-          '</div>' +
-          '<div class="card-body" style="padding:0;">' +
-            '<div class="table-responsive">' +
-              '<table class="data-table">' +
-                '<thead><tr><th>Rank</th><th>Student Name</th><th>Marks Obtained</th><th>Percentage</th></tr></thead>' +
-                '<tbody>' +
-                  (t.submissions || []).map(function (s) {
-                    var pct = Math.round((s.marks / t.max_marks) * 100);
-                    return '<tr><td>#' + s.rank + '</td><td><strong>' + s.name + '</strong></td><td><strong>' + s.marks + ' / ' + t.max_marks + '</strong></td><td>' + pct + '%</td></tr>';
-                  }).join('') +
-                '</tbody>' +
-              '</table>' +
-            '</div>' +
-          '</div>' +
-        '</div>'
+        '<button type="button" class="chip-btn ' + (isActive ? 'active' : '') + ' btn-select-test" data-test-id="' + t.id + '">' +
+          '📝 ' + t.title + ' <span class="badge" style="margin-left:4px; font-size:10px;">' + t.max_marks + 'M</span>' +
+        '</button>'
       );
     }).join('');
+
+    chipsRow.querySelectorAll('.btn-select-test').forEach(function (btn) {
+      btn.onclick = function () {
+        activeTestId = this.getAttribute('data-test-id');
+        renderDeckTests(deckData);
+      };
+    });
+
+    var currTest = tests.find(function (t) { return t.id === activeTestId; }) || tests[0];
+
+    // Ensure all currently enrolled students have an entry in currTest.submissions
+    if (!currTest.submissions) currTest.submissions = [];
+    var enrolledStudents = (STATE.students || []).filter(function (s) {
+      return deckData.studentIds.indexOf(s.id) !== -1;
+    });
+
+    enrolledStudents.forEach(function (s) {
+      var existingSub = currTest.submissions.find(function (sub) { return sub.student_id === s.id; });
+      if (!existingSub) {
+        currTest.submissions.push({
+          student_id: s.id,
+          name: s.name,
+          roll: s.roll,
+          marks: 0,
+          rank: currTest.submissions.length + 1,
+          status: 'present',
+          weak_topics: ''
+        });
+      }
+    });
+
+    // Sort submissions by marks descending
+    currTest.submissions.sort(function (a, b) { return b.marks - a.marks; });
+    currTest.submissions.forEach(function (sub, idx) { sub.rank = idx + 1; });
+
+    // Compute test analytics
+    var totalSubmissions = currTest.submissions.length;
+    var presentSubs = currTest.submissions.filter(function (sub) { return sub.status !== 'absent'; });
+    var sumMarks = presentSubs.reduce(function (acc, sub) { return acc + (Number(sub.marks) || 0); }, 0);
+    var classAvg = presentSubs.length > 0 ? (sumMarks / presentSubs.length).toFixed(1) : 0;
+    var highestMarks = currTest.submissions.length > 0 ? Math.max.apply(null, currTest.submissions.map(function (s) { return Number(s.marks) || 0; })) : 0;
+    var lowestMarks = presentSubs.length > 0 ? Math.min.apply(null, presentSubs.map(function (s) { return Number(s.marks) || 0; })) : 0;
+    var passingScore = currTest.max_marks * 0.33;
+    var passedCount = presentSubs.filter(function (s) { return s.marks >= passingScore; }).length;
+    var passRate = presentSubs.length > 0 ? Math.round((passedCount / presentSubs.length) * 100) : 100;
+
+    currTest.class_average = Number(classAvg);
+    currTest.highest_score = highestMarks;
+    currTest.lowest_score = lowestMarks;
+    currTest.pass_rate = passRate;
+
+    // Render Test Overview Card & Full Student Scorecards Table
+    detailArea.innerHTML = (
+      '<div class="card" style="margin-bottom:20px;">' +
+        '<div class="card-header" style="flex-wrap:wrap; gap:12px;">' +
+          '<div>' +
+            '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">' +
+              '<span class="badge badge-primary">' + currTest.subject + '</span>' +
+              '<span class="text-xs text-muted">Conducted: <strong>' + currTest.conducted_date + '</strong></span>' +
+              '<span class="text-xs text-muted">&bull; Maximum Marks: <strong>' + currTest.max_marks + '</strong></span>' +
+            '</div>' +
+            '<h3 class="card-title" style="font-size:17px;">' + currTest.title + '</h3>' +
+          '</div>' +
+          '<div style="display:flex; gap:8px;">' +
+            '<button type="button" class="btn btn-primary btn-sm" id="btnSaveScorecardTop">💾 Save Scorecard</button>' +
+            '<button type="button" class="btn btn-outline btn-sm" id="btnDeleteCurrTest" style="color:var(--danger); border-color:rgba(220,38,38,0.3);">🗑️ Delete Test</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card-body">' +
+          '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-bottom:18px;">' +
+            '<div style="background:var(--surface-muted); padding:12px; border-radius:var(--radius-md); text-align:center;">' +
+              '<div class="text-xs text-muted font-bold">Class Average</div>' +
+              '<div style="font-size:20px; font-weight:800; color:var(--primary); font-family:var(--font-mono);">' + classAvg + ' / ' + currTest.max_marks + '</div>' +
+              '<div class="text-xs text-muted">' + Math.round((classAvg / currTest.max_marks) * 100) + '% Avg</div>' +
+            '</div>' +
+            '<div style="background:var(--surface-muted); padding:12px; border-radius:var(--radius-md); text-align:center;">' +
+              '<div class="text-xs text-muted font-bold">Highest Score</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#059669; font-family:var(--font-mono);">' + highestMarks + ' / ' + currTest.max_marks + '</div>' +
+              '<div class="text-xs text-muted">' + (currTest.submissions[0] ? currTest.submissions[0].name : '—') + '</div>' +
+            '</div>' +
+            '<div style="background:var(--surface-muted); padding:12px; border-radius:var(--radius-md); text-align:center;">' +
+              '<div class="text-xs text-muted font-bold">Lowest Score</div>' +
+              '<div style="font-size:20px; font-weight:800; color:#D97706; font-family:var(--font-mono);">' + lowestMarks + ' / ' + currTest.max_marks + '</div>' +
+              '<div class="text-xs text-muted">Benchmark Range</div>' +
+            '</div>' +
+            '<div style="background:var(--surface-muted); padding:12px; border-radius:var(--radius-md); text-align:center;">' +
+              '<div class="text-xs text-muted font-bold">Pass Rate</div>' +
+              '<div style="font-size:20px; font-weight:800; color:var(--primary); font-family:var(--font-mono);">' + passRate + '%</div>' +
+              '<div class="text-xs text-muted">' + passedCount + ' of ' + presentSubs.length + ' Passed</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="table-responsive">' +
+            '<table class="data-table">' +
+              '<thead>' +
+                '<tr>' +
+                  '<th>Rank</th>' +
+                  '<th>Roll No</th>' +
+                  '<th>Student Name</th>' +
+                  '<th>Marks (Max ' + currTest.max_marks + ')</th>' +
+                  '<th>Percentage</th>' +
+                  '<th>Grade</th>' +
+                  '<th>Status</th>' +
+                  '<th>Weak Topic / Diagnostic Feedback</th>' +
+                '</tr>' +
+              '</thead>' +
+              '<tbody id="deckScorecardTableBody">' +
+                currTest.submissions.map(function (sub) {
+                  var sNum = Number(sub.marks) || 0;
+                  var pct = Math.round((sNum / currTest.max_marks) * 100);
+                  var grade = pct >= 90 ? 'A1' : (pct >= 80 ? 'A2' : (pct >= 70 ? 'B1' : (pct >= 60 ? 'B2' : (pct >= 50 ? 'C1' : (pct >= 33 ? 'D' : 'E')))));
+                  var medal = sub.rank === 1 ? '🥇 ' : (sub.rank === 2 ? '🥈 ' : (sub.rank === 3 ? '🥉 ' : ''));
+
+                  return (
+                    '<tr>' +
+                      '<td><strong class="font-mono">' + medal + '#' + sub.rank + '</strong></td>' +
+                      '<td><span class="font-mono text-xs font-bold">' + (sub.roll || 'SA') + '</span></td>' +
+                      '<td><strong>' + sub.name + '</strong></td>' +
+                      '<td>' +
+                        '<div style="display:flex; align-items:center; gap:6px;">' +
+                          '<input type="number" class="form-input text-xs font-bold score-marks-inp" data-sub-student-id="' + sub.student_id + '" value="' + sNum + '" min="0" max="' + currTest.max_marks + '" style="width:75px; text-align:center;">' +
+                          '<span class="text-xs text-muted">/ ' + currTest.max_marks + '</span>' +
+                        '</div>' +
+                      '</td>' +
+                      '<td><strong>' + pct + '%</strong></td>' +
+                      '<td><span class="badge ' + (pct >= 80 ? 'badge-success' : (pct >= 50 ? 'badge-primary' : 'badge-warning')) + '">' + grade + '</span></td>' +
+                      '<td>' +
+                        '<select class="form-select text-xs score-status-sel" data-sub-student-id="' + sub.student_id + '" style="padding:4px 8px; width:95px;">' +
+                          '<option value="present" ' + (sub.status !== 'absent' ? 'selected' : '') + '>Present</option>' +
+                          '<option value="absent" ' + (sub.status === 'absent' ? 'selected' : '') + '>Absent</option>' +
+                        '</select>' +
+                      '</td>' +
+                      '<td>' +
+                        '<input type="text" class="form-input text-xs score-weak-inp" data-sub-student-id="' + sub.student_id + '" value="' + (sub.weak_topics || '') + '" placeholder="e.g. Discriminant roots calculation error" style="min-width:200px;">' +
+                      '</td>' +
+                    '</tr>'
+                  );
+                }).join('') +
+              '</tbody>' +
+            '</table>' +
+          '</div>' +
+
+          '<div style="margin-top:16px; display:flex; justify-content:flex-end;">' +
+            '<button type="button" class="btn btn-primary" id="btnSaveScorecardBottom">💾 Save Scorecard &amp; Recompute Ranks</button>' +
+          '</div>' +
+
+        '</div>' +
+      '</div>'
+    );
+
+    // Save Scorecard Handler Function
+    function saveCurrTestScorecard() {
+      var rows = detailArea.querySelectorAll('#deckScorecardTableBody tr');
+      currTest.submissions.forEach(function (sub) {
+        var marksInp = detailArea.querySelector('.score-marks-inp[data-sub-student-id="' + sub.student_id + '"]');
+        var statusSel = detailArea.querySelector('.score-status-sel[data-sub-student-id="' + sub.student_id + '"]');
+        var weakInp = detailArea.querySelector('.score-weak-inp[data-sub-student-id="' + sub.student_id + '"]');
+
+        if (marksInp) sub.marks = Math.min(currTest.max_marks, Math.max(0, Number(marksInp.value) || 0));
+        if (statusSel) sub.status = statusSel.value;
+        if (weakInp) sub.weak_topics = weakInp.value.trim();
+      });
+
+      // Re-sort and re-rank
+      currTest.submissions.sort(function (a, b) { return b.marks - a.marks; });
+      currTest.submissions.forEach(function (sub, idx) { sub.rank = idx + 1; });
+
+      saveState();
+      renderDeckTests(deckData);
+      showToast('Scorecard saved for ' + currTest.title + '! Ranks recomputed.', 'success');
+    }
+
+    var saveTop = document.getElementById('btnSaveScorecardTop');
+    if (saveTop) saveTop.onclick = saveCurrTestScorecard;
+
+    var saveBottom = document.getElementById('btnSaveScorecardBottom');
+    if (saveBottom) saveBottom.onclick = saveCurrTestScorecard;
+
+    // Delete Test Handler
+    var delBtn = document.getElementById('btnDeleteCurrTest');
+    if (delBtn) {
+      delBtn.onclick = function () {
+        if (confirm('Are you sure you want to delete "' + currTest.title + '" and its scorecards?')) {
+          STATE.tests = (STATE.tests || []).filter(function (t) { return t.id !== currTest.id; });
+          saveState();
+          activeTestId = null;
+          renderDeckTests(deckData);
+          showToast('Test removed from batch.', 'info');
+        }
+      };
+    }
   }
 
-  // ─── DECK SUB-TAB 5: CURRICULUM TRACKER ─────────────────────────────────────
+  // ─── DECK SUB-TAB 5: CURRICULUM TRACKER (Planned Target vs Reality) ─────────
   function renderDeckSyllabus(deckData) {
     var tbody = document.getElementById('deckSyllabusTableBody');
+    var statsGrid = document.getElementById('sylStatsGrid');
     if (!tbody) return;
 
     var topics = (STATE.syllabus_topics || []).filter(function (tp) { return tp.context_id === activeDeckContext.id; });
+
     if (topics.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center p-20 text-muted">No syllabus topics registered for this batch.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center p-20 text-muted">No syllabus topics registered for this batch. Click "+ Add Chapter / Topic" above.</td></tr>';
+      if (statsGrid) statsGrid.innerHTML = '';
       return;
     }
 
+    // Analytics: Target vs Reality
+    var totalTopics = topics.length;
+    var coveredTopics = topics.filter(function (t) { return t.status === 'covered'; }).length;
+    var inProgressTopics = topics.filter(function (t) { return t.status === 'in_progress'; }).length;
+    var delayedTopics = topics.filter(function (t) { return t.variance_status === 'delayed'; }).length;
+
+    var plannedCoveredCount = topics.filter(function (t) {
+      return new Date(t.planned_target_date || '2026-10-01') <= new Date('2026-10-20');
+    }).length;
+
+    var plannedPct = Math.round((plannedCoveredCount / totalTopics) * 100);
+    var actualPct = Math.round((coveredTopics / totalTopics) * 100);
+
+    // Render Stats Grid
+    if (statsGrid) {
+      statsGrid.innerHTML = (
+        '<div style="background:var(--surface-muted); padding:12px 16px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+          '<div class="text-xs text-muted font-bold text-uppercase">Target Planned Timeline</div>' +
+          '<div style="font-size:20px; font-weight:800; color:#2563EB; font-family:var(--font-mono);">' + plannedCoveredCount + ' of ' + totalTopics + ' Topics</div>' +
+          '<div class="text-xs text-muted">' + plannedPct + '% of Course Target Milestone</div>' +
+        '</div>' +
+        '<div style="background:var(--surface-muted); padding:12px 16px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+          '<div class="text-xs text-muted font-bold text-uppercase">Actual Reality Covered</div>' +
+          '<div style="font-size:20px; font-weight:800; color:var(--primary); font-family:var(--font-mono);">' + coveredTopics + ' of ' + totalTopics + ' Covered</div>' +
+          '<div class="text-xs text-muted">' + actualPct + '% Realized Completion</div>' +
+        '</div>' +
+        '<div style="background:var(--surface-muted); padding:12px 16px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+          '<div class="text-xs text-muted font-bold text-uppercase">In Progress / Active</div>' +
+          '<div style="font-size:20px; font-weight:800; color:#D97706; font-family:var(--font-mono);">' + inProgressTopics + ' Topics Active</div>' +
+          '<div class="text-xs text-muted">' + delayedTopics + ' Topics Behind Target</div>' +
+        '</div>' +
+        '<div style="background:var(--surface-muted); padding:12px 16px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+          '<div class="text-xs text-muted font-bold text-uppercase">Timeline Variance Reality</div>' +
+          '<div style="font-size:15px; font-weight:800; color:' + (delayedTopics > 0 ? '#DC2626' : '#059669') + '; margin-top:4px;">' +
+            (delayedTopics > 0 ? '⚠️ ' + delayedTopics + ' Chapters Delayed' : '🟢 Fully On Schedule') +
+          '</div>' +
+          '<div class="text-xs text-muted">Syllabus Deviation Tracking</div>' +
+        '</div>'
+      );
+    }
+
+    // Update Progress Bars
+    var barPlanned = document.getElementById('sylPlannedProgressBar');
+    var lblPlanned = document.getElementById('sylPlannedPctLabel');
+    if (barPlanned) barPlanned.style.width = plannedPct + '%';
+    if (lblPlanned) lblPlanned.textContent = plannedPct + '% Planned Target';
+
+    var barActual = document.getElementById('sylActualProgressBar');
+    var lblActual = document.getElementById('sylActualPctLabel');
+    if (barActual) barActual.style.width = actualPct + '%';
+    if (lblActual) lblActual.textContent = actualPct + '% Completed (Reality)';
+
+    // Render Table Body
     tbody.innerHTML = topics.map(function (tp) {
       var statusBadge = tp.status === 'covered' 
         ? '<span class="badge badge-success">✓ Covered</span>' 
         : (tp.status === 'in_progress' ? '<span class="badge badge-warning">In Progress</span>' : '<span class="badge badge-muted">Upcoming</span>');
 
+      var varBadge = '<span class="pill pill-primary" style="font-size:11px;">' + (tp.variance_text || '🟢 On Schedule') + '</span>';
+
       return (
         '<tr>' +
-          '<td>Chapter ' + tp.chapter_number + ': <strong>' + tp.chapter_name + '</strong></td>' +
+          '<td><strong style="color:var(--primary);">Chapter ' + tp.chapter_number + '</strong><br><span style="font-size:12px; font-weight:700;">' + tp.chapter_name + '</span></td>' +
           '<td>' + tp.topic_name + '</td>' +
+          '<td><span class="font-mono text-xs font-bold">' + (tp.planned_target_date || '—') + '</span></td>' +
+          '<td><span class="font-mono text-xs font-bold" style="color:' + (tp.actual_completion_date ? '#059669' : '#D97706') + ';">' + (tp.actual_completion_date || 'In Progress') + '</span></td>' +
           '<td>' + statusBadge + '</td>' +
+          '<td>' + varBadge + '</td>' +
           '<td><strong>' + tp.revised_count + '</strong> students revised</td>' +
-          '<td><button type="button" class="btn btn-outline btn-sm btn-cycle-syl" data-syl-id="' + tp.id + '">Toggle Status</button></td>' +
+          '<td>' +
+            '<div style="display:flex; gap:6px;">' +
+              '<button type="button" class="btn btn-outline btn-sm btn-cycle-syl" data-syl-id="' + tp.id + '">Toggle Status</button>' +
+              '<button type="button" class="btn btn-outline btn-sm btn-remove-syl-topic" data-syl-id="' + tp.id + '" style="color:var(--danger); border-color:rgba(220,38,38,0.3);">🗑️</button>' +
+            '</div>' +
+          '</td>' +
         '</tr>'
       );
     }).join('');
 
+    // Toggle Status
     tbody.querySelectorAll('.btn-cycle-syl').forEach(function (btn) {
       btn.onclick = function () {
         var sId = this.getAttribute('data-syl-id');
         var item = (STATE.syllabus_topics || []).find(function (t) { return t.id === sId; });
         if (item) {
-          item.status = item.status === 'covered' ? 'in_progress' : (item.status === 'in_progress' ? 'upcoming' : 'covered');
+          if (item.status === 'covered') {
+            item.status = 'in_progress';
+            item.actual_completion_date = null;
+            item.variance_text = '🟡 In Progress';
+          } else if (item.status === 'in_progress') {
+            item.status = 'upcoming';
+            item.actual_completion_date = null;
+            item.variance_text = '⚪ Upcoming';
+          } else {
+            item.status = 'covered';
+            item.actual_completion_date = new Date().toISOString().slice(0, 10);
+            item.variance_text = '🟢 Completed (Reality)';
+          }
           saveState();
           renderDeckSyllabus(deckData);
           showToast('Updated status for: ' + item.topic_name, 'info');
         }
       };
     });
-  }
 
-  // ─── DECK SUB-TAB 6: TUITION FEES ──────────────────────────────────────────
-  function renderDeckFees(deckData) {
-    var tbody = document.getElementById('deckFeesTableBody');
-    if (!tbody) return;
-
-    var invoices = (STATE.invoices || []).filter(function (i) { return i.context_id === activeDeckContext.id; });
-    if (invoices.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center p-20 text-muted">No fee records found for this batch.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = invoices.map(function (inv) {
-      var badge = inv.status === 'paid' 
-        ? '<span class="badge badge-success">PAID</span>' 
-        : (inv.status === 'pending' ? '<span class="badge badge-warning">PENDING</span>' : '<span class="badge badge-danger">OVERDUE</span>');
-
-      return (
-        '<tr>' +
-          '<td><span class="font-mono text-xs font-bold">' + inv.invoice_no + '</span></td>' +
-          '<td><strong>' + inv.student_name + '</strong></td>' +
-          '<td>' + inv.parent_phone + '</td>' +
-          '<td><strong>₹' + inv.amount.toLocaleString() + '</strong></td>' +
-          '<td>' + badge + '</td>' +
-          '<td>' +
-            (inv.status === 'paid' 
-              ? '<span class="text-xs text-muted">Receipt Ref: ' + (inv.receipt_ref || 'REC-PAID') + '</span>' 
-              : '<button type="button" class="btn btn-primary btn-sm btn-record-fee-paid" data-inv-id="' + inv.id + '">Record Paid</button>') +
-          '</td>' +
-        '</tr>'
-      );
-    }).join('');
-
-    tbody.querySelectorAll('.btn-record-fee-paid').forEach(function (btn) {
+    // Remove Topic
+    tbody.querySelectorAll('.btn-remove-syl-topic').forEach(function (btn) {
       btn.onclick = function () {
-        var invId = this.getAttribute('data-inv-id');
-        var inv = (STATE.invoices || []).find(function (i) { return i.id === invId; });
-        if (inv) {
-          inv.status = 'paid';
-          inv.payment_mode = 'Cash / Offline Desk';
-          inv.paid_date = new Date().toISOString().slice(0, 10);
-          inv.receipt_ref = 'REC-' + Date.now().toString().slice(-6);
+        var sId = this.getAttribute('data-syl-id');
+        var item = (STATE.syllabus_topics || []).find(function (t) { return t.id === sId; });
+        if (item && confirm('Remove Chapter ' + item.chapter_number + ': ' + item.chapter_name + ' (' + item.topic_name + ')?')) {
+          STATE.syllabus_topics = (STATE.syllabus_topics || []).filter(function (t) { return t.id !== sId; });
           saveState();
-          renderDeckFees(deckData);
-          showToast('Payment recorded for ' + inv.student_name, 'success');
+          renderDeckSyllabus(deckData);
+          showToast('Removed chapter topic from curriculum.', 'info');
         }
       };
     });
   }
 
-  // ─── DECK SUB-TAB 7: BATCH SETTINGS (RENAME) ───────────────────────────────
+  // Helper to format Month keys like "2026-10" to "October 2026"
+  function formatMonthName(monthKey) {
+    if (!monthKey) return '—';
+    var parts = monthKey.split('-');
+    if (parts.length < 2) return monthKey;
+    var year = parts[0];
+    var monthNum = parseInt(parts[1], 10) - 1;
+    var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return (monthNames[monthNum] || 'Month') + ' ' + year;
+  }
+
+  // ─── DECK SUB-TAB 6: TUITION FEES (Personalized Monthly Ledger) ────────────
+  function renderDeckFees(deckData) {
+    var tbody = document.getElementById('deckFeesTableBody');
+    var statsGrid = document.getElementById('feeStatsGrid');
+    var monthSelector = document.getElementById('deckFeeMonthSelector');
+    if (!tbody || !statsGrid || !monthSelector) return;
+
+    var curMonthKey = monthSelector.value || selectedFeeMonth || '2026-10';
+    selectedFeeMonth = curMonthKey;
+
+    var monthTitleEl = document.getElementById('dispSelectedFeeMonthName');
+    if (monthTitleEl) monthTitleEl.textContent = formatMonthName(curMonthKey);
+
+    var enrolledStudents = (STATE.students || []).filter(function (s) {
+      return deckData.studentIds.indexOf(s.id) !== -1;
+    });
+
+    if (enrolledStudents.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center p-20 text-muted">No students enrolled in this batch.</td></tr>';
+      statsGrid.innerHTML = '';
+      return;
+    }
+
+    // Ensure every student has fee configuration
+    enrolledStudents.forEach(function (s) {
+      if (!s.custom_monthly_fee) s.custom_monthly_fee = deckData.fee || 2500;
+      if (!s.admission_start_month) s.admission_start_month = '2026-06';
+      if (!s.course_end_month) s.course_end_month = '2027-03';
+      if (!s.fee_ledger) s.fee_ledger = {};
+      if (!s.fee_ledger[curMonthKey]) {
+        // Inherit default or generate pending
+        s.fee_ledger[curMonthKey] = {
+          status: s.fee_status === 'paid' ? 'paid' : 'pending',
+          amount: s.custom_monthly_fee,
+          paid_date: s.fee_status === 'paid' ? '2026-10-02' : null,
+          payment_mode: s.fee_status === 'paid' ? 'UPI (Google Pay)' : null,
+          receipt_ref: s.fee_status === 'paid' ? 'REC-' + s.roll + '-10' : null
+        };
+      }
+    });
+
+    // Compute Collection Metrics for this month
+    var totalExpected = enrolledStudents.reduce(function (acc, s) { return acc + (s.custom_monthly_fee || 2500); }, 0);
+    var paidStudents = enrolledStudents.filter(function (s) {
+      var rec = s.fee_ledger && s.fee_ledger[curMonthKey];
+      return rec && rec.status === 'paid';
+    });
+    var totalCollected = paidStudents.reduce(function (acc, s) {
+      var rec = s.fee_ledger[curMonthKey];
+      return acc + (rec.amount || s.custom_monthly_fee || 2500);
+    }, 0);
+    var pendingDues = totalExpected - totalCollected;
+    var collectionRate = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 100;
+
+    // Render Stats Grid
+    statsGrid.innerHTML = (
+      '<div style="background:var(--surface-muted); padding:14px 18px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+        '<div class="text-xs text-muted font-bold text-uppercase">Expected Monthly Collections</div>' +
+        '<div style="font-size:22px; font-weight:800; color:var(--text-main); font-family:var(--font-mono);">₹' + totalExpected.toLocaleString() + '</div>' +
+        '<div class="text-xs text-muted">' + enrolledStudents.length + ' Enrolled Students in Batch</div>' +
+      '</div>' +
+      '<div style="background:var(--surface-muted); padding:14px 18px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+        '<div class="text-xs text-muted font-bold text-uppercase">Total Collected (' + formatMonthName(curMonthKey) + ')</div>' +
+        '<div style="font-size:22px; font-weight:800; color:#059669; font-family:var(--font-mono);">₹' + totalCollected.toLocaleString() + '</div>' +
+        '<div class="text-xs text-muted">' + paidStudents.length + ' Students Settled (' + collectionRate + '%)</div>' +
+      '</div>' +
+      '<div style="background:var(--surface-muted); padding:14px 18px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+        '<div class="text-xs text-muted font-bold text-uppercase">Pending Tuition Dues</div>' +
+        '<div style="font-size:22px; font-weight:800; color:' + (pendingDues > 0 ? '#DC2626' : '#059669') + '; font-family:var(--font-mono);">₹' + pendingDues.toLocaleString() + '</div>' +
+        '<div class="text-xs text-muted">' + (enrolledStudents.length - paidStudents.length) + ' Students Pending</div>' +
+      '</div>' +
+      '<div style="background:var(--surface-muted); padding:14px 18px; border-radius:var(--radius-md); border:1px solid var(--border);">' +
+        '<div class="text-xs text-muted font-bold text-uppercase">Collection Clearance Rate</div>' +
+        '<div style="font-size:22px; font-weight:800; color:var(--primary); font-family:var(--font-mono);">' + collectionRate + '%</div>' +
+        '<div class="text-xs text-muted">Cleared via UPI &amp; Cash</div>' +
+      '</div>'
+    );
+
+    // Render Table Rows
+    tbody.innerHTML = enrolledStudents.map(function (s) {
+      var rec = (s.fee_ledger && s.fee_ledger[curMonthKey]) || { status: 'pending', amount: s.custom_monthly_fee };
+      var isPaid = rec.status === 'paid';
+      var statusBadge = isPaid
+        ? '<span class="badge badge-success">PAID</span>'
+        : '<span class="badge badge-warning">PENDING</span>';
+
+      var periodStr = 'Start: ' + formatMonthName(s.admission_start_month) + '<br><span class="text-muted" style="font-size:11px;">End: ' + formatMonthName(s.course_end_month) + '</span>';
+
+      var payInfo = isPaid
+        ? '<div><strong>' + rec.paid_date + '</strong><div style="font-size:11px; color:var(--text-muted);">' + (rec.payment_mode || 'UPI') + '</div></div>'
+        : '<span style="color:#D97706; font-size:12px; font-weight:700;">— Pending Dues</span>';
+
+      return (
+        '<tr>' +
+          '<td><span class="font-mono text-xs font-bold">' + s.roll + '</span></td>' +
+          '<td>' +
+            '<div style="display:flex; align-items:center; gap:8px;">' +
+              '<div style="width:28px; height:28px; border-radius:50%; background:' + (s.avatar_bg || 'var(--primary)') + '; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:10.5px;">' + s.avatar_initials + '</div>' +
+              '<div>' +
+                '<strong>' + s.name + '</strong>' +
+                '<div style="font-size:11px; color:var(--text-muted);">' + s.father_name + ' (' + s.father_phone + ')</div>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+          '<td>' + periodStr + '</td>' +
+          '<td>' +
+            '<div style="display:flex; align-items:center; gap:6px;">' +
+              '<strong style="font-family:var(--font-mono); font-size:14px;">₹' + (s.custom_monthly_fee || 2500).toLocaleString() + '</strong>' +
+              '<button type="button" class="btn btn-outline btn-sm btn-cfg-student-fee" data-student-id="' + s.id + '" title="Configure personalized fee, start and end month" style="padding:2px 6px; font-size:11px;">⚙️</button>' +
+            '</div>' +
+          '</td>' +
+          '<td>' + statusBadge + '</td>' +
+          '<td>' + payInfo + '</td>' +
+          '<td>' +
+            '<div style="display:flex; gap:6px; align-items:center;">' +
+              (isPaid
+                ? '<button type="button" class="btn btn-outline btn-sm btn-view-receipt" data-student-id="' + s.id + '" data-month-key="' + curMonthKey + '">🧾 Receipt</button>'
+                : '<button type="button" class="btn btn-primary btn-sm btn-record-payment" data-student-id="' + s.id + '" data-month-key="' + curMonthKey + '">💳 Record Paid</button>') +
+              '<button type="button" class="btn btn-outline btn-sm btn-view-student-ledger" data-student-id="' + s.id + '" title="View complete month-by-month history">📋 Ledger</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    // Wire Month Selector Change
+    monthSelector.onchange = function () {
+      selectedFeeMonth = this.value;
+      renderDeckFees(deckData);
+    };
+
+    // Wire Record Payment Button
+    tbody.querySelectorAll('.btn-record-payment').forEach(function (btn) {
+      btn.onclick = function () {
+        var sId = this.getAttribute('data-student-id');
+        var mKey = this.getAttribute('data-month-key');
+        var student = (STATE.students || []).find(function (st) { return st.id === sId; });
+        if (!student) return;
+
+        document.getElementById('payStudentId').value = sId;
+        document.getElementById('payMonthKey').value = mKey;
+        document.getElementById('payStudentNameDisplay').textContent = student.name + ' (' + student.roll + ')';
+        document.getElementById('payMonthDisplay').textContent = formatMonthName(mKey);
+        document.getElementById('payAmountInput').value = student.custom_monthly_fee || 2500;
+        document.getElementById('payDateInput').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('payRefInput').value = 'REC-' + sId.slice(-4) + '-' + mKey.replace('-', '');
+
+        openModal('modalRecordPayment');
+      };
+    });
+
+    // Wire View Receipt Button
+    tbody.querySelectorAll('.btn-view-receipt').forEach(function (btn) {
+      btn.onclick = function () {
+        var sId = this.getAttribute('data-student-id');
+        var mKey = this.getAttribute('data-month-key');
+        var student = (STATE.students || []).find(function (st) { return st.id === sId; });
+        if (!student) return;
+
+        var rec = (student.fee_ledger && student.fee_ledger[mKey]) || {};
+
+        document.getElementById('recInstituteName').textContent = deckData.title;
+        document.getElementById('recRefNumber').textContent = rec.receipt_ref || ('REC-' + mKey.replace('-', '') + '-' + student.roll);
+        document.getElementById('recStudentName').textContent = student.name;
+        document.getElementById('recStudentRoll').textContent = student.roll;
+        document.getElementById('recBatchName').textContent = deckData.title;
+        document.getElementById('recMonthName').textContent = formatMonthName(mKey);
+        document.getElementById('recPaidDate').textContent = rec.paid_date || new Date().toISOString().slice(0, 10);
+        document.getElementById('recPaymentMode').textContent = rec.payment_mode || 'UPI (Google Pay)';
+        document.getElementById('recAmountDisplay').textContent = '₹' + (rec.amount || student.custom_monthly_fee || 2500).toLocaleString() + '.00';
+        document.getElementById('recTeacherSign').textContent = getActiveTeacher().name;
+
+        openModal('modalViewFeeReceipt');
+      };
+    });
+
+    // Wire Configure Fee Structure Button
+    tbody.querySelectorAll('.btn-cfg-student-fee').forEach(function (btn) {
+      btn.onclick = function () {
+        var sId = this.getAttribute('data-student-id');
+        var student = (STATE.students || []).find(function (st) { return st.id === sId; });
+        if (!student) return;
+
+        document.getElementById('cfgFeeStudentId').value = sId;
+        document.getElementById('cfgFeeStudentName').textContent = student.name;
+        document.getElementById('cfgFeeStudentMeta').textContent = 'Roll: ' + student.roll + ' • ' + student.grade + ' ' + student.board;
+        document.getElementById('cfgFeeAmountInput').value = student.custom_monthly_fee || 2500;
+        document.getElementById('cfgFeeStartMonth').value = student.admission_start_month || '2026-06';
+        document.getElementById('cfgFeeEndMonth').value = student.course_end_month || '2027-03';
+
+        openModal('modalConfigureStudentFee');
+      };
+    });
+
+    // Wire Full Ledger Modal Button
+    tbody.querySelectorAll('.btn-view-student-ledger').forEach(function (btn) {
+      btn.onclick = function () {
+        var sId = this.getAttribute('data-student-id');
+        var student = (STATE.students || []).find(function (st) { return st.id === sId; });
+        if (!student) return;
+
+        document.getElementById('histStudentNameTitle').textContent = student.name + ' (' + student.roll + ') — Fee History Ledger';
+        document.getElementById('histStudentPeriodTitle').textContent = 'Admission Period: ' + formatMonthName(student.admission_start_month) + ' to ' + formatMonthName(student.course_end_month) + ' • Monthly Fee: ₹' + (student.custom_monthly_fee || 2500);
+
+        var monthsList = ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11', '2026-12', '2027-01', '2027-02', '2027-03'];
+        var activeMonths = monthsList.filter(function (m) {
+          return m >= (student.admission_start_month || '2026-06') && m <= (student.course_end_month || '2027-03');
+        });
+
+        var histBody = document.getElementById('histFeeTableBody');
+        if (histBody) {
+          histBody.innerHTML = activeMonths.map(function (mKey) {
+            var rec = (student.fee_ledger && student.fee_ledger[mKey]) || { status: 'pending', amount: student.custom_monthly_fee || 2500 };
+            var isP = rec.status === 'paid';
+
+            return (
+              '<tr>' +
+                '<td><strong>' + formatMonthName(mKey) + '</strong></td>' +
+                '<td><strong>₹' + (rec.amount || student.custom_monthly_fee || 2500).toLocaleString() + '</strong></td>' +
+                '<td><span class="badge ' + (isP ? 'badge-success' : 'badge-warning') + '">' + (isP ? 'PAID' : 'PENDING') + '</span></td>' +
+                '<td>' + (rec.paid_date || '—') + '</td>' +
+                '<td>' + (rec.payment_mode || '—') + '</td>' +
+                '<td>' +
+                  (isP
+                    ? '<span class="font-mono text-xs" style="color:var(--text-muted);">' + (rec.receipt_ref || 'REC-SETTLED') + '</span>'
+                    : '<button type="button" class="btn btn-outline btn-sm btn-hist-pay" data-student-id="' + sId + '" data-month-key="' + mKey + '">Record Paid</button>') +
+                '</td>' +
+              '</tr>'
+            );
+          }).join('');
+
+          histBody.querySelectorAll('.btn-hist-pay').forEach(function (hBtn) {
+            hBtn.onclick = function () {
+              closeModal('modalStudentFeeHistory');
+              var s_Id = this.getAttribute('data-student-id');
+              var m_Key = this.getAttribute('data-month-key');
+              document.querySelector('.btn-record-payment[data-student-id="' + s_Id + '"]') && document.querySelector('.btn-record-payment[data-student-id="' + s_Id + '"]').click();
+            };
+          });
+        }
+
+        openModal('modalStudentFeeHistory');
+      };
+    });
+  }
+
+  // Helper to format Weekly Schedule object into a clean readable string
+  function formatWeeklyScheduleDisplay(schedObj) {
+    if (!schedObj || typeof schedObj !== 'object') return 'Mon, Wed, Fri • 07:30 AM – 09:00 AM';
+    var activeDays = [];
+    var commonTime = '';
+    ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].forEach(function (d) {
+      var val = schedObj[d];
+      if (val && val.toLowerCase() !== 'closed') {
+        var dayName = d.charAt(0).toUpperCase() + d.slice(1);
+        activeDays.push(dayName);
+        if (!commonTime) commonTime = val;
+      }
+    });
+
+    if (activeDays.length === 0) return 'Closed';
+    return activeDays.join(', ') + ' • ' + (commonTime || 'Regular Hours');
+  }
+
+  // ─── DECK SUB-TAB 7: BATCH SETTINGS & DAY-BY-DAY SCHEDULE ──────────────────
   function renderDeckSettings(deckData) {
     var nameInput = document.getElementById('deckRenameBatchNameInput');
     if (nameInput) nameInput.value = deckData.title;
+
+    var roomInput = document.getElementById('deckRenameRoomInput');
+    if (roomInput) roomInput.value = deckData.rawObj.room || 'Orbit Home Studio A';
+
+    var feeInput = document.getElementById('deckRenameFeeInput');
+    if (feeInput) feeInput.value = deckData.fee || 2500;
+
+    // Weekly Schedule (Saved in exact day-wise JSON schema requested)
+    var sched = deckData.rawObj.weekly_schedule;
+    if (!sched || typeof sched !== 'object') {
+      sched = {
+        "fri": "09:00 AM - 05:00 PM",
+        "mon": "09:00 AM - 05:00 PM",
+        "sat": "09:00 AM - 02:00 PM",
+        "sun": "Closed",
+        "thu": "09:00 AM - 05:00 PM",
+        "tue": "09:00 AM - 05:00 PM",
+        "wed": "09:00 AM - 05:00 PM"
+      };
+      deckData.rawObj.weekly_schedule = sched;
+    }
+
+    var schedMon = document.getElementById('sched_mon');
+    var schedTue = document.getElementById('sched_tue');
+    var schedWed = document.getElementById('sched_wed');
+    var schedThu = document.getElementById('sched_thu');
+    var schedFri = document.getElementById('sched_fri');
+    var schedSat = document.getElementById('sched_sat');
+    var schedSun = document.getElementById('sched_sun');
+
+    if (schedMon) schedMon.value = sched.mon || '09:00 AM - 05:00 PM';
+    if (schedTue) schedTue.value = sched.tue || '09:00 AM - 05:00 PM';
+    if (schedWed) schedWed.value = sched.wed || '09:00 AM - 05:00 PM';
+    if (schedThu) schedThu.value = sched.thu || '09:00 AM - 05:00 PM';
+    if (schedFri) schedFri.value = sched.fri || '09:00 AM - 05:00 PM';
+    if (schedSat) schedSat.value = sched.sat || '09:00 AM - 02:00 PM';
+    if (schedSun) schedSun.value = sched.sun || 'Closed';
+
+    // Live update JSON schema preview box
+    function updateSchedulePreview() {
+      var currentScheduleObj = {
+        "fri": (schedFri ? schedFri.value : sched.fri).trim(),
+        "mon": (schedMon ? schedMon.value : sched.mon).trim(),
+        "sat": (schedSat ? schedSat.value : sched.sat).trim(),
+        "sun": (schedSun ? schedSun.value : sched.sun).trim(),
+        "thu": (schedThu ? schedThu.value : sched.thu).trim(),
+        "tue": (schedTue ? schedTue.value : sched.tue).trim(),
+        "wed": (schedWed ? schedWed.value : sched.wed).trim()
+      };
+      var jsonPre = document.getElementById('dispScheduleJsonPreview');
+      if (jsonPre) jsonPre.textContent = JSON.stringify(currentScheduleObj, null, 2);
+      return currentScheduleObj;
+    }
+
+    [schedMon, schedTue, schedWed, schedThu, schedFri, schedSat, schedSun].forEach(function (inp) {
+      if (inp) inp.oninput = updateSchedulePreview;
+    });
+
+    updateSchedulePreview();
 
     var form = document.getElementById('formDeckRenameBatch');
     if (form) {
       form.onsubmit = function (e) {
         e.preventDefault();
         var newName = nameInput.value.trim();
+        var newRoom = roomInput.value.trim();
+        var newFee = parseInt(feeInput.value, 10) || 2500;
+        var scheduleObj = updateSchedulePreview();
+        var summaryScheduleText = formatWeeklyScheduleDisplay(scheduleObj);
+
         if (deckData.isPrivate) {
           var pbatch = (STATE.private_batches || []).find(function (b) { return b.id === activeDeckContext.id; });
           if (pbatch) {
             pbatch.name = newName;
+            pbatch.room = newRoom;
+            pbatch.monthly_fee = newFee;
+            pbatch.weekly_schedule = scheduleObj;
+            pbatch.schedule = summaryScheduleText;
             saveState();
             renderBatchDeck();
-            showToast('Batch successfully renamed to: ' + newName, 'success');
+            showToast('Batch renamed and weekly schedule JSON saved!', 'success');
           }
         } else {
-          showToast('Section name saved.', 'success');
+          var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeDeckContext.parentCoachingId; });
+          if (inst) {
+            var sec = (inst.classes_sections || []).find(function (s) { return s.id === activeDeckContext.id; });
+            if (sec) {
+              sec.full_code = newName;
+              sec.room = newRoom;
+              sec.weekly_schedule = scheduleObj;
+              saveState();
+              renderBatchDeck();
+              showToast('Section settings & weekly schedule JSON saved!', 'success');
+            }
+          }
         }
       };
     }
@@ -1148,6 +1870,26 @@
     var openInviteBtn = document.getElementById('btnOpenInviteTeacher');
     if (openInviteBtn) {
       openInviteBtn.onclick = function () { openModal('modalInviteTeacher'); };
+    }
+
+    // Add Chapter / Topic to Curriculum Modal Opener
+    var openAddChBtn = document.getElementById('btnOpenAddChapterModal');
+    if (openAddChBtn) {
+      openAddChBtn.onclick = function () {
+        var inpDate = document.getElementById('inpSylPlannedDate');
+        if (inpDate) inpDate.value = new Date().toISOString().slice(0, 10);
+        openModal('modalAddCurriculumTopic');
+      };
+    }
+
+    // Schedule New Test Modal Opener
+    var openSchedTestBtn = document.getElementById('btnOpenScheduleTestModal');
+    if (openSchedTestBtn) {
+      openSchedTestBtn.onclick = function () {
+        var inpTDate = document.getElementById('inpTestDate');
+        if (inpTDate) inpTDate.value = new Date().toISOString().slice(0, 10);
+        openModal('modalScheduleNewTest');
+      };
     }
 
     // Add Student to Batch Modal
@@ -1665,6 +2407,186 @@
         renderDeckFees(updatedDeck);
 
         showToast('🎉 Enrolled ' + name + ' (' + roll + ') in ' + deckData.title + '!', 'success');
+      };
+    }
+
+    // 5. Add Curriculum Chapter / Topic Form
+    var formAddCurriculum = document.getElementById('formAddCurriculumTopic');
+    if (formAddCurriculum) {
+      formAddCurriculum.onsubmit = function (e) {
+        e.preventDefault();
+        var deckData = getActiveDeckData();
+        if (!deckData) return;
+
+        var chNum = parseInt(document.getElementById('inpSylChapterNum').value, 10) || 1;
+        var chName = document.getElementById('inpSylChapterName').value.trim();
+        var topicName = document.getElementById('inpSylTopicName').value.trim();
+        var plannedDate = document.getElementById('inpSylPlannedDate').value;
+        var status = document.getElementById('inpSylStatus').value;
+
+        var actualDate = status === 'covered' ? new Date().toISOString().slice(0, 10) : null;
+        var varianceStatus = 'on_schedule';
+        var varianceText = '🎯 Target: ' + plannedDate;
+        if (status === 'covered') {
+          varianceStatus = 'completed';
+          varianceText = '✅ Completed (Reality)';
+        } else if (status === 'in_progress') {
+          varianceStatus = 'in_progress';
+          varianceText = '⏳ In Progress';
+        } else {
+          varianceStatus = 'upcoming';
+          varianceText = '📅 Upcoming (Planned: ' + plannedDate + ')';
+        }
+
+        var newTopic = {
+          id: 'syl-' + Date.now(),
+          context_id: activeDeckContext.id,
+          subject: deckData.subject || 'Mathematics',
+          chapter_number: chNum,
+          chapter_name: chName,
+          topic_name: topicName,
+          planned_target_date: plannedDate,
+          actual_completion_date: actualDate,
+          variance_status: varianceStatus,
+          variance_text: varianceText,
+          status: status,
+          revised_count: 0
+        };
+
+        if (!STATE.syllabus_topics) STATE.syllabus_topics = [];
+        STATE.syllabus_topics.push(newTopic);
+        saveState();
+        closeModal('modalAddCurriculumTopic');
+        formAddCurriculum.reset();
+        renderDeckSyllabus(deckData);
+        showToast('Added Chapter ' + chNum + ': ' + chName + ' to curriculum!', 'success');
+      };
+    }
+
+    // 6. Schedule New Test Exam Form
+    var formScheduleTest = document.getElementById('formScheduleNewTest');
+    if (formScheduleTest) {
+      formScheduleTest.onsubmit = function (e) {
+        e.preventDefault();
+        var deckData = getActiveDeckData();
+        if (!deckData) return;
+
+        var title = document.getElementById('inpTestTitle').value.trim();
+        var subject = document.getElementById('inpTestSubject').value.trim();
+        var date = document.getElementById('inpTestDate').value || new Date().toISOString().slice(0, 10);
+        var maxMarks = parseInt(document.getElementById('inpTestMaxMarks').value, 10) || 50;
+
+        var newTestId = 'test-' + Date.now();
+        var enrolledSubmissions = (deckData.studentIds || []).map(function (sId, idx) {
+          var st = (STATE.students || []).find(function (s) { return s.id === sId; });
+          return {
+            student_id: sId,
+            name: st ? st.name : 'Student',
+            roll: st ? st.roll : ('SA-' + (100 + idx)),
+            marks: null,
+            rank: null,
+            status: 'pending',
+            weak_topics: 'To be evaluated'
+          };
+        });
+
+        var newTest = {
+          id: newTestId,
+          context_id: activeDeckContext.id,
+          title: title,
+          subject: subject,
+          max_marks: maxMarks,
+          conducted_date: date,
+          class_average: 0,
+          highest_score: null,
+          lowest_score: null,
+          pass_rate: 0,
+          submissions: enrolledSubmissions
+        };
+
+        if (!STATE.tests) STATE.tests = [];
+        STATE.tests.unshift(newTest);
+        activeTestId = newTestId;
+
+        saveState();
+        closeModal('modalScheduleNewTest');
+        formScheduleTest.reset();
+        renderDeckTests(deckData);
+        showToast('Scheduled Test: ' + title + ' (' + maxMarks + ' Marks)!', 'success');
+      };
+    }
+
+    // 7. Record Tuition Fee Payment Form
+    var formRecordPay = document.getElementById('formRecordPayment');
+    if (formRecordPay) {
+      formRecordPay.onsubmit = function (e) {
+        e.preventDefault();
+        var sId = document.getElementById('payStudentId').value;
+        var mKey = document.getElementById('payMonthKey').value;
+        var amt = parseInt(document.getElementById('payAmountInput').value, 10) || 2500;
+        var pDate = document.getElementById('payDateInput').value || new Date().toISOString().slice(0, 10);
+        var pMode = document.getElementById('payModeSelect').value;
+        var pRef = document.getElementById('payRefInput').value.trim() || ('REC-' + sId.slice(-4) + '-' + mKey.replace('-', ''));
+
+        var student = (STATE.students || []).find(function (s) { return s.id === sId; });
+        if (!student) return;
+
+        if (!student.fee_ledger) student.fee_ledger = {};
+        student.fee_ledger[mKey] = {
+          status: 'paid',
+          amount: amt,
+          paid_date: pDate,
+          payment_mode: pMode,
+          receipt_ref: pRef
+        };
+
+        // If current month is paid, update student fee_status
+        if (mKey === '2026-10') {
+          student.fee_status = 'paid';
+        }
+
+        saveState();
+        closeModal('modalRecordPayment');
+        var deckData = getActiveDeckData();
+        if (deckData) {
+          renderDeckFees(deckData);
+        }
+        showToast('Recorded payment of ₹' + amt.toLocaleString() + ' for ' + student.name + ' (' + formatMonthName(mKey) + ')!', 'success');
+      };
+    }
+
+    // 8. Configure Student Fee Structure Form
+    var formCfgStudentFee = document.getElementById('formConfigureStudentFee');
+    if (formCfgStudentFee) {
+      formCfgStudentFee.onsubmit = function (e) {
+        e.preventDefault();
+        var sId = document.getElementById('cfgFeeStudentId').value;
+        var newAmt = parseInt(document.getElementById('cfgFeeAmountInput').value, 10) || 2500;
+        var startM = document.getElementById('cfgFeeStartMonth').value;
+        var endM = document.getElementById('cfgFeeEndMonth').value;
+
+        var student = (STATE.students || []).find(function (s) { return s.id === sId; });
+        if (!student) return;
+
+        student.custom_monthly_fee = newAmt;
+        student.admission_start_month = startM;
+        student.course_end_month = endM;
+
+        if (student.fee_ledger) {
+          Object.keys(student.fee_ledger).forEach(function (m) {
+            if (student.fee_ledger[m].status !== 'paid') {
+              student.fee_ledger[m].amount = newAmt;
+            }
+          });
+        }
+
+        saveState();
+        closeModal('modalConfigureStudentFee');
+        var deckData = getActiveDeckData();
+        if (deckData) {
+          renderDeckFees(deckData);
+        }
+        showToast('Updated fee structure for ' + student.name + ': ₹' + newAmt.toLocaleString() + '/mo', 'success');
       };
     }
   }

@@ -279,6 +279,81 @@ CREATE TABLE points_dispatches (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 10. STUDENT TUITION FEE STRUCTURES & MONTH-BY-MONTH LEDGER
+CREATE TABLE student_tuition_fee_structures (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    private_batch_id UUID NOT NULL REFERENCES private_batches(id) ON DELETE CASCADE,
+    personalized_monthly_fee DECIMAL(10,2) NOT NULL DEFAULT 2500.00,
+    admission_start_month VARCHAR(7) NOT NULL DEFAULT '2026-06', -- YYYY-MM
+    course_end_month VARCHAR(7) NOT NULL DEFAULT '2027-03',       -- YYYY-MM (e.g. Board Exams)
+    discount_concession_note VARCHAR(255),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, private_batch_id)
+);
+
+CREATE TABLE student_monthly_fee_ledgers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    private_batch_id UUID NOT NULL REFERENCES private_batches(id) ON DELETE CASCADE,
+    billing_month_key VARCHAR(7) NOT NULL, -- e.g. '2026-10'
+    amount_due DECIMAL(10,2) NOT NULL,
+    amount_paid DECIMAL(10,2) DEFAULT 0.00,
+    payment_status VARCHAR(20) NOT NULL CHECK (payment_status IN ('paid', 'pending', 'overdue', 'exempted')),
+    paid_date DATE,
+    payment_mode VARCHAR(50), -- 'UPI (Google Pay)', 'Cash', 'Net Banking', 'Cheque'
+    receipt_reference VARCHAR(64) UNIQUE,
+    recorded_by_teacher_id UUID REFERENCES teachers(id),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, private_batch_id, billing_month_key)
+);
+
+-- 11. CURRICULUM & SYLLABUS TOPICS (PLANNED TARGET VS REALITY)
+CREATE TABLE curriculum_syllabus_topics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    private_batch_id UUID REFERENCES private_batches(id) ON DELETE CASCADE,
+    coaching_section_id UUID REFERENCES coaching_sections(id) ON DELETE CASCADE,
+    subject VARCHAR(100) NOT NULL,
+    chapter_number INTEGER NOT NULL,
+    chapter_name VARCHAR(150) NOT NULL,
+    topic_description TEXT NOT NULL,
+    planned_target_date DATE NOT NULL,
+    actual_completion_date DATE,
+    variance_status VARCHAR(20) NOT NULL DEFAULT 'on_schedule' CHECK (variance_status IN ('on_schedule', 'delayed', 'ahead', 'in_progress', 'upcoming')),
+    variance_text VARCHAR(120),
+    status VARCHAR(20) NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'in_progress', 'covered')),
+    revised_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. MULTI-TEST EXAMINATIONS & STUDENT SCORECARDS
+CREATE TABLE batch_tests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    private_batch_id UUID REFERENCES private_batches(id) ON DELETE CASCADE,
+    coaching_section_id UUID REFERENCES coaching_sections(id) ON DELETE CASCADE,
+    title VARCHAR(150) NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    max_marks INTEGER NOT NULL CHECK (max_marks > 0),
+    conducted_date DATE NOT NULL,
+    class_average DECIMAL(5,2),
+    highest_score INTEGER,
+    lowest_score INTEGER,
+    pass_rate DECIMAL(5,2),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE test_student_scorecards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    test_id UUID NOT NULL REFERENCES batch_tests(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    marks_obtained INTEGER CHECK (marks_obtained >= 0),
+    student_rank INTEGER,
+    attendance_status VARCHAR(20) NOT NULL DEFAULT 'present' CHECK (attendance_status IN ('present', 'absent', 'exempted')),
+    diagnostic_weak_topics TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(test_id, student_id)
+);
+
 -- =============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- =============================================================================

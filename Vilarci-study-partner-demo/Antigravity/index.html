@@ -251,291 +251,510 @@
 
     <!-- ══════════════════════════════════════════════════════════════════════
          VIEW 4: UNIFIED BATCH & SECTION COMMAND DECK
-         (When teacher enters ANY private batch OR coaching section!)
+         (When teacher enters ANY private batch OR coaching section,
+          the top bar transforms into a dedicated Sidebar Workspace!)
          ══════════════════════════════════════════════════════════════════════ -->
-    <section id="view-batch-deck" class="main-view" style="display:none;">
+    <section id="view-batch-deck" class="main-view" style="display:none; padding:0; margin:0;">
       
-      <!-- Deck Header -->
-      <div class="batch-deck-header" id="batchDeckHeader">
-        <div>
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-            <span class="pill pill-primary" id="deckContextBadge">Private Batch</span>
-            <span class="pill pill-muted" id="deckGradeBadge">Class 10 CBSE</span>
+      <div class="deck-workspace-shell">
+        
+        <!-- ─── DEDICATED COMMAND DECK SIDEBAR (Replaces Top Bar) ───────────── -->
+        <aside class="deck-sidebar" id="deckSidebar">
+          
+          <!-- Sidebar Brand Box -->
+          <div class="deck-sidebar-brand">
+            <div class="brand-box">
+              <img src="https://officialpic.vilarci.in/Icons/web-icon.png" alt="Vilarci Logo" class="brand-icon">
+              <div class="brand-meta">
+                <span class="brand-title">Vilarci <span class="brand-badge">Partner</span></span>
+                <span class="brand-sub" id="sidebarContextSub">Batch Workspace</span>
+              </div>
+            </div>
+            <button type="button" class="deck-mobile-close-btn" id="btnDeckCloseSidebarMobile" aria-label="Close sidebar menu">&times;</button>
           </div>
-          <h1 class="batch-deck-title" id="deckTitleDisplay">Class 10 Maths Morning Super 20</h1>
-          <p class="batch-deck-meta" id="deckMetaDisplay">Mon, Wed, Fri • 07:30 AM – 09:00 AM &bull; Room: Orbit Studio A</p>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <button type="button" class="btn btn-outline" style="background:#fff; color:var(--primary); font-weight:700;" id="btnExitBatchDeck">← Exit Batch</button>
-        </div>
-      </div>
 
-      <!-- Batch Deck Sub-Navigation Tabs -->
-      <div class="batch-deck-tabs" id="batchDeckNavTabs">
-        <button type="button" class="deck-tab-btn active" data-deck-tab="students">👥 Students Roster (<span id="deckStudentCountPill">18</span>)</button>
-        <button type="button" class="deck-tab-btn" data-deck-tab="attendance">📋 Daily Attendance &amp; QR</button>
-        <button type="button" class="deck-tab-btn" data-deck-tab="points">🏅 Points &amp; Honors</button>
-        <button type="button" class="deck-tab-btn" data-deck-tab="tests">📝 Tests &amp; Marks</button>
-        <button type="button" class="deck-tab-btn" data-deck-tab="syllabus">📖 Curriculum Tracker</button>
-        <button type="button" class="deck-tab-btn" data-deck-tab="fees">💳 Tuition Fees</button>
-        <button type="button" class="deck-tab-btn" data-deck-tab="settings">⚙️ Batch Settings (Rename)</button>
-      </div>
+          <!-- Active Batch Profile Card in Sidebar -->
+          <div class="deck-sidebar-batch-card">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+              <span class="pill pill-primary" id="deckContextBadge">Private Batch</span>
+              <span class="pill pill-muted" id="deckGradeBadge">Class 10 CBSE</span>
+            </div>
+            <h2 class="deck-sidebar-batch-title" id="deckTitleDisplay">Class 10 Maths Morning Super 20</h2>
+            <div class="deck-sidebar-batch-schedule" id="deckMetaDisplay">Mon, Wed, Fri • 07:30 AM – 09:00 AM</div>
+            <div class="deck-sidebar-batch-room" id="deckRoomDisplay">📍 Room: Orbit Home Studio A</div>
+          </div>
 
-      <!-- SUB-TAB A: STUDENTS ROSTER -->
-      <div id="dsub-students" class="dsub-view active">
-        <article class="card">
-          <div class="card-header" style="flex-wrap:wrap; gap:12px;">
-            <div>
-              <h3 class="card-title">Enrolled Students Directory</h3>
-              <span class="card-subtitle">Verified parent contacts (Father, Mother, Guardian) &bull; Live points &amp; streaks</span>
-            </div>
-            <button type="button" class="btn btn-primary btn-sm" id="btnOpenAddStudentToBatch">+ Add Student to Batch</button>
-          </div>
-          <div class="card-body" style="padding:0;">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Roll No</th>
-                    <th>Student Name</th>
-                    <th>Verified Parent / Guardian Contacts</th>
-                    <th>Learning Points</th>
-                    <th>Streak</th>
-                    <th>Attendance</th>
-                    <th>Fee Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="deckStudentsTableBody">
-                  <!-- Populated dynamically by JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </article>
-      </div>
+          <!-- Vertical Navigation Tabs Menu -->
+          <nav class="deck-sidebar-nav" id="batchDeckNavTabs" aria-label="Batch Tools Navigation">
+            <button type="button" class="deck-nav-item active" data-deck-tab="students">
+              <span class="deck-nav-icon">👥</span>
+              <span class="deck-nav-label">Students Roster</span>
+              <span class="deck-nav-pill" id="deckStudentCountPill">7</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-deck-tab="attendance">
+              <span class="deck-nav-icon">📋</span>
+              <span class="deck-nav-label">Daily Attendance &amp; QR</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-deck-tab="points">
+              <span class="deck-nav-icon">🏅</span>
+              <span class="deck-nav-label">Points &amp; Honors</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-deck-tab="tests">
+              <span class="deck-nav-icon">📝</span>
+              <span class="deck-nav-label">Tests &amp; Marks</span>
+              <span class="deck-nav-pill" id="sidebarTestCountPill">3</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-deck-tab="syllabus">
+              <span class="deck-nav-icon">📖</span>
+              <span class="deck-nav-label">Curriculum Tracker</span>
+              <span class="badge badge-success" style="font-size:9.5px; padding:2px 6px;">Target vs Reality</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-deck-tab="fees">
+              <span class="deck-nav-icon">💳</span>
+              <span class="deck-nav-label">Tuition Fees</span>
+              <span class="pill pill-muted" style="font-size:9.5px; padding:2px 6px;">Monthly</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-deck-tab="settings">
+              <span class="deck-nav-icon">⚙️</span>
+              <span class="deck-nav-label">Batch Settings (Schedule)</span>
+            </button>
+          </nav>
 
-      <!-- SUB-TAB B: DAILY ATTENDANCE & QR TERMINAL -->
-      <div id="dsub-attendance" class="dsub-view" style="display:none;">
-        <div class="qr-terminal-box">
-          <div class="qr-code-graphic">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <rect x="5" y="5" width="28" height="28" fill="#800020" rx="3"/>
-              <rect x="9" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
-              <rect x="13" y="13" width="12" height="12" fill="#800020" rx="1"/>
-              <rect x="67" y="5" width="28" height="28" fill="#800020" rx="3"/>
-              <rect x="71" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
-              <rect x="75" y="13" width="12" height="12" fill="#800020" rx="1"/>
-              <rect x="5" y="67" width="28" height="28" fill="#800020" rx="3"/>
-              <rect x="9" y="71" width="20" height="20" fill="#ffffff" rx="2"/>
-              <rect x="13" y="75" width="12" height="12" fill="#800020" rx="1"/>
-              <rect x="38" y="10" width="5" height="5" fill="#800020"/>
-              <rect x="48" y="10" width="5" height="5" fill="#800020"/>
-              <rect x="38" y="40" width="8" height="8" fill="#D97706"/>
-              <rect x="52" y="42" width="6" height="6" fill="#800020"/>
-              <rect x="68" y="44" width="8" height="8" fill="#800020"/>
-              <rect x="40" y="60" width="6" height="6" fill="#800020"/>
-              <rect x="54" y="58" width="8" height="8" fill="#800020"/>
-              <rect x="42" y="74" width="7" height="7" fill="#800020"/>
-            </svg>
-          </div>
-          <div style="flex:1;">
-            <span class="badge badge-success">LIVE CLASSROOM QR CHECK-IN</span>
-            <h3 style="font-size:18px; font-weight:700; margin:6px 0;" id="deckQrBatchTitle">Classroom Check-in QR</h3>
-            <p class="text-xs text-muted" style="line-height:1.45;">Project on the screen. Students scan with their <strong>Vilarci Study</strong> portal to verify attendance (+10 pts).</p>
-            <div style="margin-top:10px; display:flex; gap:10px;">
-              <button type="button" class="btn btn-outline btn-sm" id="btnRefreshQrSession">🔄 Refresh Token</button>
-              <button type="button" class="btn btn-primary btn-sm" id="btnProjectorFullscreen">📺 Fullscreen Mode</button>
+          <!-- Sidebar Footer: Educator Identity & Return Button -->
+          <div class="deck-sidebar-footer">
+            <div class="teacher-profile-chip" style="width:100%; margin-bottom:12px; justify-content:flex-start;">
+              <div class="teacher-avatar" id="sidebarTeacherAvatar">AS</div>
+              <div style="flex:1; min-width:0;">
+                <div class="teacher-name-txt" id="sidebarTeacherName" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Er. Alok Sharma</div>
+                <div class="text-xs text-muted" id="sidebarTeacherSubject">Mathematics Specialist</div>
+              </div>
             </div>
+            <button type="button" class="btn btn-outline" id="btnExitBatchDeck" style="width:100%; font-weight:700; color:var(--primary); border-color:var(--primary); background:var(--surface);">
+              ← Exit to All Batches
+            </button>
           </div>
-        </div>
 
-        <article class="card">
-          <div class="card-header" style="flex-wrap:wrap; gap:12px;">
-            <div>
-              <h3 class="card-title">Today's Attendance Sheet — 20 Oct 2026</h3>
-              <span class="card-subtitle">Click P (Present), L (Late), or A (Absent) to override status</span>
-            </div>
-            <div style="display:flex; gap:8px;">
-              <button type="button" class="btn btn-outline btn-sm" id="btnDeckMarkAllPresent">✓ Mark All Present</button>
-              <button type="button" class="btn btn-primary btn-sm" id="btnDeckSaveAttendance">Save Session</button>
-            </div>
-          </div>
-          <div class="card-body" style="padding:0;">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Roll No</th>
-                    <th>Student Name</th>
-                    <th>Status</th>
-                    <th>Points</th>
-                    <th>Parent Alert</th>
-                  </tr>
-                </thead>
-                <tbody id="deckAttendanceTableBody">
-                  <!-- Populated dynamically by JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </article>
-      </div>
+        </aside>
 
-      <!-- SUB-TAB C: POINTS & HONORS DISPENSER DESK -->
-      <div id="dsub-points" class="dsub-view" style="display:none;">
-        <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:20px;">
-          <!-- Form to Dispense Points -->
-          <article class="card">
-            <div class="card-header">
-              <h3 class="card-title">🏅 Dispatch Academic Points to Student</h3>
+        <!-- Backdrop overlay for mobile drawer -->
+        <div class="deck-sidebar-backdrop" id="deckSidebarBackdrop"></div>
+
+        <!-- ─── MAIN CONTENT PANE ───────────────────────────────────────────── -->
+        <main class="deck-main-pane">
+          
+          <!-- Mobile Top Bar with Hamburger Toggle -->
+          <div class="deck-mobile-header" id="deckMobileHeader">
+            <button type="button" class="btn btn-outline btn-sm" id="btnDeckMobileToggleSidebar">
+              ☰ Menu
+            </button>
+            <div class="deck-mobile-title-box">
+              <span class="deck-mobile-title" id="deckMobileTitleText">Class 10 Maths</span>
+              <span class="text-xs text-muted">Command Deck</span>
             </div>
-            <div class="card-body">
-              <form id="formDeckAwardPoints">
-                <div class="form-group">
-                  <label class="form-label">Select Student:</label>
-                  <select id="deckAwardStudentSelect" class="form-select" required></select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Points to Award:</label>
-                  <div style="display:flex; gap:8px; margin-bottom:8px;">
-                    <button type="button" class="btn btn-outline btn-sm qpts" data-pts="50">+50 pts</button>
-                    <button type="button" class="btn btn-outline btn-sm qpts" data-pts="100">+100 pts</button>
-                    <button type="button" class="btn btn-outline btn-sm qpts" data-pts="150">+150 pts</button>
+            <button type="button" class="btn btn-outline btn-sm" id="btnDeckMobileExitBtn">Exit</button>
+          </div>
+
+          <!-- Main Scrollable Content Container -->
+          <div class="deck-content-inner">
+
+            <!-- ─── SUB-TAB 1: STUDENTS ROSTER ──────────────────────────────── -->
+            <div id="dsub-students" class="dsub-view active">
+              <article class="card">
+                <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                  <div>
+                    <h3 class="card-title">Enrolled Students Directory</h3>
+                    <span class="card-subtitle">Verified parent contacts (Father, Mother, Guardian) &bull; Live points, streaks &amp; exit management</span>
                   </div>
-                  <input type="number" id="deckAwardPointsInput" class="form-input" value="100" min="10" max="1000" required>
+                  <button type="button" class="btn btn-primary btn-sm" id="btnOpenAddStudentToBatch">+ Add Student to Batch</button>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Category:</label>
-                  <select id="deckAwardCategorySelect" class="form-select">
-                    <option value="Excellence in Mathematics">Test Excellence &amp; Score Mastery</option>
-                    <option value="Concept Mastery">Concept Mastery &amp; Problem Solving</option>
-                    <option value="Homework Diligence">Homework Streak</option>
-                    <option value="Classroom Leadership">Classroom Peer Assistance</option>
-                  </select>
+                <div class="card-body" style="padding:0;">
+                  <div class="table-responsive">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Roll No</th>
+                          <th>Student Name</th>
+                          <th>Verified Parent / Guardian Contacts</th>
+                          <th>Learning Points</th>
+                          <th>Streak</th>
+                          <th>Attendance</th>
+                          <th>Fee Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="deckStudentsTableBody">
+                        <!-- Populated dynamically by JS -->
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Teacher Citation / Feedback:</label>
-                  <textarea id="deckAwardCitationInput" class="form-textarea" rows="2" placeholder="e.g. Outstanding proof derivation in Quadratic Roots test." required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">Dispatch Points (+ Live Re-rank)</button>
-              </form>
+              </article>
             </div>
-          </article>
 
-          <!-- Live Batch Standings Preview -->
-          <article class="card">
-            <div class="card-header">
-              <h3 class="card-title">Live Batch Point Leaderboard</h3>
+            <!-- ─── SUB-TAB 2: DAILY ATTENDANCE & QR TERMINAL ────────────────── -->
+            <div id="dsub-attendance" class="dsub-view" style="display:none;">
+              <div class="qr-terminal-box">
+                <div class="qr-code-graphic">
+                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="5" width="28" height="28" fill="#800020" rx="3"/>
+                    <rect x="9" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
+                    <rect x="13" y="13" width="12" height="12" fill="#800020" rx="1"/>
+                    <rect x="67" y="5" width="28" height="28" fill="#800020" rx="3"/>
+                    <rect x="71" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
+                    <rect x="75" y="13" width="12" height="12" fill="#800020" rx="1"/>
+                    <rect x="5" y="67" width="28" height="28" fill="#800020" rx="3"/>
+                    <rect x="9" y="71" width="20" height="20" fill="#ffffff" rx="2"/>
+                    <rect x="13" y="75" width="12" height="12" fill="#800020" rx="1"/>
+                    <rect x="38" y="10" width="5" height="5" fill="#800020"/>
+                    <rect x="48" y="10" width="5" height="5" fill="#800020"/>
+                    <rect x="38" y="40" width="8" height="8" fill="#D97706"/>
+                    <rect x="52" y="42" width="6" height="6" fill="#800020"/>
+                    <rect x="68" y="44" width="8" height="8" fill="#800020"/>
+                    <rect x="40" y="60" width="6" height="6" fill="#800020"/>
+                    <rect x="54" y="58" width="8" height="8" fill="#800020"/>
+                    <rect x="42" y="74" width="7" height="7" fill="#800020"/>
+                  </svg>
+                </div>
+                <div style="flex:1;">
+                  <span class="badge badge-success">LIVE CLASSROOM QR CHECK-IN</span>
+                  <h3 style="font-size:18px; font-weight:700; margin:6px 0;" id="deckQrBatchTitle">Classroom Check-in QR</h3>
+                  <p class="text-xs text-muted" style="line-height:1.45;">Project on the screen. Students scan with their <strong>Vilarci Study</strong> portal to verify attendance (+10 pts).</p>
+                  <div style="margin-top:10px; display:flex; gap:10px;">
+                    <button type="button" class="btn btn-outline btn-sm" id="btnRefreshQrSession">🔄 Refresh Token</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnProjectorFullscreen">📺 Fullscreen Mode</button>
+                  </div>
+                </div>
+              </div>
+
+              <article class="card">
+                <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                  <div>
+                    <h3 class="card-title">Today's Attendance Sheet — 20 Oct 2026</h3>
+                    <span class="card-subtitle">Click P (Present), L (Late), or A (Absent) to override status</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-outline btn-sm" id="btnDeckMarkAllPresent">✓ Mark All Present</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnDeckSaveAttendance">Save Session</button>
+                  </div>
+                </div>
+                <div class="card-body" style="padding:0;">
+                  <div class="table-responsive">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Roll No</th>
+                          <th>Student Name</th>
+                          <th>Status</th>
+                          <th>Points</th>
+                          <th>Parent Alert</th>
+                        </tr>
+                      </thead>
+                      <tbody id="deckAttendanceTableBody">
+                        <!-- Populated dynamically by JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
             </div>
-            <div class="card-body" style="padding:0;">
-              <div id="deckLiveLeaderboardList">
+
+            <!-- ─── SUB-TAB 3: POINTS & HONORS DISPENSER DESK ────────────────── -->
+            <div id="dsub-points" class="dsub-view" style="display:none;">
+              <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:20px;">
+                <!-- Form to Dispense Points -->
+                <article class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">🏅 Dispatch Academic Points to Student</h3>
+                  </div>
+                  <div class="card-body">
+                    <form id="formDeckAwardPoints">
+                      <div class="form-group">
+                        <label class="form-label">Select Student:</label>
+                        <select id="deckAwardStudentSelect" class="form-select" required></select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Points to Award:</label>
+                        <div style="display:flex; gap:8px; margin-bottom:8px;">
+                          <button type="button" class="btn btn-outline btn-sm qpts" data-pts="50">+50 pts</button>
+                          <button type="button" class="btn btn-outline btn-sm qpts" data-pts="100">+100 pts</button>
+                          <button type="button" class="btn btn-outline btn-sm qpts" data-pts="150">+150 pts</button>
+                        </div>
+                        <input type="number" id="deckAwardPointsInput" class="form-input" value="100" min="10" max="1000" required>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Category:</label>
+                        <select id="deckAwardCategorySelect" class="form-select">
+                          <option value="Excellence in Mathematics">Test Excellence &amp; Score Mastery</option>
+                          <option value="Concept Mastery">Concept Mastery &amp; Problem Solving</option>
+                          <option value="Homework Diligence">Homework Streak</option>
+                          <option value="Classroom Leadership">Classroom Peer Assistance</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Teacher Citation / Feedback:</label>
+                        <textarea id="deckAwardCitationInput" class="form-textarea" rows="2" placeholder="e.g. Outstanding proof derivation in Quadratic Roots test." required></textarea>
+                      </div>
+                      <button type="submit" class="btn btn-primary" style="width:100%;">Dispatch Points (+ Live Re-rank)</button>
+                    </form>
+                  </div>
+                </article>
+
+                <!-- Live Batch Standings Preview -->
+                <article class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Live Batch Point Leaderboard</h3>
+                  </div>
+                  <div class="card-body" style="padding:0;">
+                    <div id="deckLiveLeaderboardList">
+                      <!-- Populated dynamically by JS -->
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- ─── SUB-TAB 4: TESTS & MARKS (Multiple Tests & Every Student) ── -->
+            <div id="dsub-tests" class="dsub-view" style="display:none;">
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h3 style="font-size:18px; font-weight:800;">Conducted Tests &amp; Scorecards</h3>
+                  <p class="text-xs text-muted">Manage multiple test examinations • Enter marks &amp; view diagnostic remarks for every student.</p>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="btnOpenScheduleTestModal">+ Schedule New Test</button>
+              </div>
+
+              <!-- Test Navigation Selector Chips -->
+              <div class="filter-chips-row" id="deckTestChipsRow" style="margin-bottom:18px;">
                 <!-- Populated dynamically by JS -->
               </div>
-            </div>
-          </article>
-        </div>
-      </div>
 
-      <!-- SUB-TAB D: TESTS & MARKS -->
-      <div id="dsub-tests" class="dsub-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <div>
-            <h3 style="font-size:18px; font-weight:800;">Conducted Tests &amp; Scorecards</h3>
-            <p class="text-xs text-muted">Evaluate students, enter test marks, and identify weak topics.</p>
-          </div>
-          <button type="button" class="btn btn-primary btn-sm" id="btnOpenScheduleTestModal">+ Schedule New Test</button>
-        </div>
-        <div id="deckTestsContainer">
-          <!-- Populated dynamically by JS -->
-        </div>
-      </div>
-
-      <!-- SUB-TAB E: CURRICULUM TRACKER -->
-      <div id="dsub-syllabus" class="dsub-view" style="display:none;">
-        <article class="card">
-          <div class="card-header">
-            <h3 class="card-title">Syllabus Topics Progression</h3>
-          </div>
-          <div class="card-body" style="padding:0;">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Chapter</th>
-                    <th>Topic</th>
-                    <th>Status</th>
-                    <th>Students Revised</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody id="deckSyllabusTableBody">
-                  <!-- Populated dynamically by JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <!-- SUB-TAB F: TUITION FEES -->
-      <div id="dsub-fees" class="dsub-view" style="display:none;">
-        <article class="card">
-          <div class="card-header">
-            <h3 class="card-title">Monthly Tuition Fees Ledger</h3>
-          </div>
-          <div class="card-body" style="padding:0;">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Invoice No</th>
-                    <th>Student Name</th>
-                    <th>Parent Phone</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody id="deckFeesTableBody">
-                  <!-- Populated dynamically by JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <!-- SUB-TAB G: BATCH SETTINGS (RENAME) -->
-      <div id="dsub-settings" class="dsub-view" style="display:none;">
-        <article class="card">
-          <div class="card-header">
-            <h3 class="card-title">Batch Configuration &amp; Renaming</h3>
-          </div>
-          <div class="card-body">
-            <form id="formDeckRenameBatch">
-              <div class="form-group">
-                <label class="form-label">Batch Name (Rename):</label>
-                <input type="text" id="deckRenameBatchNameInput" class="form-input" required>
+              <!-- Selected Test Overview & Scorecards Card -->
+              <div id="deckTestDetailArea">
+                <!-- Populated dynamically by JS -->
               </div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                <div class="form-group">
-                  <label class="form-label">Schedule:</label>
-                  <input type="text" id="deckRenameScheduleInput" class="form-input" required>
+
+            </div>
+
+            <!-- ─── SUB-TAB 5: CURRICULUM TRACKER (Target vs Reality) ────────── -->
+            <div id="dsub-syllabus" class="dsub-view" style="display:none;">
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h3 style="font-size:18px; font-weight:800;">Curriculum Progress &bull; Planned Target vs Reality</h3>
+                  <p class="text-xs text-muted">Compare planned completion timelines against actual reality • Add or remove syllabus chapters.</p>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Monthly Tuition Fee (₹):</label>
-                  <input type="number" id="deckRenameFeeInput" class="form-input" required>
+                <button type="button" class="btn btn-primary btn-sm" id="btnOpenAddChapterModal">+ Add Chapter / Topic</button>
+              </div>
+
+              <!-- Actual vs Reality Analytics Widget -->
+              <div class="card" style="margin-bottom:20px; background:var(--surface);">
+                <div class="card-body">
+                  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:16px; margin-bottom:16px;" id="sylStatsGrid">
+                    <!-- Populated dynamically by JS -->
+                  </div>
+
+                  <!-- Visual Timeline Comparison Bar -->
+                  <div style="background:var(--surface-muted); padding:14px; border-radius:var(--radius-md); border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:6px;">
+                      <span>Planned Target Timeline Progress</span>
+                      <span id="sylPlannedPctLabel">60% Planned</span>
+                    </div>
+                    <div style="height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; margin-bottom:12px;">
+                      <div id="sylPlannedProgressBar" style="height:100%; width:60%; background:#2563EB; border-radius:4px;"></div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:6px;">
+                      <span>Actual Reality Covered Progress</span>
+                      <span id="sylActualPctLabel">48% Completed (Reality)</span>
+                    </div>
+                    <div style="height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+                      <div id="sylActualProgressBar" style="height:100%; width:48%; background:var(--primary); border-radius:4px;"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Room / Classroom Suite:</label>
-                <input type="text" id="deckRenameRoomInput" class="form-input" required>
+
+              <!-- Syllabus Topics Progression Table -->
+              <article class="card">
+                <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+                  <div>
+                    <h4 class="card-title" style="font-size:15px;">Chapters &amp; Topics Milestone Ledger</h4>
+                    <span class="card-subtitle">Real-time status updates &bull; Variance against planned target completion dates</span>
+                  </div>
+                </div>
+                <div class="card-body" style="padding:0;">
+                  <div class="table-responsive">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Chapter</th>
+                          <th>Topic &amp; Subtopics</th>
+                          <th>Target Date (Planned)</th>
+                          <th>Reality (Actual Date)</th>
+                          <th>Status</th>
+                          <th>Timeline Variance</th>
+                          <th>Students Revised</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="deckSyllabusTableBody">
+                        <!-- Populated dynamically by JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
+
+            </div>
+
+            <!-- ─── SUB-TAB 6: TUITION FEES (Personalized Monthly Ledger) ─────── -->
+            <div id="dsub-fees" class="dsub-view" style="display:none;">
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h3 style="font-size:18px; font-weight:800;">Monthly Tuition Fees Ledger</h3>
+                  <p class="text-xs text-muted">Personalized fee per student • Admission start &amp; course end tracking • Payment status, dates &amp; stamped receipts.</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <label class="form-label" style="margin:0; font-size:12px;">Academic Month:</label>
+                  <select id="deckFeeMonthSelector" class="form-select form-select-sm" style="font-weight:700; width:180px;">
+                    <option value="2026-10" selected>October 2026 (Current)</option>
+                    <option value="2026-09">September 2026</option>
+                    <option value="2026-08">August 2026</option>
+                    <option value="2026-07">July 2026</option>
+                    <option value="2026-06">June 2026</option>
+                    <option value="2026-11">November 2026</option>
+                  </select>
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary">Save Batch Updates</button>
-            </form>
+
+              <!-- Fee Collections Metric Cards -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:20px;" id="feeStatsGrid">
+                <!-- Populated dynamically by JS -->
+              </div>
+
+              <!-- Student Monthly Fees Ledger Table -->
+              <article class="card">
+                <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+                  <div>
+                    <h4 class="card-title" style="font-size:15px;">Student Fee Status for <span id="dispSelectedFeeMonthName">October 2026</span></h4>
+                    <span class="card-subtitle">Every student has individual fee rate &bull; Record offline payment, view full history or stamped receipt</span>
+                  </div>
+                </div>
+                <div class="card-body" style="padding:0;">
+                  <div class="table-responsive">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Roll No</th>
+                          <th>Student Name</th>
+                          <th>Tuition Period (Start ➜ End)</th>
+                          <th>Custom Monthly Fee</th>
+                          <th>Status</th>
+                          <th>Payment Info (Date &amp; Mode)</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="deckFeesTableBody">
+                        <!-- Populated dynamically by JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
+
+            </div>
+
+            <!-- ─── SUB-TAB 7: BATCH SETTINGS & WEEKLY SCHEDULE ──────────────── -->
+            <div id="dsub-settings" class="dsub-view" style="display:none;">
+              <article class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Batch Configuration &amp; Renaming</h3>
+                  <span class="card-subtitle">Rename batch name, room details, and manage day-by-day weekly schedule JSON format</span>
+                </div>
+                <div class="card-body">
+                  <form id="formDeckRenameBatch">
+                    <div class="form-group">
+                      <label class="form-label">Batch Name (Rename):</label>
+                      <input type="text" id="deckRenameBatchNameInput" class="form-input" required>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                      <div class="form-group">
+                        <label class="form-label">Room / Classroom Suite:</label>
+                        <input type="text" id="deckRenameRoomInput" class="form-input" required>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Default Base Monthly Fee (₹):</label>
+                        <input type="number" id="deckRenameFeeInput" class="form-input" required>
+                      </div>
+                    </div>
+
+                    <!-- Day-by-Day Weekly Schedule Editor (Exact Schema Specified) -->
+                    <div style="margin:20px 0; background:var(--surface-muted); padding:18px; border-radius:var(--radius-md); border:1px solid var(--border);">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <div>
+                          <strong style="font-size:14px;">📅 Weekly Schedule Configuration</strong>
+                          <div class="text-xs text-muted">Saved in exact day-wise timing structure (e.g. mon, tue, wed, thu, fri, sat, sun)</div>
+                        </div>
+                        <span class="badge badge-primary">Structured JSON</span>
+                      </div>
+
+                      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;" id="weeklyScheduleEditorGrid">
+                        <!-- Monday -->
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="form-label" style="font-size:11.5px;">Monday:</label>
+                          <input type="text" id="sched_mon" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        </div>
+                        <!-- Tuesday -->
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="form-label" style="font-size:11.5px;">Tuesday:</label>
+                          <input type="text" id="sched_tue" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        </div>
+                        <!-- Wednesday -->
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="form-label" style="font-size:11.5px;">Wednesday:</label>
+                          <input type="text" id="sched_wed" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        </div>
+                        <!-- Thursday -->
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="form-label" style="font-size:11.5px;">Thursday:</label>
+                          <input type="text" id="sched_thu" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        </div>
+                        <!-- Friday -->
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="form-label" style="font-size:11.5px;">Friday:</label>
+                          <input type="text" id="sched_fri" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        </div>
+                        <!-- Saturday -->
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="form-label" style="font-size:11.5px;">Saturday:</label>
+                          <input type="text" id="sched_sat" class="form-input text-xs" value="09:00 AM - 02:00 PM">
+                        </div>
+                        <!-- Sunday -->
+                        <div class="form-group" style="margin-bottom:0;">
+                          <label class="form-label" style="font-size:11.5px;">Sunday:</label>
+                          <input type="text" id="sched_sun" class="form-input text-xs" value="Closed">
+                        </div>
+                      </div>
+
+                      <!-- JSON Preview Box -->
+                      <div style="margin-top:14px;">
+                        <label class="form-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted);">Saved Schedule JSON Schema Preview:</label>
+                        <pre id="dispScheduleJsonPreview" style="background:#0f172a; color:#38bdf8; padding:12px; border-radius:var(--radius-md); font-family:var(--font-mono); font-size:11.5px; overflow-x:auto;"></pre>
+                      </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="padding:10px 24px;">Save Batch Updates &amp; Schedule</button>
+                  </form>
+                </div>
+              </article>
+            </div>
+
           </div>
-        </article>
+
+        </main>
       </div>
 
     </section>
@@ -865,6 +1084,288 @@
         <div id="switchTeacherProfilesList" style="display:flex; flex-direction:column; gap:8px;">
           <!-- Populated dynamically by JS -->
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: ADD CHAPTER / CURRICULUM TOPIC ───────────────────────────── -->
+  <div class="modal-overlay" id="modalAddCurriculumTopic">
+    <div class="modal-window" style="max-width:540px;">
+      <div class="modal-header">
+        <h3 class="modal-title">+ Add Chapter / Syllabus Topic</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="modalAddCurriculumTopic">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formAddCurriculumTopic">
+          <div style="display:grid; grid-template-columns:100px 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Chapter #:</label>
+              <input type="number" id="inpSylChapterNum" class="form-input font-bold" value="3" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Chapter Name:</label>
+              <input type="text" id="inpSylChapterName" class="form-input" placeholder="e.g. Pair of Linear Equations" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Topic / Subtopics Description:</label>
+            <input type="text" id="inpSylTopicName" class="form-input" placeholder="e.g. Graphical Method &amp; Elimination Technique" required>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Planned Target Date:</label>
+              <input type="date" id="inpSylPlannedDate" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Initial Status:</label>
+              <select id="inpSylStatus" class="form-select">
+                <option value="upcoming" selected>Upcoming (Planned)</option>
+                <option value="in_progress">In Progress</option>
+                <option value="covered">Covered (Completed)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:6px;">Add Topic to Curriculum ➜</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: SCHEDULE NEW TEST ────────────────────────────────────────── -->
+  <div class="modal-overlay" id="modalScheduleNewTest">
+    <div class="modal-window" style="max-width:540px;">
+      <div class="modal-header">
+        <h3 class="modal-title">+ Schedule New Test Exam</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="modalScheduleNewTest">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formScheduleNewTest">
+          <div class="form-group">
+            <label class="form-label">Test Title:</label>
+            <input type="text" id="inpTestTitle" class="form-input" placeholder="e.g. Trigonometry &amp; Heights Test" required>
+          </div>
+          <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Subject:</label>
+              <input type="text" id="inpTestSubject" class="form-input" value="Mathematics" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Conducted Date:</label>
+              <input type="date" id="inpTestDate" class="form-input" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Maximum Total Marks:</label>
+            <input type="number" id="inpTestMaxMarks" class="form-input font-bold" value="50" min="10" max="200" required>
+          </div>
+          <p class="text-xs text-muted" style="margin-bottom:14px;">
+            💡 All currently enrolled students in this batch will be automatically populated on the test scorecard ready for marks entry.
+          </p>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Create Test &amp; Open Scorecards ➜</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: RECORD TUITION FEE PAYMENT ───────────────────────────────── -->
+  <div class="modal-overlay" id="modalRecordPayment">
+    <div class="modal-window" style="max-width:500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">💳 Record Tuition Fee Payment</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="modalRecordPayment">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formRecordPayment">
+          <input type="hidden" id="payStudentId">
+          <input type="hidden" id="payMonthKey">
+          
+          <div style="background:var(--surface-muted); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:16px;">
+            <div style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--text-muted);">Student &bull; Billing Month</div>
+            <div style="font-size:15px; font-weight:800; color:var(--primary);" id="payStudentNameDisplay">Aryan Mehta</div>
+            <div class="text-xs text-muted" id="payMonthDisplay">October 2026</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Amount Paid (₹):</label>
+              <input type="number" id="payAmountInput" class="form-input font-bold" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Payment Date:</label>
+              <input type="date" id="payDateInput" class="form-input" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Mode / Channel:</label>
+            <select id="payModeSelect" class="form-select">
+              <option value="UPI (Google Pay)" selected>UPI (Google Pay)</option>
+              <option value="UPI (PhonePe)">UPI (PhonePe)</option>
+              <option value="UPI (Paytm)">UPI (Paytm)</option>
+              <option value="Cash / Offline Desk">Cash / Offline Desk</option>
+              <option value="Net Banking / IMPS">Net Banking / IMPS</option>
+              <option value="Bank Cheque">Bank Cheque</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Receipt / Transaction Ref (Optional):</label>
+            <input type="text" id="payRefInput" class="form-input font-mono text-xs" placeholder="Auto-generated if blank">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Confirm &amp; Issue Stamped Receipt ➜</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: CONFIGURE STUDENT FEE STRUCTURE ──────────────────────────── -->
+  <div class="modal-overlay" id="modalConfigureStudentFee">
+    <div class="modal-window" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ Configure Student Fee Structure</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="modalConfigureStudentFee">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formConfigureStudentFee">
+          <input type="hidden" id="cfgFeeStudentId">
+
+          <div style="background:var(--surface-muted); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:16px;">
+            <div style="font-size:11px; text-transform:uppercase; font-weight:800; color:var(--text-muted);">Configuring Student:</div>
+            <div style="font-size:15px; font-weight:800; color:var(--primary);" id="cfgFeeStudentName">Vivek Gupta</div>
+            <div class="text-xs text-muted" id="cfgFeeStudentMeta">Roll: SA-105 &bull; Class 10 CBSE</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Personalized Monthly Tuition Fee (₹):</label>
+            <input type="number" id="cfgFeeAmountInput" class="form-input font-bold" required>
+            <div class="text-xs text-muted" style="margin-top:4px;">Tuition fees are customized per student (scholarships, sibling concessions, or standard batch rates).</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Admission Start Month:</label>
+              <select id="cfgFeeStartMonth" class="form-select">
+                <option value="2026-04">April 2026</option>
+                <option value="2026-05">May 2026</option>
+                <option value="2026-06" selected>June 2026</option>
+                <option value="2026-07">July 2026</option>
+                <option value="2026-08">August 2026</option>
+                <option value="2026-09">September 2026</option>
+                <option value="2026-10">October 2026</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Course End Month:</label>
+              <select id="cfgFeeEndMonth" class="form-select">
+                <option value="2027-01">January 2027</option>
+                <option value="2027-02">February 2027</option>
+                <option value="2027-03" selected>March 2027 (Board Exams)</option>
+                <option value="2027-04">April 2027</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;">Save Fee Structure ➜</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: FULL STUDENT MONTHLY FEE HISTORY LEDGER ──────────────────── -->
+  <div class="modal-overlay" id="modalStudentFeeHistory">
+    <div class="modal-window" style="max-width:680px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="histStudentNameTitle">Student Monthly Fee History</h3>
+          <span class="text-xs text-muted" id="histStudentPeriodTitle">Complete admission period payments</span>
+        </div>
+        <button type="button" class="modal-close-btn" data-close-modal="modalStudentFeeHistory">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Academic Month</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Paid Date</th>
+                <th>Payment Mode</th>
+                <th>Receipt / Action</th>
+              </tr>
+            </thead>
+            <tbody id="histFeeTableBody">
+              <!-- Populated dynamically by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: OFFICIAL PRINTABLE STAMPED FEE RECEIPT ───────────────────── -->
+  <div class="modal-overlay" id="modalViewFeeReceipt">
+    <div class="modal-window" style="max-width:520px; background:#fff;">
+      <div class="modal-header" style="border-bottom:1px dashed var(--border);">
+        <h3 class="modal-title">🧾 Official Tuition Fee Receipt</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="modalViewFeeReceipt">&times;</button>
+      </div>
+      <div class="modal-body" id="receiptPrintableArea" style="padding:24px;">
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="https://officialpic.vilarci.in/Icons/web-icon.png" alt="Logo" style="width:34px; height:34px; border-radius:6px;">
+            <div>
+              <div style="font-weight:800; font-size:14px; color:#800020;">VILARCI STUDY PARTNER</div>
+              <div style="font-size:10px; color:#64748b;" id="recInstituteName">Classroom Tuition Studio</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge badge-success" style="font-size:11px; font-weight:800;">FEE PAID</span>
+            <div style="font-family:var(--font-mono); font-size:11px; margin-top:3px; font-weight:700;" id="recRefNumber">REC-2610-01</div>
+          </div>
+        </div>
+
+        <!-- Receipt Metadata Grid -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px; font-size:12.5px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
+            <div><strong>Student:</strong> <span id="recStudentName">Aryan Mehta</span></div>
+            <div><strong>Roll No:</strong> <span id="recStudentRoll">SA-101</span></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
+            <div><strong>Batch:</strong> <span id="recBatchName">Class 10 Morning</span></div>
+            <div><strong>Month:</strong> <span id="recMonthName">October 2026</span></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div><strong>Paid Date:</strong> <span id="recPaidDate">02 Oct 2026</span></div>
+            <div><strong>Mode:</strong> <span id="recPaymentMode">UPI (Google Pay)</span></div>
+          </div>
+        </div>
+
+        <!-- Amount Box -->
+        <div style="border:2px dashed #800020; border-radius:8px; padding:12px; text-align:center; margin-bottom:16px; background:#fff;">
+          <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:700;">Total Tuition Fee Received</div>
+          <div style="font-size:26px; font-weight:800; color:#800020; font-family:var(--font-mono);" id="recAmountDisplay">₹2,500.00</div>
+          <div style="font-size:11px; color:#059669; font-weight:700;">Payment Verified &bull; Settle Status Cleared</div>
+        </div>
+
+        <!-- Signature Stamp Box -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; padding-top:10px; border-top:1px solid #e2e8f0;">
+          <div>
+            <div style="width:70px; height:70px; border:2px solid #800020; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; transform:rotate(-12deg); color:#800020; font-weight:800; font-size:8px;">
+              <span>VILARCI</span>
+              <span style="font-size:10px;">★ PAID ★</span>
+              <span style="font-size:7px;">VERIFIED</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-serif); font-style:italic; font-size:15px; color:#800020; font-weight:700;" id="recTeacherSign">Er. Alok Sharma</div>
+            <div style="font-size:10.5px; color:#64748b; font-weight:600;">Authorized Faculty Signatory</div>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="window.print()" style="width:100%; margin-top:16px;">🖨️ Print Stamped Receipt</button>
       </div>
     </div>
   </div>
