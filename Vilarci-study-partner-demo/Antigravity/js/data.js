@@ -85,19 +85,20 @@ window.TEACHER_PORTAL_DATA = {
       id: 'pbatch-10-m',
       teacher_id: 'teacher-alok',
       name: 'Class 10 Maths Morning Super 20',
+      join_code: 'VLR-M10-4443',
       grade: 'Class 10',
       board: 'CBSE',
       subject: 'Mathematics',
       room: 'Orbit Home Studio A',
-      schedule: 'Mon, Wed, Fri • 07:30 AM – 09:00 AM',
+      schedule: 'Mon, Wed, Fri • 09:00 AM – 05:00 PM, Sat • 09:00 AM – 02:00 PM',
       weekly_schedule: {
-        "fri": "07:30 AM - 09:00 AM",
-        "mon": "07:30 AM - 09:00 AM",
-        "sat": "Closed",
+        "fri": "09:00 AM - 05:00 PM",
+        "mon": "09:00 AM - 05:00 PM",
+        "sat": "09:00 AM - 02:00 PM",
         "sun": "Closed",
         "thu": "Closed",
         "tue": "Closed",
-        "wed": "07:30 AM - 09:00 AM"
+        "wed": "09:00 AM - 05:00 PM"
       },
       monthly_fee: 2500,
       capacity: 20,
@@ -1015,6 +1016,100 @@ window.TEACHER_PORTAL_DATA = {
       paid_date: null,
       payment_mode: null,
       receipt_ref: null
+    }
+  ],
+
+  // ─── 9. DATE-BY-DATE ATTENDANCE SESSIONS REGISTER ──────────────────────────
+  attendance_sessions: [
+    {
+      id: 'att-sess-20261020',
+      context_id: 'pbatch-10-m',
+      date: '2026-10-20',
+      topic_covered: 'Real Numbers & Polynomials Revision',
+      records: {
+        'student-1': 'present',
+        'student-ext-1': 'present',
+        'student-ext-2': 'present',
+        'student-ext-3': 'present',
+        'student-ext-4': 'present',
+        'student-ext-5': 'late',
+        'student-ext-6': 'absent'
+      }
+    },
+    {
+      id: 'att-sess-20261019',
+      context_id: 'pbatch-10-m',
+      date: '2026-10-19',
+      topic_covered: 'Quadratic Equations Discriminant Problem Solving',
+      records: {
+        'student-1': 'present',
+        'student-ext-1': 'present',
+        'student-ext-2': 'present',
+        'student-ext-3': 'late',
+        'student-ext-4': 'present',
+        'student-ext-5': 'present',
+        'student-ext-6': 'present'
+      }
+    },
+    {
+      id: 'att-sess-20261017',
+      context_id: 'pbatch-10-m',
+      date: '2026-10-17',
+      topic_covered: 'Nature of Roots & Factorization Speed Drill',
+      records: {
+        'student-1': 'present',
+        'student-ext-1': 'present',
+        'student-ext-2': 'absent',
+        'student-ext-3': 'present',
+        'student-ext-4': 'present',
+        'student-ext-5': 'present',
+        'student-ext-6': 'present'
+      }
+    },
+    {
+      id: 'att-sess-20261015',
+      context_id: 'pbatch-10-m',
+      date: '2026-10-15',
+      topic_covered: 'Arithmetic Progressions nth Term Formula Derivation',
+      records: {
+        'student-1': 'present',
+        'student-ext-1': 'present',
+        'student-ext-2': 'present',
+        'student-ext-3': 'present',
+        'student-ext-4': 'present',
+        'student-ext-5': 'present',
+        'student-ext-6': 'present'
+      }
+    },
+    {
+      id: 'att-sess-20261013',
+      context_id: 'pbatch-10-m',
+      date: '2026-10-13',
+      topic_covered: 'AP Sum of n Terms Practice Questions',
+      records: {
+        'student-1': 'late',
+        'student-ext-1': 'present',
+        'student-ext-2': 'present',
+        'student-ext-3': 'present',
+        'student-ext-4': 'present',
+        'student-ext-5': 'absent',
+        'student-ext-6': 'present'
+      }
+    },
+    {
+      id: 'att-sess-20261010',
+      context_id: 'pbatch-10-m',
+      date: '2026-10-10',
+      topic_covered: 'Weekly Master Diagnostic Quiz & Doubt Clearing',
+      records: {
+        'student-1': 'present',
+        'student-ext-1': 'present',
+        'student-ext-2': 'present',
+        'student-ext-3': 'present',
+        'student-ext-4': 'present',
+        'student-ext-5': 'present',
+        'student-ext-6': 'present'
+      }
     }
   ]
 };

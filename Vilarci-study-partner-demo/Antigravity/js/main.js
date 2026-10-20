@@ -143,6 +143,7 @@
         currentWorkspace = 'private_batches';
         activeDeckContext = null;
         renderCurrentWorkspace();
+        pushNavState('private_batches');
       };
     }
 
@@ -151,6 +152,7 @@
         currentWorkspace = 'coaching_institutes';
         activeDeckContext = null;
         renderCurrentWorkspace();
+        pushNavState('coaching_list');
       };
     }
   }
@@ -254,7 +256,10 @@
             '</div>' +
             '<button type="button" class="btn btn-outline btn-sm btn-rename-batch" data-rename-pbatch-id="' + b.id + '" title="Rename or edit batch">✏️</button>' +
           '</div>' +
-          '<div class="batch-meta-line">⏱️ ' + b.schedule + '</div>' +
+          '<div class="batch-meta-line" style="display:flex; justify-content:space-between; align-items:center;">' +
+            '<span>⏱️ ' + b.schedule + '</span>' +
+            '<span class="badge badge-success font-mono" style="font-size:10px; padding:2px 6px;">🔑 ' + (b.join_code || 'VLR-M10-4443') + '</span>' +
+          '</div>' +
           '<div class="batch-meta-line">🏛️ ' + b.room + '</div>' +
           '<div style="margin:12px 0;">' +
             '<div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">' +
@@ -372,15 +377,20 @@
   }
 
   // ─── WORKSPACE 3: INSIDE A SPECIFIC COACHING INSTITUTE ──────────────────────
-  function openCoachingDetail(instId, initialSubTab) {
+  function openCoachingDetail(instId, initialSubTab, skipHistory) {
     activeCoachingId = instId;
     var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === instId; });
     if (!inst) return;
 
     // Hide coaching list, show coaching detail
-    document.getElementById('view-coaching-list').style.display = 'none';
+    var listEl = document.getElementById('view-coaching-list');
+    if (listEl) listEl.style.display = 'none';
     var detailView = document.getElementById('view-coaching-detail');
     if (detailView) detailView.style.display = 'block';
+
+    if (!skipHistory) {
+      pushNavState('coaching_detail', { instId: instId, subTab: initialSubTab || 'my_sections' });
+    }
 
     // Update banner
     var isOwner = inst.owner_teacher_id === activeTeacherId;
@@ -412,6 +422,7 @@
       backBtn.onclick = function () {
         detailView.style.display = 'none';
         renderCurrentWorkspace();
+        pushNavState('coaching_list');
       };
     }
   }
@@ -605,13 +616,88 @@
     }
   }
 
+  // ─── UNIVERSAL HISTORY & BACK NAVIGATION MANAGER ─────────────────────────
+  function pushNavState(viewType, params) {
+    var state = { view: viewType, params: params || {} };
+    var hash = '#';
+    if (viewType === 'batch_deck') {
+      hash += 'batch/' + params.id;
+    } else if (viewType === 'coaching_detail') {
+      hash += 'coaching/' + params.instId;
+    } else if (viewType === 'coaching_list') {
+      hash += 'coaching';
+    } else {
+      hash += 'batches';
+    }
+    try {
+      history.pushState(state, '', hash);
+    } catch (e) {}
+  }
+
+  window.onpopstate = function (e) {
+    // 1. If any modal is open, close it first
+    var openModalEl = document.querySelector('.modal-overlay.active');
+    if (openModalEl) {
+      openModalEl.classList.remove('active');
+      document.body.style.overflow = '';
+      return;
+    }
+
+    // 2. If mobile drawer is open, close it
+    var sidebar = document.getElementById('deckSidebar');
+    if (sidebar && sidebar.classList.contains('mobile-open')) {
+      sidebar.classList.remove('mobile-open');
+      var backdrop = document.getElementById('deckSidebarBackdrop');
+      if (backdrop) backdrop.classList.remove('active');
+      return;
+    }
+
+    var state = e.state;
+    if (state) {
+      if (state.view === 'batch_deck') {
+        enterBatchDeck(state.params.type, state.params.id, state.params.parentCoachingId, true);
+      } else if (state.view === 'coaching_detail') {
+        if (document.body.classList.contains('in-batch-deck')) {
+          exitBatchDeck(true);
+        }
+        openCoachingDetail(state.params.instId, state.params.subTab || 'my_sections', true);
+      } else if (state.view === 'coaching_list') {
+        if (document.body.classList.contains('in-batch-deck')) {
+          exitBatchDeck(true);
+        }
+        currentWorkspace = 'coaching_institutes';
+        var dView = document.getElementById('view-coaching-detail');
+        if (dView) dView.style.display = 'none';
+        renderCurrentWorkspace();
+      } else {
+        if (document.body.classList.contains('in-batch-deck')) {
+          exitBatchDeck(true);
+        }
+        currentWorkspace = 'private_batches';
+        renderCurrentWorkspace();
+      }
+    } else {
+      // Top level
+      if (document.body.classList.contains('in-batch-deck')) {
+        exitBatchDeck(true);
+      } else {
+        var detailView = document.getElementById('view-coaching-detail');
+        if (detailView && detailView.style.display === 'block') {
+          detailView.style.display = 'none';
+        }
+        currentWorkspace = 'private_batches';
+        renderCurrentWorkspace();
+      }
+    }
+  };
+
   // ─── WORKSPACE 4: UNIFIED BATCH & SECTION COMMAND DECK ─────────────────────
   // When a teacher clicks ANY batch (private batch OR coaching section), they enter this deck!
   // The layout transforms the top navigation bar into a focused Left Sidebar!
   var activeTestId = null;
   var selectedFeeMonth = '2026-10';
 
-  function enterBatchDeck(type, id, parentCoachingId) {
+  function enterBatchDeck(type, id, parentCoachingId, skipHistory) {
     activeDeckContext = {
       type: type, // 'private_batch' or 'coaching_section'
       id: id,
@@ -620,17 +706,32 @@
 
     document.body.classList.add('in-batch-deck');
     renderCurrentWorkspace();
+
+    if (!skipHistory) {
+      pushNavState('batch_deck', { type: type, id: id, parentCoachingId: parentCoachingId });
+    }
   }
 
-  function exitBatchDeck() {
+  function exitBatchDeck(skipHistory) {
     document.body.classList.remove('in-batch-deck');
     var sidebar = document.getElementById('deckSidebar');
     if (sidebar) sidebar.classList.remove('mobile-open');
     var backdrop = document.getElementById('deckSidebarBackdrop');
     if (backdrop) backdrop.classList.remove('active');
 
+    var wasCoaching = activeDeckContext && activeDeckContext.type === 'coaching_section';
+    var parentCoaching = activeDeckContext && activeDeckContext.parentCoachingId;
+
     activeDeckContext = null;
-    renderCurrentWorkspace();
+
+    if (wasCoaching && parentCoaching) {
+      openCoachingDetail(parentCoaching, 'my_sections', skipHistory);
+    } else {
+      renderCurrentWorkspace();
+      if (!skipHistory) {
+        pushNavState(currentWorkspace === 'coaching_institutes' ? 'coaching_list' : 'private_batches');
+      }
+    }
   }
 
   function getActiveDeckData() {
@@ -643,13 +744,13 @@
       // Ensure default weekly schedule exists in requested schema
       if (!pbatch.weekly_schedule) {
         pbatch.weekly_schedule = {
-          "fri": "07:30 AM - 09:00 AM",
-          "mon": "07:30 AM - 09:00 AM",
-          "sat": "Closed",
+          "fri": "09:00 AM - 05:00 PM",
+          "mon": "09:00 AM - 05:00 PM",
+          "sat": "09:00 AM - 02:00 PM",
           "sun": "Closed",
           "thu": "Closed",
           "tue": "Closed",
-          "wed": "07:30 AM - 09:00 AM"
+          "wed": "09:00 AM - 05:00 PM"
         };
       }
 
@@ -658,7 +759,9 @@
         title: pbatch.name,
         badgeText: 'Private Tuition Batch',
         gradeText: pbatch.grade + ' • ' + pbatch.board,
-        metaText: pbatch.schedule + ' • Room: ' + pbatch.room,
+        metaText: pbatch.schedule,
+        joinCode: pbatch.join_code || 'VLR-M10-4443',
+        roomText: pbatch.room,
         studentIds: pbatch.student_ids || [],
         fee: pbatch.monthly_fee,
         rawObj: pbatch
@@ -686,7 +789,9 @@
         title: inst.name + ' • ' + sec.full_code,
         badgeText: 'Coaching Section',
         gradeText: sec.class_name + ' • ' + sec.board,
-        metaText: 'Room: ' + sec.room + ' • Institute: ' + inst.name,
+        metaText: sec.schedule || 'Regular Class Hours',
+        joinCode: inst.code + '-' + (sec.section_name || 'A'),
+        roomText: sec.room,
         studentIds: sec.student_ids || [],
         fee: 2500,
         rawObj: sec
@@ -711,11 +816,14 @@
     var gradeEl = document.getElementById('deckGradeBadge');
     if (gradeEl) gradeEl.textContent = deckData.gradeText;
 
+    var codeEl = document.getElementById('deckCodeBadge');
+    if (codeEl) codeEl.textContent = deckData.joinCode || 'VLR-M10-4443';
+
     var metaEl = document.getElementById('deckMetaDisplay');
-    if (metaEl) metaEl.textContent = deckData.metaText;
+    if (metaEl) metaEl.textContent = '🕒 ' + (deckData.metaText || 'Regular Hours');
 
     var roomEl = document.getElementById('deckRoomDisplay');
-    if (roomEl) roomEl.textContent = '📍 Room: ' + (deckData.rawObj.room || 'Studio A');
+    if (roomEl) roomEl.textContent = '📍 ' + (deckData.roomText || deckData.rawObj.room || 'Orbit Home Studio A');
 
     var countEl = document.getElementById('deckStudentCountPill');
     if (countEl) countEl.textContent = deckData.studentIds.length;
@@ -929,70 +1037,293 @@
     });
   }
 
-  // ─── DECK SUB-TAB 2: DAILY ATTENDANCE & QR TERMINAL ────────────────────────
+  // ─── DECK SUB-TAB 2: DAILY ATTENDANCE & DATE-BY-DATE REGISTER ─────────────
+  var activeAttendanceDate = '2026-10-20';
+  var attendanceViewTab = 'marking'; // 'marking' or 'register'
+
   function renderDeckAttendance(deckData) {
     var titleEl = document.getElementById('deckQrBatchTitle');
     if (titleEl) titleEl.textContent = deckData.title + ' — Daily Check-in QR';
-
-    var tbody = document.getElementById('deckAttendanceTableBody');
-    if (!tbody) return;
 
     var enrolledStudents = (STATE.students || []).filter(function (s) {
       return deckData.studentIds.indexOf(s.id) !== -1;
     });
 
-    tbody.innerHTML = enrolledStudents.map(function (s, idx) {
-      var isPresent = idx % 5 !== 4; // Simulated check-in
-      var status = isPresent ? 'present' : 'absent';
+    if (!STATE.attendance_sessions) STATE.attendance_sessions = [];
 
-      return (
-        '<tr>' +
-          '<td><span class="font-mono text-xs font-bold">' + s.roll + '</span></td>' +
-          '<td><strong>' + s.name + '</strong></td>' +
-          '<td>' +
-            '<div class="att-toggle-group" data-student-id="' + s.id + '">' +
-              '<button type="button" class="att-btn ' + (status === 'present' ? 'active present' : '') + '" data-status="present">P</button>' +
-              '<button type="button" class="att-btn ' + (status === 'late' ? 'active late' : '') + '" data-status="late">L</button>' +
-              '<button type="button" class="att-btn ' + (status === 'absent' ? 'active absent' : '') + '" data-status="absent">A</button>' +
-            '</div>' +
-          '</td>' +
-          '<td>' + (status === 'present' ? '<span class="badge badge-success">+10 pts</span>' : '0 pts') + '</td>' +
-          '<td>' +
-            '<a href="https://wa.me/' + s.father_phone.replace(/[^0-9]/g, '') + '?text=Dear%20Parent,%20' + encodeURIComponent(s.name) + '%20was%20marked%20' + status.toUpperCase() + '%20today%20in%20' + encodeURIComponent(deckData.title) + '." target="_blank" class="btn btn-outline btn-sm">💬 Alert Parent</a>' +
-          '</td>' +
-        '</tr>'
-      );
-    }).join('');
-
-    // Toggle button handler
-    tbody.querySelectorAll('.att-btn').forEach(function (btn) {
-      btn.onclick = function () {
-        var group = this.closest('.att-toggle-group');
-        group.querySelectorAll('.att-btn').forEach(function (b) { b.className = 'att-btn'; });
-        var status = this.getAttribute('data-status');
-        this.className = 'att-btn active ' + status;
-        showToast('Updated student attendance to: ' + status.toUpperCase(), 'info');
-      };
+    // Filter sessions belonging to this batch / section
+    var batchSessions = STATE.attendance_sessions.filter(function (sess) {
+      return sess.context_id === activeDeckContext.id;
     });
 
-    var markAllBtn = document.getElementById('btnDeckMarkAllPresent');
-    if (markAllBtn) {
-      markAllBtn.onclick = function () {
-        tbody.querySelectorAll('.att-toggle-group').forEach(function (group) {
-          group.querySelectorAll('.att-btn').forEach(function (b) { b.className = 'att-btn'; });
-          var pBtn = group.querySelector('[data-status="present"]');
-          if (pBtn) pBtn.className = 'att-btn active present';
-        });
-        showToast('Marked all students as Present (+10 pts)', 'success');
+    // Sort descending by date
+    batchSessions.sort(function (a, b) { return b.date.localeCompare(a.date); });
+
+    // Mode tabs: Daily Session Marking vs Date-by-Date Register Matrix
+    var btnMarking = document.getElementById('btnAttViewMarking');
+    var btnRegister = document.getElementById('btnAttViewRegister');
+    var secDaily = document.getElementById('deckAttDailySection');
+    var secMatrix = document.getElementById('deckAttMatrixSection');
+
+    function updateAttTabUI() {
+      if (attendanceViewTab === 'marking') {
+        if (btnMarking) btnMarking.className = 'chip-btn active';
+        if (btnRegister) btnRegister.className = 'chip-btn';
+        if (secDaily) secDaily.style.display = 'block';
+        if (secMatrix) secMatrix.style.display = 'none';
+      } else {
+        if (btnMarking) btnMarking.className = 'chip-btn';
+        if (btnRegister) btnRegister.className = 'chip-btn active';
+        if (secDaily) secDaily.style.display = 'none';
+        if (secMatrix) secMatrix.style.display = 'block';
+        renderAttendanceMatrix(deckData, enrolledStudents, batchSessions);
+      }
+    }
+
+    if (btnMarking) {
+      btnMarking.onclick = function () {
+        attendanceViewTab = 'marking';
+        updateAttTabUI();
+      };
+    }
+    if (btnRegister) {
+      btnRegister.onclick = function () {
+        attendanceViewTab = 'register';
+        updateAttTabUI();
       };
     }
 
-    var saveBtn = document.getElementById('btnDeckSaveAttendance');
-    if (saveBtn) {
-      saveBtn.onclick = function () {
-        showToast('Attendance session saved and synced with student portals!', 'success');
+    // Date Picker Input
+    var datePicker = document.getElementById('deckAttDatePicker');
+    if (datePicker) {
+      datePicker.value = activeAttendanceDate;
+      datePicker.onchange = function () {
+        activeAttendanceDate = this.value;
+        renderDeckAttendance(deckData);
       };
     }
+
+    // Quick Date Chips
+    var chipsContainer = document.getElementById('deckAttRecentChips');
+    if (chipsContainer) {
+      var uniqueDates = [];
+      batchSessions.forEach(function (sess) {
+        if (uniqueDates.indexOf(sess.date) === -1) uniqueDates.push(sess.date);
+      });
+      if (uniqueDates.indexOf('2026-10-20') === -1) uniqueDates.unshift('2026-10-20');
+
+      chipsContainer.innerHTML = uniqueDates.slice(0, 6).map(function (d) {
+        var isAct = d === activeAttendanceDate;
+        var label = d === '2026-10-20' ? 'Today (20 Oct)' : formatShortDate(d);
+        return '<button type="button" class="att-quick-chip ' + (isAct ? 'active' : '') + '" data-date="' + d + '">' + label + '</button>';
+      }).join('');
+
+      chipsContainer.querySelectorAll('.att-quick-chip').forEach(function (btn) {
+        btn.onclick = function () {
+          activeAttendanceDate = this.getAttribute('data-date');
+          renderDeckAttendance(deckData);
+        };
+      });
+    }
+
+    // Find or initialize session for activeAttendanceDate
+    var curSession = batchSessions.find(function (s) { return s.date === activeAttendanceDate; });
+    if (!curSession) {
+      curSession = {
+        id: 'att-sess-' + activeAttendanceDate.replace(/-/g, ''),
+        context_id: activeDeckContext.id,
+        date: activeAttendanceDate,
+        topic_covered: 'Classroom Lecture',
+        records: {}
+      };
+      enrolledStudents.forEach(function (st) {
+        curSession.records[st.id] = 'present';
+      });
+    } else {
+      // Ensure all enrolled students exist in records
+      enrolledStudents.forEach(function (st) {
+        if (!curSession.records[st.id]) curSession.records[st.id] = 'present';
+      });
+    }
+
+    // Sheet title
+    var sheetTitle = document.getElementById('deckAttSheetTitle');
+    if (sheetTitle) sheetTitle.textContent = 'Daily Attendance Sheet — ' + formatFullDate(activeAttendanceDate);
+
+    // Render Daily Marking Table
+    var tbody = document.getElementById('deckAttendanceTableBody');
+    if (tbody) {
+      tbody.innerHTML = enrolledStudents.map(function (s) {
+        var status = curSession.records[s.id] || 'present';
+        var pointsText = status === 'present' ? '+10 pts' : (status === 'late' ? '+5 pts' : '0 pts');
+        var ptsBadge = status === 'present' ? 'badge-success' : (status === 'late' ? 'badge-warning' : 'badge-danger');
+
+        return (
+          '<tr>' +
+            '<td><span class="font-mono text-xs font-bold">' + s.roll + '</span></td>' +
+            '<td><strong>' + s.name + '</strong></td>' +
+            '<td>' +
+              '<div class="att-toggle-group" data-student-id="' + s.id + '">' +
+                '<button type="button" class="att-btn ' + (status === 'present' ? 'active present' : '') + '" data-status="present">P</button>' +
+                '<button type="button" class="att-btn ' + (status === 'late' ? 'active late' : '') + '" data-status="late">L</button>' +
+                '<button type="button" class="att-btn ' + (status === 'absent' ? 'active absent' : '') + '" data-status="absent">A</button>' +
+              '</div>' +
+            '</td>' +
+            '<td><span class="badge ' + ptsBadge + '">' + pointsText + '</span></td>' +
+            '<td>' +
+              '<a href="https://wa.me/' + s.father_phone.replace(/[^0-9]/g, '') + '?text=Dear%20Parent,%20' + encodeURIComponent(s.name) + '%20was%20marked%20' + status.toUpperCase() + '%20on%20' + encodeURIComponent(formatFullDate(activeAttendanceDate)) + '%20in%20' + encodeURIComponent(deckData.title) + '." target="_blank" class="btn btn-outline btn-sm">💬 Alert Parent</a>' +
+            '</td>' +
+          '</tr>'
+        );
+      }).join('');
+
+      function updateDaySummary() {
+        var pCount = 0, lCount = 0, aCount = 0;
+        enrolledStudents.forEach(function (s) {
+          var st = curSession.records[s.id];
+          if (st === 'present') pCount++;
+          else if (st === 'late') lCount++;
+          else aCount++;
+        });
+        var sumEl = document.getElementById('deckAttDayStatsSummary');
+        if (sumEl) sumEl.textContent = 'Enrolled: ' + enrolledStudents.length + ' • Present: ' + pCount + ' • Late: ' + lCount + ' • Absent: ' + aCount;
+      }
+      updateDaySummary();
+
+      // Toggle button handler
+      tbody.querySelectorAll('.att-btn').forEach(function (btn) {
+        btn.onclick = function () {
+          var group = this.closest('.att-toggle-group');
+          var sId = group.getAttribute('data-student-id');
+          group.querySelectorAll('.att-btn').forEach(function (b) { b.className = 'att-btn'; });
+          var status = this.getAttribute('data-status');
+          this.className = 'att-btn active ' + status;
+          curSession.records[sId] = status;
+
+          var ptsCell = this.closest('tr').children[3];
+          if (ptsCell) {
+            var ptsText = status === 'present' ? '+10 pts' : (status === 'late' ? '+5 pts' : '0 pts');
+            var ptsBadge = status === 'present' ? 'badge-success' : (status === 'late' ? 'badge-warning' : 'badge-danger');
+            ptsCell.innerHTML = '<span class="badge ' + ptsBadge + '">' + ptsText + '</span>';
+          }
+          updateDaySummary();
+        };
+      });
+
+      // Mark All Present Button
+      var markAllBtn = document.getElementById('btnDeckMarkAllPresent');
+      if (markAllBtn) {
+        markAllBtn.onclick = function () {
+          enrolledStudents.forEach(function (s) { curSession.records[s.id] = 'present'; });
+          tbody.querySelectorAll('.att-toggle-group').forEach(function (group) {
+            group.querySelectorAll('.att-btn').forEach(function (b) { b.className = 'att-btn'; });
+            var pBtn = group.querySelector('[data-status="present"]');
+            if (pBtn) pBtn.className = 'att-btn active present';
+          });
+          tbody.querySelectorAll('tr').forEach(function (row) {
+            var ptsCell = row.children[3];
+            if (ptsCell) ptsCell.innerHTML = '<span class="badge badge-success">+10 pts</span>';
+          });
+          updateDaySummary();
+          showToast('Marked all students as Present for ' + formatFullDate(activeAttendanceDate), 'success');
+        };
+      }
+
+      // Save Attendance for Date Button
+      var saveBtn = document.getElementById('btnDeckSaveAttendance');
+      if (saveBtn) {
+        saveBtn.onclick = function () {
+          var idx = STATE.attendance_sessions.findIndex(function (s) {
+            return s.context_id === activeDeckContext.id && s.date === activeAttendanceDate;
+          });
+          if (idx !== -1) {
+            STATE.attendance_sessions[idx] = curSession;
+          } else {
+            STATE.attendance_sessions.push(curSession);
+          }
+
+          recalculateBatchAttendanceRates(deckData, enrolledStudents);
+          saveState();
+          renderDeckAttendance(deckData);
+          showToast('💾 Saved attendance session for ' + formatFullDate(activeAttendanceDate) + '!', 'success');
+        };
+      }
+    }
+
+    updateAttTabUI();
+  }
+
+  function renderAttendanceMatrix(deckData, enrolledStudents, batchSessions) {
+    var table = document.getElementById('deckAttMatrixTable');
+    if (!table) return;
+
+    if (batchSessions.length === 0) {
+      table.innerHTML = '<tr><td colspan="6" class="text-center p-20 text-muted">No past attendance sessions recorded yet.</td></tr>';
+      return;
+    }
+
+    var thead = '<thead><tr>' +
+      '<th style="width:70px;">Roll</th>' +
+      '<th style="min-width:140px;">Student Name</th>' +
+      '<th style="min-width:90px;">Overall Rate</th>' +
+      batchSessions.map(function (sess) {
+        return '<th style="text-align:center; min-width:65px;">' + formatShortDate(sess.date) + '</th>';
+      }).join('') +
+      '</tr></thead>';
+
+    var tbody = '<tbody>' + enrolledStudents.map(function (st) {
+      return (
+        '<tr>' +
+          '<td><span class="font-mono text-xs font-bold">' + st.roll + '</span></td>' +
+          '<td><strong>' + st.name + '</strong></td>' +
+          '<td><strong style="color:var(--primary);">' + st.attendance_rate + '%</strong></td>' +
+          batchSessions.map(function (sess) {
+            var rec = (sess.records && sess.records[st.id]) || 'present';
+            var badgeClass = rec === 'present' ? 'att-matrix-p' : (rec === 'late' ? 'att-matrix-l' : 'att-matrix-a');
+            var char = rec === 'present' ? 'P' : (rec === 'late' ? 'L' : 'A');
+            return '<td style="text-align:center;"><span class="' + badgeClass + '" title="' + rec.toUpperCase() + '">' + char + '</span></td>';
+          }).join('') +
+        '</tr>'
+      );
+    }).join('') + '</tbody>';
+
+    table.innerHTML = thead + tbody;
+  }
+
+  function recalculateBatchAttendanceRates(deckData, enrolledStudents) {
+    var bSessions = (STATE.attendance_sessions || []).filter(function (s) {
+      return s.context_id === activeDeckContext.id;
+    });
+    if (bSessions.length === 0) return;
+
+    enrolledStudents.forEach(function (st) {
+      var total = bSessions.length;
+      var attended = 0;
+      bSessions.forEach(function (sess) {
+        var status = (sess.records && sess.records[st.id]) || 'present';
+        if (status === 'present') attended += 1;
+        else if (status === 'late') attended += 0.5;
+      });
+      st.attendance_rate = Math.round((attended / total) * 100);
+    });
+  }
+
+  function formatShortDate(dateStr) {
+    if (!dateStr) return '';
+    var parts = dateStr.split('-');
+    if (parts.length < 3) return dateStr;
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var m = parseInt(parts[1], 10) - 1;
+    return parts[2] + ' ' + (months[m] || '');
+  }
+
+  function formatFullDate(dateStr) {
+    if (!dateStr) return '';
+    var parts = dateStr.split('-');
+    if (parts.length < 3) return dateStr;
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var m = parseInt(parts[1], 10) - 1;
+    return parts[2] + ' ' + (months[m] || '') + ' ' + parts[0];
   }
 
   // ─── DECK SUB-TAB 3: POINTS & HONORS DISPENSER DESK ────────────────────────
@@ -1586,7 +1917,7 @@
           '<td>' +
             '<div style="display:flex; gap:6px; align-items:center;">' +
               (isPaid
-                ? '<button type="button" class="btn btn-outline btn-sm btn-view-receipt" data-student-id="' + s.id + '" data-month-key="' + curMonthKey + '">🧾 Receipt</button>'
+                ? '<span class="badge badge-success font-bold" style="padding:4px 8px; font-size:11px;">PAID ✓</span>'
                 : '<button type="button" class="btn btn-primary btn-sm btn-record-payment" data-student-id="' + s.id + '" data-month-key="' + curMonthKey + '">💳 Record Paid</button>') +
               '<button type="button" class="btn btn-outline btn-sm btn-view-student-ledger" data-student-id="' + s.id + '" title="View complete month-by-month history">📋 Ledger</button>' +
             '</div>' +
@@ -1615,34 +1946,9 @@
         document.getElementById('payMonthDisplay').textContent = formatMonthName(mKey);
         document.getElementById('payAmountInput').value = student.custom_monthly_fee || 2500;
         document.getElementById('payDateInput').value = new Date().toISOString().slice(0, 10);
-        document.getElementById('payRefInput').value = 'REC-' + sId.slice(-4) + '-' + mKey.replace('-', '');
+        document.getElementById('payRefInput').value = 'PAY-' + sId.slice(-4) + '-' + mKey.replace('-', '');
 
         openModal('modalRecordPayment');
-      };
-    });
-
-    // Wire View Receipt Button
-    tbody.querySelectorAll('.btn-view-receipt').forEach(function (btn) {
-      btn.onclick = function () {
-        var sId = this.getAttribute('data-student-id');
-        var mKey = this.getAttribute('data-month-key');
-        var student = (STATE.students || []).find(function (st) { return st.id === sId; });
-        if (!student) return;
-
-        var rec = (student.fee_ledger && student.fee_ledger[mKey]) || {};
-
-        document.getElementById('recInstituteName').textContent = deckData.title;
-        document.getElementById('recRefNumber').textContent = rec.receipt_ref || ('REC-' + mKey.replace('-', '') + '-' + student.roll);
-        document.getElementById('recStudentName').textContent = student.name;
-        document.getElementById('recStudentRoll').textContent = student.roll;
-        document.getElementById('recBatchName').textContent = deckData.title;
-        document.getElementById('recMonthName').textContent = formatMonthName(mKey);
-        document.getElementById('recPaidDate').textContent = rec.paid_date || new Date().toISOString().slice(0, 10);
-        document.getElementById('recPaymentMode').textContent = rec.payment_mode || 'UPI (Google Pay)';
-        document.getElementById('recAmountDisplay').textContent = '₹' + (rec.amount || student.custom_monthly_fee || 2500).toLocaleString() + '.00';
-        document.getElementById('recTeacherSign').textContent = getActiveTeacher().name;
-
-        openModal('modalViewFeeReceipt');
       };
     });
 
@@ -1694,8 +2000,8 @@
                 '<td>' + (rec.payment_mode || '—') + '</td>' +
                 '<td>' +
                   (isP
-                    ? '<span class="font-mono text-xs" style="color:var(--text-muted);">' + (rec.receipt_ref || 'REC-SETTLED') + '</span>'
-                    : '<button type="button" class="btn btn-outline btn-sm btn-hist-pay" data-student-id="' + sId + '" data-month-key="' + mKey + '">Record Paid</button>') +
+                    ? '<span class="font-mono text-xs font-bold" style="color:var(--success);">' + (rec.receipt_ref || 'SETTLED ✓') + '</span>'
+                    : '<button type="button" class="btn btn-primary btn-sm btn-hist-pay" data-student-id="' + sId + '" data-month-key="' + mKey + '">Record Paid</button>') +
                 '</td>' +
               '</tr>'
             );
@@ -1703,10 +2009,22 @@
 
           histBody.querySelectorAll('.btn-hist-pay').forEach(function (hBtn) {
             hBtn.onclick = function () {
-              closeModal('modalStudentFeeHistory');
               var s_Id = this.getAttribute('data-student-id');
               var m_Key = this.getAttribute('data-month-key');
-              document.querySelector('.btn-record-payment[data-student-id="' + s_Id + '"]') && document.querySelector('.btn-record-payment[data-student-id="' + s_Id + '"]').click();
+              var st = (STATE.students || []).find(function (x) { return x.id === s_Id; });
+              if (!st) return;
+
+              closeModal('modalStudentFeeHistory');
+
+              document.getElementById('payStudentId').value = s_Id;
+              document.getElementById('payMonthKey').value = m_Key;
+              document.getElementById('payStudentNameDisplay').textContent = st.name + ' (' + st.roll + ')';
+              document.getElementById('payMonthDisplay').textContent = formatMonthName(m_Key);
+              document.getElementById('payAmountInput').value = st.custom_monthly_fee || 2500;
+              document.getElementById('payDateInput').value = new Date().toISOString().slice(0, 10);
+              document.getElementById('payRefInput').value = 'PAY-' + s_Id.slice(-4) + '-' + m_Key.replace('-', '');
+
+              openModal('modalRecordPayment');
             };
           });
         }
@@ -1753,48 +2071,77 @@
         "mon": "09:00 AM - 05:00 PM",
         "sat": "09:00 AM - 02:00 PM",
         "sun": "Closed",
-        "thu": "09:00 AM - 05:00 PM",
-        "tue": "09:00 AM - 05:00 PM",
+        "thu": "Closed",
+        "tue": "Closed",
         "wed": "09:00 AM - 05:00 PM"
       };
       deckData.rawObj.weekly_schedule = sched;
     }
 
-    var schedMon = document.getElementById('sched_mon');
-    var schedTue = document.getElementById('sched_tue');
-    var schedWed = document.getElementById('sched_wed');
-    var schedThu = document.getElementById('sched_thu');
-    var schedFri = document.getElementById('sched_fri');
-    var schedSat = document.getElementById('sched_sat');
-    var schedSun = document.getElementById('sched_sun');
+    var days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
-    if (schedMon) schedMon.value = sched.mon || '09:00 AM - 05:00 PM';
-    if (schedTue) schedTue.value = sched.tue || '09:00 AM - 05:00 PM';
-    if (schedWed) schedWed.value = sched.wed || '09:00 AM - 05:00 PM';
-    if (schedThu) schedThu.value = sched.thu || '09:00 AM - 05:00 PM';
-    if (schedFri) schedFri.value = sched.fri || '09:00 AM - 05:00 PM';
-    if (schedSat) schedSat.value = sched.sat || '09:00 AM - 02:00 PM';
-    if (schedSun) schedSun.value = sched.sun || 'Closed';
+    // Initialize toggle and pickers for each day
+    days.forEach(function (d) {
+      var tog = document.getElementById('tog_sched_' + d);
+      var row = document.getElementById('row_sched_' + d);
+      var startInp = document.getElementById('start_sched_' + d);
+      var endInp = document.getElementById('end_sched_' + d);
+      var val = sched[d] || 'Closed';
+
+      if (!val || val.toLowerCase() === 'closed') {
+        if (tog) tog.checked = false;
+        if (row) row.classList.add('day-closed');
+      } else {
+        if (tog) tog.checked = true;
+        if (row) row.classList.remove('day-closed');
+        var parts = val.split(/\s*[-–]\s*/);
+        if (parts.length >= 2) {
+          if (startInp) startInp.value = parts[0].trim();
+          if (endInp) endInp.value = parts[1].trim();
+        }
+      }
+
+      if (tog) {
+        tog.onchange = function () {
+          if (this.checked) {
+            row && row.classList.remove('day-closed');
+          } else {
+            row && row.classList.add('day-closed');
+          }
+          updateSchedulePreview();
+        };
+      }
+
+      if (startInp) startInp.oninput = updateSchedulePreview;
+      if (endInp) endInp.oninput = updateSchedulePreview;
+    });
 
     // Live update JSON schema preview box
     function updateSchedulePreview() {
-      var currentScheduleObj = {
-        "fri": (schedFri ? schedFri.value : sched.fri).trim(),
-        "mon": (schedMon ? schedMon.value : sched.mon).trim(),
-        "sat": (schedSat ? schedSat.value : sched.sat).trim(),
-        "sun": (schedSun ? schedSun.value : sched.sun).trim(),
-        "thu": (schedThu ? schedThu.value : sched.thu).trim(),
-        "tue": (schedTue ? schedTue.value : sched.tue).trim(),
-        "wed": (schedWed ? schedWed.value : sched.wed).trim()
-      };
-      var jsonPre = document.getElementById('dispScheduleJsonPreview');
-      if (jsonPre) jsonPre.textContent = JSON.stringify(currentScheduleObj, null, 2);
-      return currentScheduleObj;
-    }
+      var currentScheduleObj = {};
+      days.forEach(function (d) {
+        var tog = document.getElementById('tog_sched_' + d);
+        var startInp = document.getElementById('start_sched_' + d);
+        var endInp = document.getElementById('end_sched_' + d);
+        if (tog && tog.checked) {
+          var sTime = (startInp && startInp.value.trim()) || '09:00 AM';
+          var eTime = (endInp && endInp.value.trim()) || '05:00 PM';
+          currentScheduleObj[d] = sTime + ' - ' + eTime;
+        } else {
+          currentScheduleObj[d] = 'Closed';
+        }
+      });
 
-    [schedMon, schedTue, schedWed, schedThu, schedFri, schedSat, schedSun].forEach(function (inp) {
-      if (inp) inp.oninput = updateSchedulePreview;
-    });
+      var sortedKeys = ["fri", "mon", "sat", "sun", "thu", "tue", "wed"];
+      var sortedObj = {};
+      sortedKeys.forEach(function (k) {
+        sortedObj[k] = currentScheduleObj[k] || "Closed";
+      });
+
+      var jsonPre = document.getElementById('dispScheduleJsonPreview');
+      if (jsonPre) jsonPre.textContent = JSON.stringify(sortedObj, null, 2);
+      return sortedObj;
+    }
 
     updateSchedulePreview();
 

@@ -1042,30 +1042,37 @@ body.in-batch-deck #view-batch-deck {
 }
 
 .deck-sidebar-batch-card {
-  padding: 16px 20px;
-  background: var(--primary-light);
-  border-bottom: 1px solid rgba(128, 0, 32, 0.15);
+  padding: 16px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
 }
 
 .deck-sidebar-batch-title {
-  font-family: var(--font-serif);
-  font-size: 16.5px;
-  font-weight: 700;
-  color: var(--primary);
-  margin: 6px 0 3px 0;
-  line-height: 1.3;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 6px 0 6px 0;
+  line-height: 1.35;
 }
 
 .deck-sidebar-batch-schedule {
   font-size: 11.5px;
   color: var(--text-muted);
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .deck-sidebar-batch-room {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .deck-sidebar-nav {
@@ -1229,3 +1236,219 @@ body.in-batch-deck #view-batch-deck {
     padding: 16px 14px 40px 14px;
   }
 }
+
+/* ─── SWITCH TOGGLE (iOS / Modern Pill Style) ────────────────────────────── */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: all 0.25s ease;
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: all 0.25s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.switch-toggle input:checked + .switch-slider {
+  background-color: var(--primary, #800020);
+}
+
+.switch-toggle input:checked + .switch-slider:before {
+  transform: translateX(20px);
+}
+
+/* ─── WEEKLY SCHEDULE TIME SELECTOR (Screenshot 2 Architecture) ─────────── */
+.schedule-editor-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sched-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sched-day-row:hover {
+  border-color: #cbd5e1;
+}
+
+.sched-day-row.day-closed {
+  background: transparent;
+  border-style: dashed;
+}
+
+.sched-day-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 160px;
+}
+
+.sched-day-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.sched-time-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.2s ease;
+}
+
+.sched-day-row.day-closed .sched-time-range {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.time-picker-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.time-picker-pill .time-glyph {
+  font-size: 13px;
+}
+
+.time-picker-pill .clock-glyph {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.time-picker-pill .time-field {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-main);
+  outline: none;
+  font-family: var(--font-sans);
+  width: 86px;
+  text-align: center;
+}
+
+.to-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.sched-closed-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  display: none;
+  padding: 4px 10px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: var(--radius-pill);
+}
+
+.sched-day-row.day-closed .sched-closed-tag {
+  display: inline-block;
+}
+
+/* ─── ATTENDANCE DATE-BY-DATE REGISTER MATRIX ────────────────────────────── */
+.att-quick-chip {
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--text-main);
+}
+
+.att-quick-chip:hover, .att-quick-chip.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.att-matrix-p {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 800;
+  font-size: 11px;
+}
+
+.att-matrix-l {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 800;
+  font-size: 11px;
+}
+
+.att-matrix-a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 800;
+  font-size: 11px;
+}
+

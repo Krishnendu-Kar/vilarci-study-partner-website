@@ -275,13 +275,16 @@
 
           <!-- Active Batch Profile Card in Sidebar -->
           <div class="deck-sidebar-batch-card">
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-              <span class="pill pill-primary" id="deckContextBadge">Private Batch</span>
-              <span class="pill pill-muted" id="deckGradeBadge">Class 10 CBSE</span>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="pill pill-primary" id="deckContextBadge">Private Batch</span>
+                <span class="pill pill-muted" id="deckGradeBadge">Class 10 CBSE</span>
+              </div>
+              <span class="badge badge-success font-mono" id="deckCodeBadge" style="font-size:10px; padding:2px 6px;">VLR-M10-4443</span>
             </div>
             <h2 class="deck-sidebar-batch-title" id="deckTitleDisplay">Class 10 Maths Morning Super 20</h2>
-            <div class="deck-sidebar-batch-schedule" id="deckMetaDisplay">Mon, Wed, Fri • 07:30 AM – 09:00 AM</div>
-            <div class="deck-sidebar-batch-room" id="deckRoomDisplay">📍 Room: Orbit Home Studio A</div>
+            <div class="deck-sidebar-batch-schedule" id="deckMetaDisplay">🕒 Mon, Wed, Fri • 09:00 AM – 05:00 PM</div>
+            <div class="deck-sidebar-batch-room" id="deckRoomDisplay">📍 Orbit Home Studio A</div>
           </div>
 
           <!-- Vertical Navigation Tabs Menu -->
@@ -391,71 +394,122 @@
               </article>
             </div>
 
-            <!-- ─── SUB-TAB 2: DAILY ATTENDANCE & QR TERMINAL ────────────────── -->
+            <!-- ─── SUB-TAB 2: DAILY ATTENDANCE & DATE-BY-DATE REGISTER ───── -->
             <div id="dsub-attendance" class="dsub-view" style="display:none;">
-              <div class="qr-terminal-box">
-                <div class="qr-code-graphic">
-                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="5" y="5" width="28" height="28" fill="#800020" rx="3"/>
-                    <rect x="9" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
-                    <rect x="13" y="13" width="12" height="12" fill="#800020" rx="1"/>
-                    <rect x="67" y="5" width="28" height="28" fill="#800020" rx="3"/>
-                    <rect x="71" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
-                    <rect x="75" y="13" width="12" height="12" fill="#800020" rx="1"/>
-                    <rect x="5" y="67" width="28" height="28" fill="#800020" rx="3"/>
-                    <rect x="9" y="71" width="20" height="20" fill="#ffffff" rx="2"/>
-                    <rect x="13" y="75" width="12" height="12" fill="#800020" rx="1"/>
-                    <rect x="38" y="10" width="5" height="5" fill="#800020"/>
-                    <rect x="48" y="10" width="5" height="5" fill="#800020"/>
-                    <rect x="38" y="40" width="8" height="8" fill="#D97706"/>
-                    <rect x="52" y="42" width="6" height="6" fill="#800020"/>
-                    <rect x="68" y="44" width="8" height="8" fill="#800020"/>
-                    <rect x="40" y="60" width="6" height="6" fill="#800020"/>
-                    <rect x="54" y="58" width="8" height="8" fill="#800020"/>
-                    <rect x="42" y="74" width="7" height="7" fill="#800020"/>
-                  </svg>
+              <!-- Attendance Mode Switcher & Date Controls -->
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px 20px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" class="chip-btn active" id="btnAttViewMarking">📋 Daily Session Marking</button>
+                    <button type="button" class="chip-btn" id="btnAttViewRegister">📊 Date-by-Date Register Matrix</button>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-outline btn-sm" id="btnDeckMarkAllPresent">✓ Mark All Present</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnDeckSaveAttendance">💾 Save Attendance for Date</button>
+                  </div>
                 </div>
-                <div style="flex:1;">
-                  <span class="badge badge-success">LIVE CLASSROOM QR CHECK-IN</span>
-                  <h3 style="font-size:18px; font-weight:700; margin:6px 0;" id="deckQrBatchTitle">Classroom Check-in QR</h3>
-                  <p class="text-xs text-muted" style="line-height:1.45;">Project on the screen. Students scan with their <strong>Vilarci Study</strong> portal to verify attendance (+10 pts).</p>
-                  <div style="margin-top:10px; display:flex; gap:10px;">
-                    <button type="button" class="btn btn-outline btn-sm" id="btnRefreshQrSession">🔄 Refresh Token</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnProjectorFullscreen">📺 Fullscreen Mode</button>
+
+                <!-- Session Date Picker & Quick History Chips -->
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-top:10px; border-top:1px solid var(--border);">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <label class="form-label" style="margin:0; font-size:12px; font-weight:800; text-transform:uppercase; color:var(--text-muted);">Session Date:</label>
+                    <input type="date" id="deckAttDatePicker" class="form-input" style="width:145px; padding:6px 10px; font-weight:700; font-size:12.5px;">
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;" id="deckAttRecentChips">
+                    <!-- Date chips rendered dynamically -->
                   </div>
                 </div>
               </div>
 
-              <article class="card">
-                <div class="card-header" style="flex-wrap:wrap; gap:12px;">
-                  <div>
-                    <h3 class="card-title">Today's Attendance Sheet — 20 Oct 2026</h3>
-                    <span class="card-subtitle">Click P (Present), L (Late), or A (Absent) to override status</span>
+              <!-- VIEW 1: DAILY SESSION MARKING & QR TERMINAL -->
+              <div id="deckAttDailySection">
+                <div class="qr-terminal-box">
+                  <div class="qr-code-graphic">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="5" y="5" width="28" height="28" fill="#800020" rx="3"/>
+                      <rect x="9" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
+                      <rect x="13" y="13" width="12" height="12" fill="#800020" rx="1"/>
+                      <rect x="67" y="5" width="28" height="28" fill="#800020" rx="3"/>
+                      <rect x="71" y="9" width="20" height="20" fill="#ffffff" rx="2"/>
+                      <rect x="75" y="13" width="12" height="12" fill="#800020" rx="1"/>
+                      <rect x="5" y="67" width="28" height="28" fill="#800020" rx="3"/>
+                      <rect x="9" y="71" width="20" height="20" fill="#ffffff" rx="2"/>
+                      <rect x="13" y="75" width="12" height="12" fill="#800020" rx="1"/>
+                      <rect x="38" y="10" width="5" height="5" fill="#800020"/>
+                      <rect x="48" y="10" width="5" height="5" fill="#800020"/>
+                      <rect x="38" y="40" width="8" height="8" fill="#D97706"/>
+                      <rect x="52" y="42" width="6" height="6" fill="#800020"/>
+                      <rect x="68" y="44" width="8" height="8" fill="#800020"/>
+                      <rect x="40" y="60" width="6" height="6" fill="#800020"/>
+                      <rect x="54" y="58" width="8" height="8" fill="#800020"/>
+                      <rect x="42" y="74" width="7" height="7" fill="#800020"/>
+                    </svg>
                   </div>
-                  <div style="display:flex; gap:8px;">
-                    <button type="button" class="btn btn-outline btn-sm" id="btnDeckMarkAllPresent">✓ Mark All Present</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnDeckSaveAttendance">Save Session</button>
+                  <div style="flex:1;">
+                    <span class="badge badge-success">LIVE CLASSROOM QR CHECK-IN</span>
+                    <h3 style="font-size:18px; font-weight:700; margin:6px 0;" id="deckQrBatchTitle">Classroom Check-in QR</h3>
+                    <p class="text-xs text-muted" style="line-height:1.45;">Project on the screen. Students scan with their <strong>Vilarci Study</strong> portal to verify attendance (+10 pts).</p>
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                      <button type="button" class="btn btn-outline btn-sm" id="btnRefreshQrSession">🔄 Refresh Token</button>
+                      <button type="button" class="btn btn-primary btn-sm" id="btnProjectorFullscreen">📺 Fullscreen Mode</button>
+                    </div>
                   </div>
                 </div>
-                <div class="card-body" style="padding:0;">
-                  <div class="table-responsive">
-                    <table class="data-table">
-                      <thead>
-                        <tr>
-                          <th>Roll No</th>
-                          <th>Student Name</th>
-                          <th>Status</th>
-                          <th>Points</th>
-                          <th>Parent Alert</th>
-                        </tr>
-                      </thead>
-                      <tbody id="deckAttendanceTableBody">
-                        <!-- Populated dynamically by JS -->
-                      </tbody>
-                    </table>
+
+                <article class="card">
+                  <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                    <div>
+                      <h3 class="card-title" id="deckAttSheetTitle">Daily Attendance Sheet — 20 Oct 2026</h3>
+                      <span class="card-subtitle">Click P (Present), L (Late), or A (Absent) to record attendance for this date</span>
+                    </div>
+                    <div class="text-xs font-bold" id="deckAttDayStatsSummary" style="color:var(--primary);">
+                      <!-- E.g. Present: 5 • Late: 1 • Absent: 1 -->
+                    </div>
                   </div>
-                </div>
-              </article>
+                  <div class="card-body" style="padding:0;">
+                    <div class="table-responsive">
+                      <table class="data-table">
+                        <thead>
+                          <tr>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Attendance Status</th>
+                            <th>Points</th>
+                            <th>Parent WhatsApp Notification</th>
+                          </tr>
+                        </thead>
+                        <tbody id="deckAttendanceTableBody">
+                          <!-- Populated dynamically by JS -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              <!-- VIEW 2: FULL DATE-BY-DATE ATTENDANCE REGISTER MATRIX -->
+              <div id="deckAttMatrixSection" style="display:none;">
+                <article class="card">
+                  <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                    <div>
+                      <h3 class="card-title">Full Attendance Register Matrix (Date-by-Date)</h3>
+                      <span class="card-subtitle">Complete chronological record of student presence across all conducted sessions</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px; font-size:11.5px;">
+                      <span style="display:inline-flex; align-items:center; gap:4px;"><span class="att-matrix-p">P</span> Present</span>
+                      <span style="display:inline-flex; align-items:center; gap:4px;"><span class="att-matrix-l">L</span> Late</span>
+                      <span style="display:inline-flex; align-items:center; gap:4px;"><span class="att-matrix-a">A</span> Absent</span>
+                    </div>
+                  </div>
+                  <div class="card-body" style="padding:0;">
+                    <div class="table-responsive">
+                      <table class="data-table" id="deckAttMatrixTable">
+                        <!-- Rendered dynamically -->
+                      </table>
+                    </div>
+                  </div>
+                </article>
+              </div>
             </div>
 
             <!-- ─── SUB-TAB 3: POINTS & HONORS DISPENSER DESK ────────────────── -->
@@ -691,51 +745,190 @@
                       </div>
                     </div>
 
-                    <!-- Day-by-Day Weekly Schedule Editor (Exact Schema Specified) -->
-                    <div style="margin:20px 0; background:var(--surface-muted); padding:18px; border-radius:var(--radius-md); border:1px solid var(--border);">
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <!-- Day-by-Day Weekly Schedule Editor (Screenshot 2 Architecture) -->
+                    <div style="margin:20px 0; background:var(--surface-muted); padding:18px; border-radius:var(--radius-lg); border:1px solid var(--border);">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
                         <div>
                           <strong style="font-size:14px;">📅 Weekly Schedule Configuration</strong>
-                          <div class="text-xs text-muted">Saved in exact day-wise timing structure (e.g. mon, tue, wed, thu, fri, sat, sun)</div>
+                          <div class="text-xs text-muted">Toggle days ON/OFF and select class operating hours (Saved in exact standard JSON format)</div>
                         </div>
-                        <span class="badge badge-primary">Structured JSON</span>
+                        <span class="badge badge-primary">Interactive Time Selectors</span>
                       </div>
 
-                      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;" id="weeklyScheduleEditorGrid">
+                      <div class="schedule-editor-card" id="weeklyScheduleEditorCard">
                         <!-- Monday -->
-                        <div class="form-group" style="margin-bottom:0;">
-                          <label class="form-label" style="font-size:11.5px;">Monday:</label>
-                          <input type="text" id="sched_mon" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        <div class="sched-day-row" id="row_sched_mon" data-day="mon">
+                          <div class="sched-day-meta">
+                            <label class="switch-toggle">
+                              <input type="checkbox" id="tog_sched_mon" checked>
+                              <span class="switch-slider"></span>
+                            </label>
+                            <span class="sched-day-name">Monday</span>
+                          </div>
+                          <div class="sched-time-range" id="range_sched_mon">
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">☀️</span>
+                              <input type="text" class="time-field" id="start_sched_mon" value="09:00 AM" placeholder="09:00 AM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                            <span class="to-label">TO</span>
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">🌙</span>
+                              <input type="text" class="time-field" id="end_sched_mon" value="05:00 PM" placeholder="05:00 PM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                          </div>
+                          <span class="sched-closed-tag" id="tag_sched_mon">Closed</span>
                         </div>
+
                         <!-- Tuesday -->
-                        <div class="form-group" style="margin-bottom:0;">
-                          <label class="form-label" style="font-size:11.5px;">Tuesday:</label>
-                          <input type="text" id="sched_tue" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        <div class="sched-day-row day-closed" id="row_sched_tue" data-day="tue">
+                          <div class="sched-day-meta">
+                            <label class="switch-toggle">
+                              <input type="checkbox" id="tog_sched_tue">
+                              <span class="switch-slider"></span>
+                            </label>
+                            <span class="sched-day-name">Tuesday</span>
+                          </div>
+                          <div class="sched-time-range" id="range_sched_tue">
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">☀️</span>
+                              <input type="text" class="time-field" id="start_sched_tue" value="09:00 AM" placeholder="09:00 AM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                            <span class="to-label">TO</span>
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">🌙</span>
+                              <input type="text" class="time-field" id="end_sched_tue" value="05:00 PM" placeholder="05:00 PM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                          </div>
+                          <span class="sched-closed-tag" id="tag_sched_tue">Closed</span>
                         </div>
+
                         <!-- Wednesday -->
-                        <div class="form-group" style="margin-bottom:0;">
-                          <label class="form-label" style="font-size:11.5px;">Wednesday:</label>
-                          <input type="text" id="sched_wed" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        <div class="sched-day-row" id="row_sched_wed" data-day="wed">
+                          <div class="sched-day-meta">
+                            <label class="switch-toggle">
+                              <input type="checkbox" id="tog_sched_wed" checked>
+                              <span class="switch-slider"></span>
+                            </label>
+                            <span class="sched-day-name">Wednesday</span>
+                          </div>
+                          <div class="sched-time-range" id="range_sched_wed">
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">☀️</span>
+                              <input type="text" class="time-field" id="start_sched_wed" value="09:00 AM" placeholder="09:00 AM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                            <span class="to-label">TO</span>
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">🌙</span>
+                              <input type="text" class="time-field" id="end_sched_wed" value="05:00 PM" placeholder="05:00 PM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                          </div>
+                          <span class="sched-closed-tag" id="tag_sched_wed">Closed</span>
                         </div>
+
                         <!-- Thursday -->
-                        <div class="form-group" style="margin-bottom:0;">
-                          <label class="form-label" style="font-size:11.5px;">Thursday:</label>
-                          <input type="text" id="sched_thu" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        <div class="sched-day-row day-closed" id="row_sched_thu" data-day="thu">
+                          <div class="sched-day-meta">
+                            <label class="switch-toggle">
+                              <input type="checkbox" id="tog_sched_thu">
+                              <span class="switch-slider"></span>
+                            </label>
+                            <span class="sched-day-name">Thursday</span>
+                          </div>
+                          <div class="sched-time-range" id="range_sched_thu">
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">☀️</span>
+                              <input type="text" class="time-field" id="start_sched_thu" value="09:00 AM" placeholder="09:00 AM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                            <span class="to-label">TO</span>
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">🌙</span>
+                              <input type="text" class="time-field" id="end_sched_thu" value="05:00 PM" placeholder="05:00 PM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                          </div>
+                          <span class="sched-closed-tag" id="tag_sched_thu">Closed</span>
                         </div>
+
                         <!-- Friday -->
-                        <div class="form-group" style="margin-bottom:0;">
-                          <label class="form-label" style="font-size:11.5px;">Friday:</label>
-                          <input type="text" id="sched_fri" class="form-input text-xs" value="09:00 AM - 05:00 PM">
+                        <div class="sched-day-row" id="row_sched_fri" data-day="fri">
+                          <div class="sched-day-meta">
+                            <label class="switch-toggle">
+                              <input type="checkbox" id="tog_sched_fri" checked>
+                              <span class="switch-slider"></span>
+                            </label>
+                            <span class="sched-day-name">Friday</span>
+                          </div>
+                          <div class="sched-time-range" id="range_sched_fri">
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">☀️</span>
+                              <input type="text" class="time-field" id="start_sched_fri" value="09:00 AM" placeholder="09:00 AM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                            <span class="to-label">TO</span>
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">🌙</span>
+                              <input type="text" class="time-field" id="end_sched_fri" value="05:00 PM" placeholder="05:00 PM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                          </div>
+                          <span class="sched-closed-tag" id="tag_sched_fri">Closed</span>
                         </div>
+
                         <!-- Saturday -->
-                        <div class="form-group" style="margin-bottom:0;">
-                          <label class="form-label" style="font-size:11.5px;">Saturday:</label>
-                          <input type="text" id="sched_sat" class="form-input text-xs" value="09:00 AM - 02:00 PM">
+                        <div class="sched-day-row" id="row_sched_sat" data-day="sat">
+                          <div class="sched-day-meta">
+                            <label class="switch-toggle">
+                              <input type="checkbox" id="tog_sched_sat" checked>
+                              <span class="switch-slider"></span>
+                            </label>
+                            <span class="sched-day-name">Saturday</span>
+                          </div>
+                          <div class="sched-time-range" id="range_sched_sat">
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">☀️</span>
+                              <input type="text" class="time-field" id="start_sched_sat" value="09:00 AM" placeholder="09:00 AM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                            <span class="to-label">TO</span>
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">🌙</span>
+                              <input type="text" class="time-field" id="end_sched_sat" value="02:00 PM" placeholder="02:00 PM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                          </div>
+                          <span class="sched-closed-tag" id="tag_sched_sat">Closed</span>
                         </div>
+
                         <!-- Sunday -->
-                        <div class="form-group" style="margin-bottom:0;">
-                          <label class="form-label" style="font-size:11.5px;">Sunday:</label>
-                          <input type="text" id="sched_sun" class="form-input text-xs" value="Closed">
+                        <div class="sched-day-row day-closed" id="row_sched_sun" data-day="sun">
+                          <div class="sched-day-meta">
+                            <label class="switch-toggle">
+                              <input type="checkbox" id="tog_sched_sun">
+                              <span class="switch-slider"></span>
+                            </label>
+                            <span class="sched-day-name">Sunday</span>
+                          </div>
+                          <div class="sched-time-range" id="range_sched_sun">
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">☀️</span>
+                              <input type="text" class="time-field" id="start_sched_sun" value="09:00 AM" placeholder="09:00 AM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                            <span class="to-label">TO</span>
+                            <div class="time-picker-pill">
+                              <span class="time-glyph">🌙</span>
+                              <input type="text" class="time-field" id="end_sched_sun" value="05:00 PM" placeholder="05:00 PM">
+                              <span class="clock-glyph">🕒</span>
+                            </div>
+                          </div>
+                          <span class="sched-closed-tag" id="tag_sched_sun">Closed</span>
                         </div>
                       </div>
 
@@ -1209,11 +1402,11 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Receipt / Transaction Ref (Optional):</label>
+            <label class="form-label">Payment / Transaction Ref (Optional):</label>
             <input type="text" id="payRefInput" class="form-input font-mono text-xs" placeholder="Auto-generated if blank">
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Confirm &amp; Issue Stamped Receipt ➜</button>
+          <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Confirm Payment Record ✓</button>
         </form>
       </div>
     </div>
@@ -1292,7 +1485,7 @@
                 <th>Status</th>
                 <th>Paid Date</th>
                 <th>Payment Mode</th>
-                <th>Receipt / Action</th>
+                <th>Transaction Ref / Action</th>
               </tr>
             </thead>
             <tbody id="histFeeTableBody">
@@ -1300,72 +1493,6 @@
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ─── MODAL: OFFICIAL PRINTABLE STAMPED FEE RECEIPT ───────────────────── -->
-  <div class="modal-overlay" id="modalViewFeeReceipt">
-    <div class="modal-window" style="max-width:520px; background:#fff;">
-      <div class="modal-header" style="border-bottom:1px dashed var(--border);">
-        <h3 class="modal-title">🧾 Official Tuition Fee Receipt</h3>
-        <button type="button" class="modal-close-btn" data-close-modal="modalViewFeeReceipt">&times;</button>
-      </div>
-      <div class="modal-body" id="receiptPrintableArea" style="padding:24px;">
-        <!-- Header -->
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <img src="https://officialpic.vilarci.in/Icons/web-icon.png" alt="Logo" style="width:34px; height:34px; border-radius:6px;">
-            <div>
-              <div style="font-weight:800; font-size:14px; color:#800020;">VILARCI STUDY PARTNER</div>
-              <div style="font-size:10px; color:#64748b;" id="recInstituteName">Classroom Tuition Studio</div>
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <span class="badge badge-success" style="font-size:11px; font-weight:800;">FEE PAID</span>
-            <div style="font-family:var(--font-mono); font-size:11px; margin-top:3px; font-weight:700;" id="recRefNumber">REC-2610-01</div>
-          </div>
-        </div>
-
-        <!-- Receipt Metadata Grid -->
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px; font-size:12.5px;">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
-            <div><strong>Student:</strong> <span id="recStudentName">Aryan Mehta</span></div>
-            <div><strong>Roll No:</strong> <span id="recStudentRoll">SA-101</span></div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px;">
-            <div><strong>Batch:</strong> <span id="recBatchName">Class 10 Morning</span></div>
-            <div><strong>Month:</strong> <span id="recMonthName">October 2026</span></div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <div><strong>Paid Date:</strong> <span id="recPaidDate">02 Oct 2026</span></div>
-            <div><strong>Mode:</strong> <span id="recPaymentMode">UPI (Google Pay)</span></div>
-          </div>
-        </div>
-
-        <!-- Amount Box -->
-        <div style="border:2px dashed #800020; border-radius:8px; padding:12px; text-align:center; margin-bottom:16px; background:#fff;">
-          <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:700;">Total Tuition Fee Received</div>
-          <div style="font-size:26px; font-weight:800; color:#800020; font-family:var(--font-mono);" id="recAmountDisplay">₹2,500.00</div>
-          <div style="font-size:11px; color:#059669; font-weight:700;">Payment Verified &bull; Settle Status Cleared</div>
-        </div>
-
-        <!-- Signature Stamp Box -->
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; padding-top:10px; border-top:1px solid #e2e8f0;">
-          <div>
-            <div style="width:70px; height:70px; border:2px solid #800020; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; transform:rotate(-12deg); color:#800020; font-weight:800; font-size:8px;">
-              <span>VILARCI</span>
-              <span style="font-size:10px;">★ PAID ★</span>
-              <span style="font-size:7px;">VERIFIED</span>
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-family:var(--font-serif); font-style:italic; font-size:15px; color:#800020; font-weight:700;" id="recTeacherSign">Er. Alok Sharma</div>
-            <div style="font-size:10.5px; color:#64748b; font-weight:600;">Authorized Faculty Signatory</div>
-          </div>
-        </div>
-
-        <button type="button" class="btn btn-primary" onclick="window.print()" style="width:100%; margin-top:16px;">🖨️ Print Stamped Receipt</button>
       </div>
     </div>
   </div>

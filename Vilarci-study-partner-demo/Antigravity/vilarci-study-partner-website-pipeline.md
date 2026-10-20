@@ -71,22 +71,39 @@ Whether a teacher enters one of their **own private batches** or a **coaching se
    - **`+ Add Student to Batch` Modal & Dual Enrollment Engine**:
      - **Mechanism A (Automated Invite Link & QR)**: Every batch generates a deterministic unique invite link (`https://study.vilarci.in/join?batch=<batch_id>&code=<code_hash>`) and QR code. Students scanning or clicking join are immediately admitted into the batch with parent verified contacts. Includes an interactive demo simulation runner (`Simulate Student Joining via Invite Link`).
      - **Mechanism B (Manual Direct Registration)**: Teachers can directly onboard students, auto-suggesting roll numbers (`SA-110`), capturing OTP-verified Father & Mother contacts, initial fee status, and welcoming them with milestone points.
-2. **📋 Daily Attendance & QR Terminal**:
-   - **Live Rotating QR Code**: Projected on screen/tablet. Students scan via their mobile portal to claim **+10 learning points**.
-   - **Rapid Attendance Roster**: One-click toggles: `Present [P]`, `Late [L]`, `Absent [A]`, plus `✓ Mark All Present`.
-   - Generates automated WhatsApp/SMS notifications with prefilled attendance status.
+2. **📋 Daily Attendance & Date-by-Date Register Matrix**:
+   - **Full Chronological Attendance History**: Saves attendance sessions date-by-date across all academic days (e.g., `20 Oct`, `19 Oct`, `17 Oct`, `15 Oct`, `13 Oct`, `10 Oct`).
+   - **Mode Switcher**:
+     - *Daily Session Marking*: Date picker, quick date chips, per-student toggle pills (`Present [P]`, `Late [L]`, `Absent [A]`), `✓ Mark All Present`, and one-click session save with automatic attendance rate recalculation.
+     - *Date-by-Date Register Matrix*: Full historical cross-tabular grid showing every student's attendance records across all dates with color-coded badges (`P` in emerald green, `L` in amber, `A` in red).
+   - **Live Rotating QR Code**: Projected on screen/tablet for student portal check-ins (+10 learning points).
 3. **🏅 Points & Academic Honors Dispenser Desk**:
    - Teachers award faculty points (+50, +100, +150, +200) with custom citations.
    - **Live Batch Point Leaderboard**: Real-time peer standings re-ranking immediately upon point dispatch (e.g., Aryan Mehta climbing from Rank #3 to Rank #2).
 4. **📝 Tests, Assessments & Scorecards**:
    - Schedule chapter tests, enter student marks, calculate class averages, and tag diagnostic weak topics.
 5. **📖 Curriculum & Syllabus Tracker**:
-   - Topic status toggles: `Covered`, `In Progress`, `Upcoming`.
-   - Tracks how many students marked revision on their student portal (+15 pts).
-6. **💳 Tuition Fees & Stamped Receipts**:
-   - Monthly tuition fee ledger, offline payment recording, and printable stamped receipt vouchers with director signatures.
-7. **⚙️ Batch Configuration (Rename)**:
-   - Change batch name, schedule, monthly fee, or classroom suite.
+   - Planned Target vs Reality Variance tracking (`On Schedule`, `Delayed`, `In Progress`).
+   - Topic status toggles, add/remove chapter capabilities, and student revision tracking.
+6. **💳 Tuition Fees & Academic Ledger (No Receipt Policy)**:
+   - **Policy Guideline**: Vilarci is an academic study keeper app and does not issue legal fee receipts. All receipt generators and buttons are strictly omitted.
+   - **Personalized Student Fee Model**: Configurable monthly fees per student, variable admission start months, and course completion months.
+   - **Academic Fee Ledger**: Full month-by-month payment history for each student across their admission span with an active `💳 Record Paid` button that directly opens the prefilled payment modal for past, current, or upcoming billing months.
+7. **⚙️ Batch Configuration & Weekly Schedule Editor**:
+   - **Interactive Schedule Configuration**: 7-day schedule editor matching modern visual design (iOS-style day switches, start time pickers with ☀️ sun icon, "TO" separator, end time pickers with 🌙 moon / 🕒 clock icons, and automated "Closed" status).
+   - **Live JSON Schema Sync**: Real-time preview synchronizing directly with the canonical weekly schedule format:
+     ```json
+     {
+       "fri": "09:00 AM - 05:00 PM",
+       "mon": "09:00 AM - 05:00 PM",
+       "sat": "09:00 AM - 02:00 PM",
+       "sun": "Closed",
+       "thu": "Closed",
+       "tue": "Closed",
+       "wed": "09:00 AM - 05:00 PM"
+     }
+     ```
+   - **Universal Back Button Navigation**: Full browser back button (`window.onpopstate`) and UI back button integration seamlessly closing modals, mobile drawer, and batch deck navigation without page reloads.
 
 ---
 
