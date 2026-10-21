@@ -987,19 +987,24 @@ button, input, select, textarea {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   BATCH COMMAND DECK — TRANSFORMS TOP NAV INTO DEDICATED LEFT SIDEBAR
+   FOCUSED WORKSPACE DECKS (BATCH COMMAND DECK & COACHING INSTITUTE DECK)
+   Transforms top navigation into dedicated Left Sidebar layouts
    ════════════════════════════════════════════════════════════════════════════ */
-body.in-batch-deck {
+body.in-batch-deck,
+body.in-coaching-deck {
   overflow: hidden !important;
   height: 100vh !important;
 }
 
 body.in-batch-deck .top-navbar,
-body.in-batch-deck .context-breadcrumb-bar {
+body.in-batch-deck .context-breadcrumb-bar,
+body.in-coaching-deck .top-navbar,
+body.in-coaching-deck .context-breadcrumb-bar {
   display: none !important;
 }
 
-body.in-batch-deck .app-container {
+body.in-batch-deck .app-container,
+body.in-coaching-deck .app-container {
   max-width: 100% !important;
   padding: 0 !important;
   margin: 0 !important;
@@ -1007,7 +1012,8 @@ body.in-batch-deck .app-container {
   overflow: hidden !important;
 }
 
-body.in-batch-deck #view-batch-deck {
+body.in-batch-deck #view-batch-deck,
+body.in-coaching-deck #view-coaching-detail {
   height: 100% !important;
   width: 100% !important;
 }
@@ -1451,4 +1457,47 @@ body.in-batch-deck #view-batch-deck {
   font-weight: 800;
   font-size: 11px;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   COACHING NOTICES & ANALYTICS STYLING
+   ════════════════════════════════════════════════════════════════════════════ */
+.coaching-notice-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.coaching-notice-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(128, 0, 32, 0.25);
+}
+
+.coaching-notice-card.notice-priority-important {
+  border-left: 4px solid var(--danger);
+}
+
+.coaching-notice-card.notice-priority-academic {
+  border-left: 4px solid var(--accent);
+}
+
+.coaching-notice-card.notice-priority-general {
+  border-left: 4px solid var(--primary);
+}
+
+.notice-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
 

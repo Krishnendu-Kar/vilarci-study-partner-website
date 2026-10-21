@@ -126,127 +126,258 @@
     </section>
 
     <!-- ══════════════════════════════════════════════════════════════════════
-         VIEW 3: INSIDE A SPECIFIC COACHING INSTITUTE (SECTIONS & MEMBERS)
+         VIEW 3: COACHING INSTITUTE SIDEBAR WORKSPACE
+         (Replaces top bar with dedicated Left Sidebar layout for Coaching)
          ══════════════════════════════════════════════════════════════════════ -->
-    <section id="view-coaching-detail" class="main-view" style="display:none;">
+    <section id="view-coaching-detail" class="main-view" style="display:none; padding:0; margin:0;">
       
-      <!-- Institute Hero Banner -->
-      <div class="batch-deck-header" id="coachingHeroBanner">
-        <div>
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-            <span class="pill pill-primary" id="coachingRolePill">Director &amp; Owner</span>
-            <span class="text-xs" id="coachingCodePill" style="color:var(--accent-light);">Join Code: <strong>STLR10</strong></span>
-          </div>
-          <h1 class="batch-deck-title" id="coachingDetailTitle">Stellar Academy</h1>
-          <p class="batch-deck-meta" id="coachingDetailMeta">Master Concepts. Excel in Board &amp; Competitive Science &amp; Maths.</p>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <button type="button" class="btn" style="background:#fff; color:var(--primary); font-weight:700;" id="btnBackToCoachingList">← All Institutes</button>
-        </div>
-      </div>
-
-      <!-- Coaching Institute Sub-Navigation Tabs -->
-      <div class="batch-deck-tabs" id="coachingSubNavTabs">
-        <button type="button" class="deck-tab-btn active" data-coaching-tab="my_sections">📌 My Assigned Sections (Classes)</button>
-        <button type="button" class="deck-tab-btn" data-coaching-tab="all_sections" id="tabAllSections">🏛️ All Classes &amp; Sections (Coaching Roster)</button>
-        <button type="button" class="deck-tab-btn" data-coaching-tab="members" id="tabMembersManagement">👥 Members &amp; Teachers Management</button>
-        <button type="button" class="deck-tab-btn" data-coaching-tab="settings">⚙️ Institute Settings</button>
-      </div>
-
-      <!-- Coaching Sub-View A: My Assigned Sections -->
-      <div id="csub-my_sections" class="csub-view active">
-        <div style="margin-bottom:16px;">
-          <h3 style="font-size:18px; font-weight:800;">Classes &amp; Sections You Teach In</h3>
-          <p class="text-xs text-muted">In this coaching institute, you are assigned to teach the following class sections. Click on any section to manage students, attendance, points, and tests.</p>
-        </div>
-        <div class="sections-grid" id="mySectionsGrid">
-          <!-- Populated dynamically by JS -->
-        </div>
-      </div>
-
-      <!-- Coaching Sub-View B: All Classes & Sections (Institute-wide) -->
-      <div id="csub-all_sections" class="csub-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <div>
-            <h3 style="font-size:18px; font-weight:800;">All Classes &amp; Sections with Subject-wise Faculty</h3>
-            <p class="text-xs text-muted">Complete timetable division. Multiple teachers teach different subjects in the same section.</p>
-          </div>
-          <button type="button" class="btn btn-primary btn-sm" id="btnOpenCreateSection">+ Add Class / Section</button>
-        </div>
-        <div class="sections-grid" id="allSectionsGrid">
-          <!-- Populated dynamically by JS -->
-        </div>
-      </div>
-
-      <!-- Coaching Sub-View C: Members & Teachers Management -->
-      <div id="csub-members" class="csub-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
-          <div>
-            <h3 style="font-size:18px; font-weight:800;">Faculty Members &amp; Permissions</h3>
-            <p class="text-xs text-muted">Manage educators connected to this coaching institute. Invite new teachers, assign roles, or remove members.</p>
-          </div>
-          <button type="button" class="btn btn-primary" id="btnOpenInviteTeacher">+ Invite New Teacher</button>
-        </div>
-
-        <article class="card">
-          <div class="card-body" style="padding:0;">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Teacher Name</th>
-                    <th>Role &amp; Permissions</th>
-                    <th>Assigned Subjects</th>
-                    <th>Assigned Sections</th>
-                    <th>Joined Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="coachingMembersTableBody">
-                  <!-- Populated dynamically by JS -->
-                </tbody>
-              </table>
+      <div class="deck-workspace-shell">
+        
+        <!-- ─── COACHING INSTITUTE DEDICATED LEFT SIDEBAR ─────────────────── -->
+        <aside class="deck-sidebar" id="coachingSidebar">
+          
+          <!-- Sidebar Brand Box -->
+          <div class="deck-sidebar-brand">
+            <div class="brand-box">
+              <img src="https://officialpic.vilarci.in/Icons/web-icon.png" alt="Vilarci Logo" class="brand-icon">
+              <div class="brand-meta">
+                <span class="brand-title">Vilarci <span class="brand-badge">Partner</span></span>
+                <span class="brand-sub">Coaching Workspace</span>
+              </div>
             </div>
+            <button type="button" class="deck-mobile-close-btn" id="btnCoachingCloseSidebarMobile" aria-label="Close sidebar menu">&times;</button>
           </div>
-        </article>
-      </div>
 
-      <!-- Coaching Sub-View D: Institute Settings -->
-      <div id="csub-settings" class="csub-view" style="display:none;">
-        <article class="card">
-          <div class="card-header">
-            <h3 class="card-title">Institute Profile &amp; Join Code Settings</h3>
+          <!-- Active Coaching Profile Card in Sidebar -->
+          <div class="deck-sidebar-batch-card" style="border-left: 3px solid var(--accent-light);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:6px; flex-wrap:wrap;">
+              <span class="pill pill-primary" id="coachingRolePill">Director &amp; Owner</span>
+              <span class="badge badge-success font-mono" id="coachingCodePill" style="font-size:10px; padding:2px 6px;">STLR10</span>
+            </div>
+            <h2 class="deck-sidebar-batch-title" id="coachingDetailTitle">Stellar Academy</h2>
+            <div class="deck-sidebar-batch-schedule" id="coachingDetailMeta">📍 Orbit House, Park Street</div>
+            <div class="deck-sidebar-batch-room" id="coachingDetailSubtext">Premier STEM &amp; Board Prep Institute</div>
           </div>
-          <div class="card-body">
-            <form id="formCoachingSettings">
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                <div class="form-group">
-                  <label class="form-label">Coaching Institute Name:</label>
-                  <input type="text" id="setCoachingName" class="form-input" value="Stellar Academy">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Student Join Code (6 Characters):</label>
-                  <input type="text" id="setCoachingCode" class="form-input font-mono font-bold" value="STLR10">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Official Phone:</label>
-                  <input type="text" id="setCoachingPhone" class="form-input" value="+91 98765 43210">
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Official Email:</label>
-                  <input type="email" id="setCoachingEmail" class="form-input" value="admin@stellaracademy.edu.in">
+
+          <!-- Vertical Navigation Tabs Menu for Coaching -->
+          <nav class="deck-sidebar-nav" id="coachingSidebarNav" aria-label="Coaching Institute Navigation">
+            <button type="button" class="deck-nav-item active" data-coaching-tab="my_sections">
+              <span class="deck-nav-icon">📌</span>
+              <span class="deck-nav-label">My Assigned Sections</span>
+              <span class="deck-nav-pill" id="coachingMySecCountPill">3</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-coaching-tab="members" id="tabMembersManagement">
+              <span class="deck-nav-icon">👥</span>
+              <span class="deck-nav-label">Faculty &amp; Members</span>
+              <span class="deck-nav-pill" id="coachingMembersCountPill">5</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-coaching-tab="all_sections" id="tabAllSections">
+              <span class="deck-nav-icon">🏛️</span>
+              <span class="deck-nav-label">All Classes &amp; Sections</span>
+              <span class="deck-nav-pill" id="coachingAllSecCountPill">4</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-coaching-tab="notices" id="tabCoachingNotices">
+              <span class="deck-nav-icon">📢</span>
+              <span class="deck-nav-label">Notices &amp; Circulars</span>
+              <span class="badge badge-success" style="font-size:9.5px; padding:2px 6px;">Active</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-coaching-tab="analytics" id="tabCoachingAnalytics">
+              <span class="deck-nav-icon">📊</span>
+              <span class="deck-nav-label">Institute Analytics</span>
+              <span class="pill pill-muted" style="font-size:9.5px; padding:2px 6px;">Live</span>
+            </button>
+            <button type="button" class="deck-nav-item" data-coaching-tab="settings" id="tabCoachingSettings">
+              <span class="deck-nav-icon">⚙️</span>
+              <span class="deck-nav-label">Institute Settings</span>
+            </button>
+          </nav>
+
+          <!-- Sidebar Footer: Educator Identity & Return Button -->
+          <div class="deck-sidebar-footer">
+            <div class="teacher-profile-chip" style="width:100%; margin-bottom:12px; justify-content:flex-start;">
+              <div class="teacher-avatar" id="coachingSidebarTeacherAvatar">AS</div>
+              <div style="flex:1; min-width:0;">
+                <div class="font-bold text-xs" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="coachingSidebarTeacherName">Er. Alok Sharma</div>
+                <div class="text-xs text-muted" id="coachingSidebarTeacherRole">Owner &amp; Admin</div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" id="btnBackToCoachingList" style="width:100%; justify-content:center; gap:6px;">
+              <span>← Exit to Institutes</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Backdrop overlay for mobile drawer -->
+        <div class="deck-sidebar-backdrop" id="coachingSidebarBackdrop"></div>
+
+        <!-- ─── COACHING MAIN WORKSPACE PANEL ────────────────────────────── -->
+        <main class="deck-main-pane">
+          
+          <!-- Mobile Header Bar for Coaching -->
+          <div class="deck-mobile-header" id="coachingMobileHeader">
+            <button type="button" class="deck-hamburger-btn" id="btnCoachingHamburger" aria-label="Open coaching menu">
+              <span></span><span></span><span></span>
+            </button>
+            <div class="deck-mobile-title-box">
+              <span class="deck-mobile-title" id="coachingMobileTitle">Stellar Academy</span>
+              <span class="text-xs text-muted" id="coachingMobileSubtitle">📌 My Assigned Sections</span>
+            </div>
+            <span class="badge badge-success font-mono" id="coachingMobileCode">STLR10</span>
+          </div>
+
+          <!-- Content Canvas -->
+          <div class="deck-content-inner">
+            
+            <!-- Coaching Sub-View A: My Assigned Sections -->
+            <div id="csub-my_sections" class="csub-view active">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h2 style="font-size:22px; font-weight:800; color:var(--text-main); margin-bottom:4px;">Classes &amp; Sections You Teach In</h2>
+                  <p class="text-xs text-muted">In this coaching institute, you are assigned to teach the following class sections. Click on any section to enter its Command Deck.</p>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Campus Address:</label>
-                <textarea id="setCoachingAddress" class="form-textarea" rows="2">42, Orbit Lane, Science Nagar, Pune – 411021</textarea>
+              <div class="sections-grid" id="mySectionsGrid">
+                <!-- Populated dynamically by JS -->
               </div>
-              <button type="submit" class="btn btn-primary">Save Institute Settings</button>
-            </form>
-          </div>
-        </article>
-      </div>
+            </div>
 
+            <!-- Coaching Sub-View B: All Classes & Sections (Institute-wide) -->
+            <div id="csub-all_sections" class="csub-view" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h2 style="font-size:22px; font-weight:800; color:var(--text-main); margin-bottom:4px;">All Classes &amp; Sections with Subject-wise Faculty</h2>
+                  <p class="text-xs text-muted">Complete timetable division. Multiple teachers instruct different subjects in the same section.</p>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="btnOpenCreateSection">+ Add Class / Section</button>
+              </div>
+              <div class="sections-grid" id="allSectionsGrid">
+                <!-- Populated dynamically by JS -->
+              </div>
+            </div>
+
+            <!-- Coaching Sub-View C: Members & Teachers Management -->
+            <div id="csub-members" class="csub-view" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h2 style="font-size:22px; font-weight:800; color:var(--text-main); margin-bottom:4px;">Faculty Members &amp; Permissions</h2>
+                  <p class="text-xs text-muted">Manage educators connected to this coaching institute. Invite new teachers, assign subject roles, or remove members.</p>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnOpenInviteTeacher">+ Invite New Teacher</button>
+              </div>
+
+              <article class="card">
+                <div class="card-body" style="padding:0;">
+                  <div class="table-responsive">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Teacher Name</th>
+                          <th>Role &amp; Permissions</th>
+                          <th>Assigned Subjects</th>
+                          <th>Assigned Sections</th>
+                          <th>Joined Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="coachingMembersTableBody">
+                        <!-- Populated dynamically by JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- Coaching Sub-View D: Notices & Circulars (New Extensible Feature!) -->
+            <div id="csub-notices" class="csub-view" style="display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+                <div>
+                  <h2 style="font-size:22px; font-weight:800; color:var(--text-main); margin-bottom:4px;">📢 Institute Notices &amp; Circulars</h2>
+                  <p class="text-xs text-muted">Broadcast official exam dates, holidays, schedule revisions, and announcements to students and faculty.</p>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnOpenPostNoticeModal">+ Post New Notice</button>
+              </div>
+              <div id="coachingNoticesContainer" style="display:grid; gap:16px;">
+                <!-- Populated dynamically by JS -->
+              </div>
+            </div>
+
+            <!-- Coaching Sub-View E: Institute Analytics (New Extensible Feature!) -->
+            <div id="csub-analytics" class="csub-view" style="display:none;">
+              <div style="margin-bottom:20px;">
+                <h2 style="font-size:22px; font-weight:800; color:var(--text-main); margin-bottom:4px;">📊 Institute Performance Analytics</h2>
+                <p class="text-xs text-muted">Aggregate attendance rates, academic health, and section performance across the coaching institute.</p>
+              </div>
+              <div class="kpi-grid" id="coachingAnalyticsKpiGrid" style="margin-bottom:24px;">
+                <!-- Populated dynamically by JS -->
+              </div>
+              <article class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Section-by-Section Health &amp; Activity Overview</h3>
+                </div>
+                <div class="card-body" style="padding:0;">
+                  <div class="table-responsive">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Class &amp; Section</th>
+                          <th>Room</th>
+                          <th>Faculty Allocated</th>
+                          <th>Enrolled Students</th>
+                          <th>Avg. Attendance</th>
+                          <th>Academic Status</th>
+                        </tr>
+                      </thead>
+                      <tbody id="coachingAnalyticsTableBody">
+                        <!-- Populated dynamically by JS -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- Coaching Sub-View F: Institute Settings -->
+            <div id="csub-settings" class="csub-view" style="display:none;">
+              <div style="margin-bottom:20px;">
+                <h2 style="font-size:22px; font-weight:800; color:var(--text-main); margin-bottom:4px;">⚙️ Institute Profile &amp; Join Code Settings</h2>
+                <p class="text-xs text-muted">Configure your institute's public identity, student admission join code, and contact information.</p>
+              </div>
+              <article class="card">
+                <div class="card-body">
+                  <form id="formCoachingSettings">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                      <div class="form-group">
+                        <label class="form-label">Coaching Institute Name:</label>
+                        <input type="text" id="setCoachingName" class="form-input" value="Stellar Academy">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Student Join Code (6 Characters):</label>
+                        <input type="text" id="setCoachingCode" class="form-input font-mono font-bold" value="STLR10">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Official Phone:</label>
+                        <input type="text" id="setCoachingPhone" class="form-input" value="+91 98765 43210">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Official Email:</label>
+                        <input type="email" id="setCoachingEmail" class="form-input" value="admin@stellaracademy.edu.in">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Campus Address:</label>
+                      <textarea id="setCoachingAddress" class="form-textarea" rows="2">42, Orbit Lane, Science Nagar, Pune – 411021</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Institute Settings</button>
+                  </form>
+                </div>
+              </article>
+            </div>
+
+          </div>
+        </main>
+
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════════════════
@@ -1260,6 +1391,42 @@
             <input type="text" id="inpInviteTeacherSubjects" class="form-input" placeholder="e.g. Physics, Optics" required>
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%;">Send Faculty Invitation</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: POST NEW NOTICE / CIRCULAR ──────────────────────────────── -->
+  <div class="modal-overlay" id="modalPostNotice">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">📢 Post New Circular / Notice</h3>
+        <button type="button" class="modal-close-btn" data-close-modal="modalPostNotice">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formPostNotice">
+          <div class="form-group">
+            <label class="form-label">Notice Title / Headline:</label>
+            <input type="text" id="noticeTitleInput" class="form-input" placeholder="e.g. Diwali Vacation &amp; Special Revision Schedule" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Audience / Sections:</label>
+            <input type="text" id="noticeTargetInput" class="form-input" placeholder="e.g. All Students &amp; Faculty, or Class 10 Sections" value="All Students &amp; Faculty" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notice Category / Priority:</label>
+            <select id="noticeCategoryInput" class="form-select">
+              <option value="Important Circular">🚨 Important Circular</option>
+              <option value="Exam &amp; Test Schedule">📝 Exam &amp; Test Schedule</option>
+              <option value="Holiday &amp; Vacation Notice">🏖️ Holiday &amp; Vacation Notice</option>
+              <option value="General Announcement">📢 General Announcement</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Detailed Notice Content:</label>
+            <textarea id="noticeBodyInput" class="form-textarea" rows="4" placeholder="Enter notice details, instructions, dates, and reporting times..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Publish Circular to Notice Board 📢</button>
         </form>
       </div>
     </div>

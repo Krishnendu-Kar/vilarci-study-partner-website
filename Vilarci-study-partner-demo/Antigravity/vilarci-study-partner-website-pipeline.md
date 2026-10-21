@@ -24,9 +24,15 @@ The portal is designed around the authentic mental model and daily workflow of I
    - A teacher can **create their own Coaching Institute** (e.g., Er. Alok Sharma founded *Stellar Academy*):
      - In institutes they own or direct, they have administrative control over the **Members (Teachers) Table**: inviting teachers, assigning roles/permissions, allocating subjects, or deleting/removing faculty members.
    - A teacher can also be **joined in multiple coaching institutes** (e.g., Er. Alok Sharma is also joined as a Visiting Mathematics Faculty at *Apex Science Hub*).
-   - When entering a coaching institute, the teacher sees **Classes with Sections** (e.g., `Class 10-A`, `Class 10-B`, `Class 9-A`, `Class 12-PCM-A`):
-     - In coaching institutes, classes are divided into sections, and multiple teachers instruct different subjects in the same section (e.g., in `Class 10-A`: Maths with Alok Sharma, Physics with Meenakshi Soni, Chemistry with Rashmi Verma).
-     - Clicking on a specific section opens the Section Command Deck to manage students, marks, attendance, and honors.
+   - **Coaching Sidebar Workspace**: Entering a coaching institute transforms the top navigation bar into a focused **Left Sidebar Layout** (matching the batch deck architecture) designed for easy extensibility:
+     - 📌 *My Assigned Sections* (Class sections instructed by the logged-in teacher)
+     - 👥 *Faculty & Members* (Directory of educators with roles and permission management)
+     - 🏛️ *All Classes & Sections* (Institute-wide division with multi-teacher allocations)
+     - 📢 *Notices & Circulars* (Official broadcasts to students & faculty with custom priority tags)
+     - 📊 *Institute Performance Analytics* (Aggregate student count, attendance %, active faculty, and section health)
+     - ⚙️ *Institute Settings* (Public profile, student admission code, and campus location)
+   - When clicking on a specific section (e.g. `Class 10-A`), the teacher enters the **Section Command Deck** to manage student performance, marks, attendance, and honors.
+   - Returning from a section brings the teacher right back to their Coaching Sidebar Workspace.
 
 ```mermaid
 flowchart TD
@@ -103,6 +109,10 @@ Whether a teacher enters one of their **own private batches** or a **coaching se
        "wed": "09:00 AM - 05:00 PM"
      }
      ```
+   - **Centralized View Manager (`showMainView`)**: Guarantees mutual exclusivity across all views (`view-private-batches`, `view-coaching-list`, `view-coaching-detail`, `view-batch-deck`), permanently preventing view overlap bugs.
+   - **Universal Deep Linking & Refresh Persistence**:
+     - Every page, coaching institute, batch, and subtab maintains its own distinct bookmarkable URL hash (e.g. `#batches`, `#batch/pbatch-10-m/attendance`, `#coaching/inst-stellar/members`, `#coaching/inst-stellar/section/sec-10-a/tests`).
+     - Browser reloads/refreshes (`location.reload()`) parse the hash on initialization and directly re-render the target page and subtab without resetting to the home screen.
    - **Universal Back Button Navigation**: Full browser back button (`window.onpopstate`) and UI back button integration seamlessly closing modals, mobile drawer, and batch deck navigation without page reloads.
 
 ---

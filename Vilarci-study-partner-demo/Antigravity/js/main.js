@@ -24,12 +24,17 @@
     setupTopNavbar();
     setupWorkspaceTabs();
     setupClassFilterChips();
+    setupCoachingSidebar();
+    setupNoticeModal();
     setupModals();
     setupThemeToggle();
     setupFormHandlers();
 
-    // Render initial view
-    renderCurrentWorkspace();
+    // Attach router to hash changes for deep linking & back/forward navigation
+    window.addEventListener('hashchange', handleRouteFromHash);
+
+    // Initial route from URL hash (keeps current view upon browser refresh)
+    handleRouteFromHash();
   }
 
   function loadState() {
@@ -122,15 +127,35 @@
         saveState();
         updateTeacherNavProfile();
         closeModal('modalSwitchTeacher');
-        // Reset view to private batches of this teacher
-        currentWorkspace = 'private_batches';
-        activeDeckContext = null;
-        renderCurrentWorkspace();
+        navigateTo('batches');
         showToast('Switched account to: ' + getActiveTeacher().name, 'info');
       };
     });
 
     openModal('modalSwitchTeacher');
+  }
+
+  // ─── CENTRALIZED VIEW DISPLAY MANAGER ──────────────────────────────────────
+  // Guarantees only ONE main view is visible at any given time (prevents overlapping bug)
+  function showMainView(viewId) {
+    var allViews = ['view-private-batches', 'view-coaching-list', 'view-coaching-detail', 'view-batch-deck'];
+    allViews.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) {
+        el.style.display = (id === viewId) ? 'block' : 'none';
+      }
+    });
+
+    if (viewId === 'view-batch-deck') {
+      document.body.classList.add('in-batch-deck');
+      document.body.classList.remove('in-coaching-deck');
+    } else if (viewId === 'view-coaching-detail') {
+      document.body.classList.add('in-coaching-deck');
+      document.body.classList.remove('in-batch-deck');
+    } else {
+      document.body.classList.remove('in-batch-deck');
+      document.body.classList.remove('in-coaching-deck');
+    }
   }
 
   // ─── PRIMARY WORKSPACE SWITCHER ────────────────────────────────────────────
@@ -140,49 +165,35 @@
 
     if (pbBtn) {
       pbBtn.onclick = function () {
-        currentWorkspace = 'private_batches';
-        activeDeckContext = null;
-        renderCurrentWorkspace();
-        pushNavState('private_batches');
+        navigateTo('batches');
       };
     }
 
     if (ciBtn) {
       ciBtn.onclick = function () {
-        currentWorkspace = 'coaching_institutes';
-        activeDeckContext = null;
-        renderCurrentWorkspace();
-        pushNavState('coaching_list');
+        navigateTo('coaching');
       };
     }
   }
 
   function renderCurrentWorkspace() {
-    // Sync tab button states
     var pbBtn = document.getElementById('wsBtnPrivateBatches');
     var ciBtn = document.getElementById('wsBtnCoachingInstitutes');
     if (pbBtn) pbBtn.classList.toggle('active', currentWorkspace === 'private_batches' && !activeDeckContext);
     if (ciBtn) ciBtn.classList.toggle('active', currentWorkspace === 'coaching_institutes' && !activeDeckContext);
 
-    // Hide all main views first
-    document.querySelectorAll('.main-view').forEach(function (v) { v.style.display = 'none'; });
-
     if (activeDeckContext) {
-      // We are inside a specific batch/section deck!
-      var deckView = document.getElementById('view-batch-deck');
-      if (deckView) deckView.style.display = 'block';
+      showMainView('view-batch-deck');
       renderBatchDeck();
       return;
     }
 
     if (currentWorkspace === 'private_batches') {
-      var pbView = document.getElementById('view-private-batches');
-      if (pbView) pbView.style.display = 'block';
+      showMainView('view-private-batches');
       updateBreadcrumb(['Workspace', 'My Private Batches']);
       renderPrivateBatches('all');
     } else if (currentWorkspace === 'coaching_institutes') {
-      var ciView = document.getElementById('view-coaching-list');
-      if (ciView) ciView.style.display = 'block';
+      showMainView('view-coaching-list');
       updateBreadcrumb(['Workspace', 'Coaching Institutes']);
       renderCoachingInstitutesList();
     }
@@ -211,10 +222,12 @@
     var chips = document.querySelectorAll('#classFilterChipsRow .chip-btn');
     chips.forEach(function (chip) {
       chip.onclick = function () {
-        chips.forEach(function (c) { c.classList.remove('active'); });
-        this.classList.add('active');
         var filter = this.getAttribute('data-class-filter');
-        renderPrivateBatches(filter);
+        if (filter === 'all') {
+          navigateTo('batches');
+        } else {
+          navigateTo('batches/' + filter);
+        }
       };
     });
   }
@@ -282,7 +295,7 @@
     container.querySelectorAll('.btn-enter-pbatch').forEach(function (btn) {
       btn.onclick = function () {
         var bId = this.getAttribute('data-pbatch-id');
-        enterBatchDeck('private_batch', bId);
+        navigateTo('batch/' + bId + '/students');
       };
     });
 
@@ -364,92 +377,162 @@
     container.querySelectorAll('.btn-enter-coaching').forEach(function (btn) {
       btn.onclick = function () {
         var instId = this.getAttribute('data-inst-id');
-        openCoachingDetail(instId, 'my_sections');
+        navigateTo('coaching/' + instId + '/my_sections');
       };
     });
 
     container.querySelectorAll('.btn-manage-members').forEach(function (btn) {
       btn.onclick = function () {
         var instId = this.getAttribute('data-inst-id');
-        openCoachingDetail(instId, 'members');
+        navigateTo('coaching/' + instId + '/members');
       };
     });
   }
 
-  // ─── WORKSPACE 3: INSIDE A SPECIFIC COACHING INSTITUTE ──────────────────────
-  function openCoachingDetail(instId, initialSubTab, skipHistory) {
-    activeCoachingId = instId;
-    var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === instId; });
-    if (!inst) return;
+  // ─── WORKSPACE 3: COACHING INSTITUTE SIDEBAR WORKSPACE ─────────────────────
+  function setupCoachingSidebar() {
+    var navBtns = document.querySelectorAll('#coachingSidebarNav .deck-nav-item');
+    navBtns.forEach(function (btn) {
+      btn.onclick = function () {
+        var tabId = this.getAttribute('data-coaching-tab');
+        navigateTo('coaching/' + activeCoachingId + '/' + tabId);
+      };
+    });
 
-    // Hide coaching list, show coaching detail
-    var listEl = document.getElementById('view-coaching-list');
-    if (listEl) listEl.style.display = 'none';
-    var detailView = document.getElementById('view-coaching-detail');
-    if (detailView) detailView.style.display = 'block';
-
-    if (!skipHistory) {
-      pushNavState('coaching_detail', { instId: instId, subTab: initialSubTab || 'my_sections' });
+    var backBtn = document.getElementById('btnBackToCoachingList');
+    if (backBtn) {
+      backBtn.onclick = function () {
+        navigateTo('coaching');
+      };
     }
 
-    // Update banner
+    // Mobile drawer toggle for coaching
+    var btnHam = document.getElementById('btnCoachingHamburger');
+    var btnCloseMob = document.getElementById('btnCoachingCloseSidebarMobile');
+    var cSidebar = document.getElementById('coachingSidebar');
+    var cBackdrop = document.getElementById('coachingSidebarBackdrop');
+
+    if (btnHam && cSidebar && cBackdrop) {
+      btnHam.onclick = function () {
+        cSidebar.classList.add('mobile-open');
+        cBackdrop.classList.add('active');
+      };
+    }
+    if (btnCloseMob && cSidebar && cBackdrop) {
+      btnCloseMob.onclick = function () {
+        cSidebar.classList.remove('mobile-open');
+        cBackdrop.classList.remove('active');
+      };
+    }
+    if (cBackdrop && cSidebar) {
+      cBackdrop.onclick = function () {
+        cSidebar.classList.remove('mobile-open');
+        cBackdrop.classList.remove('active');
+      };
+    }
+  }
+
+  function openCoachingDetail(instId, initialSubTab, skipHistory) {
+    activeCoachingId = instId;
+    activeDeckContext = null;
+    var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === instId; });
+    if (!inst) {
+      navigateTo('coaching', true);
+      return;
+    }
+
+    showMainView('view-coaching-detail');
+
+    var tab = initialSubTab || 'my_sections';
+    if (!skipHistory) {
+      navigateTo('coaching/' + instId + '/' + tab);
+      return;
+    }
+
+    // Update banner & identity card in sidebar
     var isOwner = inst.owner_teacher_id === activeTeacherId;
     var rolePill = document.getElementById('coachingRolePill');
     if (rolePill) rolePill.textContent = isOwner ? 'Director & Owner (Full Admin)' : inst.user_role_in_institute;
 
     var codePill = document.getElementById('coachingCodePill');
-    if (codePill) codePill.innerHTML = 'Student Join Code: <strong>' + inst.code + '</strong>';
+    if (codePill) codePill.textContent = inst.code;
 
     var titleEl = document.getElementById('coachingDetailTitle');
     if (titleEl) titleEl.textContent = inst.name;
 
     var metaEl = document.getElementById('coachingDetailMeta');
-    if (metaEl) metaEl.textContent = inst.tagline + ' &bull; ' + inst.address;
+    if (metaEl) metaEl.textContent = '📍 ' + (inst.address ? inst.address.split(',')[0] : 'Campus');
+
+    var subtextEl = document.getElementById('coachingDetailSubtext');
+    if (subtextEl) subtextEl.textContent = inst.tagline || 'Coaching Institute';
+
+    // Mobile header
+    var mobTitle = document.getElementById('coachingMobileTitle');
+    if (mobTitle) mobTitle.textContent = inst.name;
+    var mobCode = document.getElementById('coachingMobileCode');
+    if (mobCode) mobCode.textContent = inst.code;
+
+    // Educator Profile in Coaching Sidebar Footer
+    var t = getActiveTeacher();
+    var avatarEl = document.getElementById('coachingSidebarTeacherAvatar');
+    if (avatarEl) {
+      avatarEl.textContent = t.photo_initials;
+      avatarEl.style.backgroundColor = t.avatar_bg || '#800020';
+    }
+    var nameEl = document.getElementById('coachingSidebarTeacherName');
+    if (nameEl) nameEl.textContent = t.name;
+    var roleEl = document.getElementById('coachingSidebarTeacherRole');
+    if (roleEl) roleEl.textContent = isOwner ? 'Director & Owner' : inst.user_role_in_institute;
+
+    // Counts in sidebar
+    var mySecCount = (inst.classes_sections || []).filter(function (sec) {
+      return (sec.subject_faculty_map || []).some(function (m) { return m.teacher_id === activeTeacherId; });
+    }).length;
+    var mySecCountPill = document.getElementById('coachingMySecCountPill');
+    if (mySecCountPill) mySecCountPill.textContent = mySecCount;
+
+    var membersCount = (inst.members || []).length;
+    var membersCountPill = document.getElementById('coachingMembersCountPill');
+    if (membersCountPill) membersCountPill.textContent = membersCount;
+
+    var allSecCount = (inst.classes_sections || []).length;
+    var allSecCountPill = document.getElementById('coachingAllSecCountPill');
+    if (allSecCountPill) allSecCountPill.textContent = allSecCount;
 
     // Hide/show tabs based on permissions
     var tabMembers = document.getElementById('tabMembersManagement');
     var tabAllSec = document.getElementById('tabAllSections');
-    if (tabMembers) tabMembers.style.display = isOwner ? 'inline-flex' : 'none';
-    if (tabAllSec) tabAllSec.style.display = isOwner ? 'inline-flex' : 'none';
+    if (tabMembers) tabMembers.style.display = isOwner ? 'flex' : 'none';
+    if (tabAllSec) tabAllSec.style.display = isOwner ? 'flex' : 'none';
 
-    updateBreadcrumb(['Workspace', 'Coaching Institutes', inst.name]);
+    switchCoachingSubTab(tab, true);
+  }
 
-    // Setup sub-navigation tabs
-    setupCoachingSubNavTabs(initialSubTab || 'my_sections');
-
-    var backBtn = document.getElementById('btnBackToCoachingList');
-    if (backBtn) {
-      backBtn.onclick = function () {
-        detailView.style.display = 'none';
-        renderCurrentWorkspace();
-        pushNavState('coaching_list');
-      };
+  function switchCoachingSubTab(tabId, skipHistory) {
+    if (!skipHistory && activeCoachingId) {
+      navigateTo('coaching/' + activeCoachingId + '/' + tabId);
+      return;
     }
-  }
 
-  function setupCoachingSubNavTabs(activeTab) {
-    var tabs = document.querySelectorAll('#coachingSubNavTabs .deck-tab-btn');
-    tabs.forEach(function (tab) {
-      tab.onclick = function () {
-        var tabId = this.getAttribute('data-coaching-tab');
-        switchCoachingSubTab(tabId);
-      };
-    });
-    switchCoachingSubTab(activeTab || 'my_sections');
-  }
-
-  function switchCoachingSubTab(tabId) {
-    var tabs = document.querySelectorAll('#coachingSubNavTabs .deck-tab-btn');
-    tabs.forEach(function (t) {
-      t.classList.toggle('active', t.getAttribute('data-coaching-tab') === tabId);
+    var navBtns = document.querySelectorAll('#coachingSidebarNav .deck-nav-item');
+    navBtns.forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-coaching-tab') === tabId);
     });
 
-    document.querySelectorAll('.csub-view').forEach(function (view) {
-      view.style.display = 'none';
-    });
+    var mobSub = document.getElementById('coachingMobileSubtitle');
+    var activeBtn = document.querySelector('#coachingSidebarNav .deck-nav-item[data-coaching-tab="' + tabId + '"] .deck-nav-label');
+    if (mobSub && activeBtn) {
+      mobSub.textContent = activeBtn.textContent;
+    }
 
+    document.querySelectorAll('.csub-view').forEach(function (v) { v.style.display = 'none'; });
     var targetView = document.getElementById('csub-' + tabId);
     if (targetView) targetView.style.display = 'block';
+
+    var cSidebar = document.getElementById('coachingSidebar');
+    if (cSidebar) cSidebar.classList.remove('mobile-open');
+    var cBackdrop = document.getElementById('coachingSidebarBackdrop');
+    if (cBackdrop) cBackdrop.classList.remove('active');
 
     var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeCoachingId; });
     if (!inst) return;
@@ -460,6 +543,169 @@
       renderAllInstituteSections(inst);
     } else if (tabId === 'members') {
       renderCoachingMembers(inst);
+    } else if (tabId === 'notices') {
+      renderCoachingNotices(inst);
+    } else if (tabId === 'analytics') {
+      renderCoachingAnalytics(inst);
+    }
+  }
+
+  function renderCoachingNotices(inst) {
+    var container = document.getElementById('coachingNoticesContainer');
+    if (!container) return;
+
+    var notices = inst.notices || [];
+    if (notices.length === 0) {
+      container.innerHTML = '<div class="empty-state card" style="padding:40px; text-align:center;"><p class="text-muted">No notices posted yet. Click "+ Post New Notice" to broadcast circulars.</p></div>';
+      return;
+    }
+
+    var isOwner = inst.owner_teacher_id === activeTeacherId;
+
+    container.innerHTML = notices.map(function (n) {
+      var priorityClass = 'notice-priority-general';
+      var badgeClass = 'badge-primary';
+      if ((n.category || '').indexOf('Important') !== -1 || (n.category || '').indexOf('Urgent') !== -1) {
+        priorityClass = 'notice-priority-important';
+        badgeClass = 'badge-danger';
+      } else if ((n.category || '').indexOf('Exam') !== -1 || (n.category || '').indexOf('Test') !== -1) {
+        priorityClass = 'notice-priority-academic';
+        badgeClass = 'badge-success';
+      }
+
+      var delBtn = isOwner ? '<button type="button" class="btn btn-outline btn-sm btn-delete-notice" data-notice-id="' + n.id + '" style="color:var(--danger); border-color:var(--danger); padding:2px 8px; font-size:11px;">🗑️ Delete</button>' : '';
+
+      return (
+        '<div class="coaching-notice-card ' + priorityClass + '">' +
+          '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px;">' +
+            '<div>' +
+              '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">' +
+                '<span class="badge ' + badgeClass + '">' + (n.category || 'Announcement') + '</span>' +
+                '<span class="pill pill-muted" style="font-size:10.5px;">👥 ' + (n.target || 'All Students') + '</span>' +
+              '</div>' +
+              '<h3 style="font-size:16px; font-weight:800; color:var(--text-main); line-height:1.3;">' + n.title + '</h3>' +
+            '</div>' +
+            delBtn +
+          '</div>' +
+          '<p style="font-size:13.5px; line-height:1.6; color:var(--text-secondary); margin-bottom:0;">' + n.body + '</p>' +
+          '<div class="notice-meta-bar">' +
+            '<span>📅 Posted: <strong>' + n.date + '</strong></span>' +
+            '<span>✍️ Authorized by: <strong>' + n.author + '</strong></span>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    container.querySelectorAll('.btn-delete-notice').forEach(function (btn) {
+      btn.onclick = function () {
+        var notId = this.getAttribute('data-notice-id');
+        if (confirm('Are you sure you want to delete this notice?')) {
+          inst.notices = (inst.notices || []).filter(function (x) { return x.id !== notId; });
+          saveState();
+          renderCoachingNotices(inst);
+          showToast('Notice circular deleted.', 'info');
+        }
+      };
+    });
+  }
+
+  function renderCoachingAnalytics(inst) {
+    var kpiGrid = document.getElementById('coachingAnalyticsKpiGrid');
+    var tbody = document.getElementById('coachingAnalyticsTableBody');
+    if (!kpiGrid || !tbody) return;
+
+    var sections = inst.classes_sections || [];
+    var totalStudents = sections.reduce(function (sum, s) { return sum + (s.student_ids || []).length; }, 0);
+    var totalFaculty = (inst.members || []).length;
+    var totalLectures = sections.reduce(function (sum, s) {
+      return sum + (s.subject_faculty_map || []).reduce(function (subSum, m) { return subSum + (m.lectures_per_week || 3); }, 0);
+    }, 0);
+
+    kpiGrid.innerHTML = 
+      '<div class="kpi-card">' +
+        '<div class="kpi-label">Total Enrolled Students</div>' +
+        '<div class="kpi-value">' + totalStudents + '</div>' +
+        '<div class="kpi-sub">Across ' + sections.length + ' Active Sections</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-label">Average Attendance Rate</div>' +
+        '<div class="kpi-value font-mono">94.8%</div>' +
+        '<div class="kpi-sub" style="color:var(--success);">✅ Optimal classroom attendance</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-label">Teaching Faculty</div>' +
+        '<div class="kpi-value">' + totalFaculty + '</div>' +
+        '<div class="kpi-sub">Active Subject Specialists</div>' +
+      '</div>' +
+      '<div class="kpi-card">' +
+        '<div class="kpi-label">Weekly Lectures Conducted</div>' +
+        '<div class="kpi-value">' + totalLectures + '</div>' +
+        '<div class="kpi-sub">Timetable classes per week</div>' +
+      '</div>';
+
+    tbody.innerHTML = sections.map(function (sec) {
+      var enrolled = (sec.student_ids || []).length;
+      var facultyNames = (sec.subject_faculty_map || []).map(function (m) {
+        var t = (STATE.teachers || []).find(function (tc) { return tc.id === m.teacher_id; });
+        return (t ? t.name : 'Faculty') + ' (' + m.subject + ')';
+      }).join(', ');
+
+      return (
+        '<tr>' +
+          '<td><strong>' + sec.full_code + '</strong> <span class="pill pill-primary" style="font-size:10px; margin-left:4px;">' + sec.board + '</span></td>' +
+          '<td>🏛️ ' + sec.room + '</td>' +
+          '<td style="font-size:12px; color:var(--text-secondary);">' + facultyNames + '</td>' +
+          '<td><strong>' + enrolled + '</strong> of ' + sec.capacity + '</td>' +
+          '<td><span class="badge badge-success font-bold font-mono">95%</span></td>' +
+          '<td><span class="badge badge-success font-bold">HEALTHY ✓</span></td>' +
+        '</tr>'
+      );
+    }).join('');
+  }
+
+  function setupNoticeModal() {
+    var btnOpen = document.getElementById('btnOpenPostNoticeModal');
+    var form = document.getElementById('formPostNotice');
+
+    if (btnOpen) {
+      btnOpen.onclick = function () {
+        openModal('modalPostNotice');
+      };
+    }
+
+    if (form) {
+      form.onsubmit = function (e) {
+        e.preventDefault();
+        var inst = (STATE.coaching_institutes || []).find(function (i) { return i.id === activeCoachingId; });
+        if (!inst) return;
+
+        var title = document.getElementById('noticeTitleInput').value.trim();
+        var target = document.getElementById('noticeTargetInput').value.trim();
+        var category = document.getElementById('noticeCategoryInput').value;
+        var body = document.getElementById('noticeBodyInput').value.trim();
+
+        if (!title || !body) return;
+
+        var newNotice = {
+          id: 'not-' + Date.now(),
+          title: title,
+          target: target || 'All Students & Faculty',
+          category: category,
+          priority: category.indexOf('Important') !== -1 ? 'important' : 'academic',
+          date: '21 Oct 2026',
+          author: getActiveTeacher().name,
+          body: body
+        };
+
+        if (!inst.notices) inst.notices = [];
+        inst.notices.unshift(newNotice);
+        saveState();
+
+        closeModal('modalPostNotice');
+        form.reset();
+        renderCoachingNotices(inst);
+        showToast('✓ Circular published to notice board!', 'success');
+      };
     }
   }
 
@@ -505,7 +751,7 @@
     container.querySelectorAll('.btn-enter-section').forEach(function (btn) {
       btn.onclick = function () {
         var secId = this.getAttribute('data-sec-id');
-        enterBatchDeck('coaching_section', secId, activeCoachingId);
+        navigateTo('coaching/' + activeCoachingId + '/section/' + secId + '/students');
       };
     });
   }
@@ -549,7 +795,7 @@
     container.querySelectorAll('.btn-enter-section').forEach(function (btn) {
       btn.onclick = function () {
         var secId = this.getAttribute('data-sec-id');
-        enterBatchDeck('coaching_section', secId, activeCoachingId);
+        navigateTo('coaching/' + activeCoachingId + '/section/' + secId + '/students');
       };
     });
   }
@@ -616,22 +862,90 @@
     }
   }
 
-  // ─── UNIVERSAL HISTORY & BACK NAVIGATION MANAGER ─────────────────────────
-  function pushNavState(viewType, params) {
-    var state = { view: viewType, params: params || {} };
-    var hash = '#';
-    if (viewType === 'batch_deck') {
-      hash += 'batch/' + params.id;
-    } else if (viewType === 'coaching_detail') {
-      hash += 'coaching/' + params.instId;
-    } else if (viewType === 'coaching_list') {
-      hash += 'coaching';
-    } else {
-      hash += 'batches';
+  // ─── UNIVERSAL HISTORY & URL ROUTER MANAGER ────────────────────────────────
+  function getUrlHash() {
+    return window.location.hash.replace(/^#\/?/, '').trim();
+  }
+
+  function navigateTo(path, replace) {
+    var cleanPath = path.replace(/^#\/?/, '');
+    var fullHash = '#' + cleanPath;
+    if (window.location.hash !== fullHash) {
+      if (replace) {
+        history.replaceState(null, '', fullHash);
+      } else {
+        history.pushState(null, '', fullHash);
+      }
     }
-    try {
-      history.pushState(state, '', hash);
-    } catch (e) {}
+    handleRouteFromHash();
+  }
+
+  function handleRouteFromHash() {
+    var hash = getUrlHash();
+    if (!hash) {
+      navigateTo('batches', true);
+      return;
+    }
+
+    var parts = hash.split('/').filter(Boolean);
+    var root = parts[0];
+
+    if (root === 'batches') {
+      var classFilter = parts[1] || 'all';
+      currentWorkspace = 'private_batches';
+      activeDeckContext = null;
+      showMainView('view-private-batches');
+      updateBreadcrumb(['Workspace', 'My Private Batches']);
+
+      var pbBtn = document.getElementById('wsBtnPrivateBatches');
+      var ciBtn = document.getElementById('wsBtnCoachingInstitutes');
+      if (pbBtn) pbBtn.classList.add('active');
+      if (ciBtn) ciBtn.classList.remove('active');
+
+      document.querySelectorAll('#classFilterChipsRow .chip-btn').forEach(function (chip) {
+        var f = chip.getAttribute('data-class-filter');
+        chip.classList.toggle('active', f === classFilter);
+      });
+      renderPrivateBatches(classFilter);
+
+    } else if (root === 'batch') {
+      var batchId = parts[1] || 'pbatch-10-m';
+      var subTab = parts[2] || 'students';
+      if (subTab === 'roster') subTab = 'students';
+      if (subTab === 'curriculum') subTab = 'syllabus';
+
+      enterBatchDeck('private_batch', batchId, null, true);
+      switchDeckSubTab(subTab, true);
+
+    } else if (root === 'coaching') {
+      var instId = parts[1];
+      if (!instId) {
+        currentWorkspace = 'coaching_institutes';
+        activeDeckContext = null;
+        showMainView('view-coaching-list');
+        updateBreadcrumb(['Workspace', 'Coaching Institutes']);
+
+        var pbBtn = document.getElementById('wsBtnPrivateBatches');
+        var ciBtn = document.getElementById('wsBtnCoachingInstitutes');
+        if (pbBtn) pbBtn.classList.remove('active');
+        if (ciBtn) ciBtn.classList.add('active');
+
+        renderCoachingInstitutesList();
+      } else if (parts[2] === 'section') {
+        var secId = parts[3] || 'sec-10-a';
+        var secSubTab = parts[4] || 'students';
+        if (secSubTab === 'roster') secSubTab = 'students';
+        if (secSubTab === 'curriculum') secSubTab = 'syllabus';
+
+        enterBatchDeck('coaching_section', secId, instId, true);
+        switchDeckSubTab(secSubTab, true);
+      } else {
+        var cTab = parts[2] || 'my_sections';
+        openCoachingDetail(instId, cTab, true);
+      }
+    } else {
+      navigateTo('batches', true);
+    }
   }
 
   window.onpopstate = function (e) {
@@ -643,7 +957,7 @@
       return;
     }
 
-    // 2. If mobile drawer is open, close it
+    // 2. If mobile drawer is open in batch deck, close it
     var sidebar = document.getElementById('deckSidebar');
     if (sidebar && sidebar.classList.contains('mobile-open')) {
       sidebar.classList.remove('mobile-open');
@@ -652,43 +966,17 @@
       return;
     }
 
-    var state = e.state;
-    if (state) {
-      if (state.view === 'batch_deck') {
-        enterBatchDeck(state.params.type, state.params.id, state.params.parentCoachingId, true);
-      } else if (state.view === 'coaching_detail') {
-        if (document.body.classList.contains('in-batch-deck')) {
-          exitBatchDeck(true);
-        }
-        openCoachingDetail(state.params.instId, state.params.subTab || 'my_sections', true);
-      } else if (state.view === 'coaching_list') {
-        if (document.body.classList.contains('in-batch-deck')) {
-          exitBatchDeck(true);
-        }
-        currentWorkspace = 'coaching_institutes';
-        var dView = document.getElementById('view-coaching-detail');
-        if (dView) dView.style.display = 'none';
-        renderCurrentWorkspace();
-      } else {
-        if (document.body.classList.contains('in-batch-deck')) {
-          exitBatchDeck(true);
-        }
-        currentWorkspace = 'private_batches';
-        renderCurrentWorkspace();
-      }
-    } else {
-      // Top level
-      if (document.body.classList.contains('in-batch-deck')) {
-        exitBatchDeck(true);
-      } else {
-        var detailView = document.getElementById('view-coaching-detail');
-        if (detailView && detailView.style.display === 'block') {
-          detailView.style.display = 'none';
-        }
-        currentWorkspace = 'private_batches';
-        renderCurrentWorkspace();
-      }
+    // 3. If mobile drawer is open in coaching deck, close it
+    var cSidebar = document.getElementById('coachingSidebar');
+    if (cSidebar && cSidebar.classList.contains('mobile-open')) {
+      cSidebar.classList.remove('mobile-open');
+      var cBackdrop = document.getElementById('coachingSidebarBackdrop');
+      if (cBackdrop) cBackdrop.classList.remove('active');
+      return;
     }
+
+    // Route to URL from history
+    handleRouteFromHash();
   };
 
   // ─── WORKSPACE 4: UNIFIED BATCH & SECTION COMMAND DECK ─────────────────────
@@ -696,6 +984,7 @@
   // The layout transforms the top navigation bar into a focused Left Sidebar!
   var activeTestId = null;
   var selectedFeeMonth = '2026-10';
+  var activeDeckSubTab = 'students';
 
   function enterBatchDeck(type, id, parentCoachingId, skipHistory) {
     activeDeckContext = {
@@ -704,33 +993,33 @@
       parentCoachingId: parentCoachingId
     };
 
-    document.body.classList.add('in-batch-deck');
-    renderCurrentWorkspace();
+    showMainView('view-batch-deck');
+    renderBatchDeck(activeDeckSubTab || 'students');
 
     if (!skipHistory) {
-      pushNavState('batch_deck', { type: type, id: id, parentCoachingId: parentCoachingId });
+      if (type === 'coaching_section') {
+        navigateTo('coaching/' + parentCoachingId + '/section/' + id + '/' + (activeDeckSubTab || 'students'));
+      } else {
+        navigateTo('batch/' + id + '/' + (activeDeckSubTab || 'students'));
+      }
     }
   }
 
-  function exitBatchDeck(skipHistory) {
-    document.body.classList.remove('in-batch-deck');
+  function exitBatchDeck() {
+    var wasCoaching = activeDeckContext && activeDeckContext.type === 'coaching_section';
+    var parentCoaching = activeDeckContext && activeDeckContext.parentCoachingId;
+
     var sidebar = document.getElementById('deckSidebar');
     if (sidebar) sidebar.classList.remove('mobile-open');
     var backdrop = document.getElementById('deckSidebarBackdrop');
     if (backdrop) backdrop.classList.remove('active');
 
-    var wasCoaching = activeDeckContext && activeDeckContext.type === 'coaching_section';
-    var parentCoaching = activeDeckContext && activeDeckContext.parentCoachingId;
-
     activeDeckContext = null;
 
     if (wasCoaching && parentCoaching) {
-      openCoachingDetail(parentCoaching, 'my_sections', skipHistory);
+      navigateTo('coaching/' + parentCoaching + '/my_sections');
     } else {
-      renderCurrentWorkspace();
-      if (!skipHistory) {
-        pushNavState(currentWorkspace === 'coaching_institutes' ? 'coaching_list' : 'private_batches');
-      }
+      navigateTo('batches');
     }
   }
 
@@ -799,7 +1088,7 @@
     }
   }
 
-  function renderBatchDeck() {
+  function renderBatchDeck(requestedTab) {
     var deckData = getActiveDeckData();
     if (!deckData) return;
 
@@ -883,7 +1172,7 @@
     }
 
     // Setup sub tabs
-    setupDeckSubTabs('students');
+    setupDeckSubTabs(requestedTab || activeDeckSubTab || 'students');
   }
 
   function setupDeckSubTabs(initialTab) {
@@ -901,10 +1190,20 @@
         switchDeckSubTab(tabId);
       };
     });
-    switchDeckSubTab(initialTab || 'students');
+    switchDeckSubTab(initialTab || 'students', true);
   }
 
-  function switchDeckSubTab(tabId) {
+  function switchDeckSubTab(tabId, skipHistory) {
+    activeDeckSubTab = tabId;
+    if (!skipHistory && activeDeckContext) {
+      if (activeDeckContext.type === 'coaching_section') {
+        navigateTo('coaching/' + activeDeckContext.parentCoachingId + '/section/' + activeDeckContext.id + '/' + tabId);
+      } else {
+        navigateTo('batch/' + activeDeckContext.id + '/' + tabId);
+      }
+      return;
+    }
+
     var navItems = document.querySelectorAll('#batchDeckNavTabs .deck-nav-item');
     navItems.forEach(function (t) {
       t.classList.toggle('active', t.getAttribute('data-deck-tab') === tabId);
@@ -916,6 +1215,17 @@
 
     var targetView = document.getElementById('dsub-' + tabId);
     if (targetView) targetView.style.display = 'block';
+
+    var activeNavBtn = document.querySelector('#batchDeckNavTabs .deck-nav-item[data-deck-tab="' + tabId + '"] .deck-nav-label');
+    var mobSubtitle = document.getElementById('deckMobileSubtitle');
+    if (mobSubtitle && activeNavBtn) {
+      mobSubtitle.textContent = activeNavBtn.textContent;
+    }
+
+    var sidebar = document.getElementById('deckSidebar');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    var backdrop = document.getElementById('deckSidebarBackdrop');
+    if (backdrop) backdrop.classList.remove('active');
 
     var deckData = getActiveDeckData();
     if (!deckData) return;

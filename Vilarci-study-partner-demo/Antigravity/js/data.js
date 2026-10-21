@@ -295,6 +295,40 @@ window.TEACHER_PORTAL_DATA = {
         }
       ],
 
+      // Official Notices & Announcements (Broadcast to Students & Faculty)
+      notices: [
+        {
+          id: 'not-1',
+          title: 'Diwali & Autumn Break Academic Schedule',
+          category: 'Holiday & Vacation Notice',
+          priority: 'important',
+          target: 'All Students & Faculty',
+          date: '18 Oct 2026',
+          author: 'Er. Alok Sharma (Director)',
+          body: 'Please note the coaching campus will remain closed for regular lectures from 28 Oct to 02 Nov for Diwali festivities. Special morning revision and doubt-clearing sessions will be conducted online on Sunday 25 Oct from 09:00 AM to 12:00 PM.'
+        },
+        {
+          id: 'not-2',
+          title: 'Class 10 CBSE Pre-Board Diagnostic Mock Exam Schedule',
+          category: 'Exam & Test Schedule',
+          priority: 'academic',
+          target: 'Class 10-A, Class 10-B',
+          date: '15 Oct 2026',
+          author: 'Er. Alok Sharma & Dr. Meenakshi Soni',
+          body: 'Comprehensive diagnostic mock examinations for Mathematics & Science will commence on Monday, 03 November 2026. Syllabus covers Real Numbers, Polynomials, Linear Equations, Quadratic Equations, and Light Reflection & Refraction. Reporting time: 08:45 AM.'
+        },
+        {
+          id: 'not-3',
+          title: 'Senior STEM Lab Practical Manuals Requirement',
+          category: 'Important Circular',
+          priority: 'general',
+          target: 'Class 9-A & Class 10-A',
+          date: '10 Oct 2026',
+          author: 'Prof. Vikramaditya Sen (Lab Instructor)',
+          body: 'All students attending the Saturday practical batches must bring their designated laboratory record books and protective aprons. Titration apparatus and lens bench setups will be provided in Senior Lab B.'
+        }
+      ],
+
       // Classes with Sections (e.g. Class-10-A, Class-10-B, Class-9-A)
       // Inside coaching, multiple teachers teach different subjects in the same section!
       classes_sections: [
@@ -401,6 +435,19 @@ window.TEACHER_PORTAL_DATA = {
           assigned_subjects: ['Mathematics Core', 'Advanced Problem Solving'],
           joined_date: 'Aug 2022',
           assigned_sections: ['Class 10-A', 'Class 12-A']
+        }
+      ],
+
+      notices: [
+        {
+          id: 'not-apex-1',
+          title: 'NEET / JEE Advanced Problem-Solving Booster Series',
+          category: 'Exam & Test Schedule',
+          priority: 'academic',
+          target: 'Class 12-A',
+          date: '17 Oct 2026',
+          author: 'Dr. Rashmi Verma',
+          body: 'Special Sunday problem workshops for organic reactions and calculus mechanics will commence from 26 October at FC Road branch.'
         }
       ],
 
