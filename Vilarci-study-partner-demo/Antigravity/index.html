@@ -302,18 +302,52 @@
               </div>
             </div>
 
-            <!-- Coaching Sub-View E: Institute Analytics (New Extensible Feature!) -->
+            <!-- Coaching Sub-View E: Institute Analytics (Executive Intelligence Dashboard) -->
             <div id="csub-analytics" class="csub-view" style="display:none;">
-              <div style="margin-bottom:20px;">
-                <h2 style="font-size:22px; font-weight:800; color:var(--text-main); margin-bottom:4px;">📊 Institute Performance Analytics</h2>
-                <p class="text-xs text-muted">Aggregate attendance rates, academic health, and section performance across the coaching institute.</p>
+              
+              <!-- Analytics Hero Banner -->
+              <div class="analytics-hero-banner">
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                    <span class="badge badge-primary">Institutional Executive Intelligence</span>
+                    <span class="pill pill-muted" style="font-size:11px;">Term: 2026-27</span>
+                    <span class="pill" style="font-size:11px; background:#dcfce7; color:#166534; font-weight:700;">● Live Real-Time Feed</span>
+                  </div>
+                  <h2 style="font-size:24px; font-weight:800; color:var(--text-main); line-height:1.2; margin-bottom:6px;">
+                    📊 Institute Performance Analytics
+                  </h2>
+                  <p class="text-xs text-muted" style="margin-bottom:0; max-width:680px; line-height:1.5;">
+                    Comprehensive campus oversight: aggregate student admissions, daily attendance health, faculty teaching loads, and class section operational benchmarks across all lecture halls.
+                  </p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <button type="button" class="btn btn-outline btn-sm" id="btnRefreshAnalytics" style="gap:6px;">
+                    <span>🔄 Refresh Data</span>
+                  </button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="window.print()" style="gap:6px;">
+                    <span>🖨️ Export Report</span>
+                  </button>
+                </div>
               </div>
-              <div class="kpi-grid" id="coachingAnalyticsKpiGrid" style="margin-bottom:24px;">
+
+              <!-- 4 Executive KPI Cards Grid -->
+              <div class="kpi-grid" id="coachingAnalyticsKpiGrid">
                 <!-- Populated dynamically by JS -->
               </div>
+
+              <!-- Executive Insights: Attendance Distribution & Faculty Workload -->
+              <div class="analytics-insight-grid" id="coachingAnalyticsInsights">
+                <!-- Populated dynamically by JS -->
+              </div>
+
+              <!-- Section Health & Activity Overview Table -->
               <article class="card">
-                <div class="card-header">
-                  <h3 class="card-title">Section-by-Section Health &amp; Activity Overview</h3>
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                  <div>
+                    <h3 class="card-title">Section-by-Section Health &amp; Operational Overview</h3>
+                    <p class="text-xs text-muted" style="margin-top:2px;">Live classroom status, seat occupancy, teacher subject allocation, and attendance compliance.</p>
+                  </div>
+                  <span class="badge badge-success font-bold" id="analyticsAllHealthyBadge">All 4 Sections Active &amp; Healthy</span>
                 </div>
                 <div class="card-body" style="padding:0;">
                   <div class="table-responsive">
@@ -321,11 +355,13 @@
                       <thead>
                         <tr>
                           <th>Class &amp; Section</th>
-                          <th>Room</th>
-                          <th>Faculty Allocated</th>
+                          <th>Classroom</th>
+                          <th>Faculty Allocated (Subject)</th>
                           <th>Enrolled Students</th>
+                          <th>Seat Occupancy</th>
                           <th>Avg. Attendance</th>
-                          <th>Academic Status</th>
+                          <th>Status</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody id="coachingAnalyticsTableBody">

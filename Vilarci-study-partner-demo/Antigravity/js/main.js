@@ -461,7 +461,7 @@
     if (titleEl) titleEl.textContent = inst.name;
 
     var metaEl = document.getElementById('coachingDetailMeta');
-    if (metaEl) metaEl.textContent = '📍 ' + (inst.address ? inst.address.split(',')[0] : 'Campus');
+    if (metaEl) metaEl.textContent = '📍 ' + (inst.address ? inst.address.replace(/^\d+,\s*/, '') : 'Campus');
 
     var subtextEl = document.getElementById('coachingDetailSubtext');
     if (subtextEl) subtextEl.textContent = inst.tagline || 'Coaching Institute';
@@ -611,56 +611,180 @@
 
   function renderCoachingAnalytics(inst) {
     var kpiGrid = document.getElementById('coachingAnalyticsKpiGrid');
+    var insightsEl = document.getElementById('coachingAnalyticsInsights');
     var tbody = document.getElementById('coachingAnalyticsTableBody');
     if (!kpiGrid || !tbody) return;
 
     var sections = inst.classes_sections || [];
     var totalStudents = sections.reduce(function (sum, s) { return sum + (s.student_ids || []).length; }, 0);
+    var totalCapacity = sections.reduce(function (sum, s) { return sum + (s.capacity || 30); }, 0);
+    var occupancyPct = Math.round((totalStudents / (totalCapacity || 1)) * 100);
     var totalFaculty = (inst.members || []).length;
     var totalLectures = sections.reduce(function (sum, s) {
       return sum + (s.subject_faculty_map || []).reduce(function (subSum, m) { return subSum + (m.lectures_per_week || 3); }, 0);
     }, 0);
 
+    // 4 Modern Executive KPI Cards
     kpiGrid.innerHTML = 
-      '<div class="kpi-card">' +
+      '<div class="kpi-card kpi-card-maroon">' +
+        '<div class="kpi-card-top">' +
+          '<div class="kpi-card-icon kpi-icon-maroon">👥</div>' +
+          '<span class="kpi-trend-pill kpi-trend-up">▲ +18% Term Gain</span>' +
+        '</div>' +
         '<div class="kpi-label">Total Enrolled Students</div>' +
-        '<div class="kpi-value">' + totalStudents + '</div>' +
-        '<div class="kpi-sub">Across ' + sections.length + ' Active Sections</div>' +
+        '<div class="kpi-value">' + totalStudents + '<span style="font-size:16px; font-weight:600; color:var(--text-muted); margin-left:4px;">/ ' + totalCapacity + '</span></div>' +
+        '<div class="kpi-sub">Across ' + sections.length + ' active campus sections (' + occupancyPct + '% capacity filled)</div>' +
+        '<div class="kpi-progress-bar">' +
+          '<div class="kpi-progress-fill" style="width:' + occupancyPct + '%; background:var(--primary);"></div>' +
+        '</div>' +
       '</div>' +
-      '<div class="kpi-card">' +
+
+      '<div class="kpi-card kpi-card-emerald">' +
+        '<div class="kpi-card-top">' +
+          '<div class="kpi-card-icon kpi-icon-emerald">📈</div>' +
+          '<span class="kpi-trend-pill kpi-trend-up">▲ +2.4% vs Last Mo</span>' +
+        '</div>' +
         '<div class="kpi-label">Average Attendance Rate</div>' +
-        '<div class="kpi-value font-mono">94.8%</div>' +
-        '<div class="kpi-sub" style="color:var(--success);">✅ Optimal classroom attendance</div>' +
+        '<div class="kpi-value font-mono" style="color:#059669;">94.8%</div>' +
+        '<div class="kpi-sub">✅ Optimal classroom participation tier</div>' +
+        '<div class="kpi-progress-bar">' +
+          '<div class="kpi-progress-fill" style="width:94.8%; background:#10b981;"></div>' +
+        '</div>' +
       '</div>' +
-      '<div class="kpi-card">' +
+
+      '<div class="kpi-card kpi-card-amber">' +
+        '<div class="kpi-card-top">' +
+          '<div class="kpi-card-icon kpi-icon-amber">👨‍🏫</div>' +
+          '<span class="kpi-trend-pill" style="background:#fef3c7; color:#b45309;">100% Allocated</span>' +
+        '</div>' +
         '<div class="kpi-label">Teaching Faculty</div>' +
-        '<div class="kpi-value">' + totalFaculty + '</div>' +
-        '<div class="kpi-sub">Active Subject Specialists</div>' +
+        '<div class="kpi-value">' + totalFaculty + '<span style="font-size:16px; font-weight:600; color:var(--text-muted); margin-left:6px;">Educators</span></div>' +
+        '<div class="kpi-sub">Senior faculty, visiting specialists &amp; mentors</div>' +
+        '<div class="kpi-progress-bar">' +
+          '<div class="kpi-progress-fill" style="width:100%; background:#f59e0b;"></div>' +
+        '</div>' +
       '</div>' +
-      '<div class="kpi-card">' +
+
+      '<div class="kpi-card kpi-card-blue">' +
+        '<div class="kpi-card-top">' +
+          '<div class="kpi-card-icon kpi-icon-blue">⏱️</div>' +
+          '<span class="kpi-trend-pill" style="background:#e0f2fe; color:#0369a1;">Full Timetable</span>' +
+        '</div>' +
         '<div class="kpi-label">Weekly Lectures Conducted</div>' +
-        '<div class="kpi-value">' + totalLectures + '</div>' +
-        '<div class="kpi-sub">Timetable classes per week</div>' +
+        '<div class="kpi-value">' + totalLectures + '<span style="font-size:16px; font-weight:600; color:var(--text-muted); margin-left:6px;">Lecs/Wk</span></div>' +
+        '<div class="kpi-sub">Scheduled lectures across all halls &amp; labs</div>' +
+        '<div class="kpi-progress-bar">' +
+          '<div class="kpi-progress-fill" style="width:85%; background:#0284c7;"></div>' +
+        '</div>' +
       '</div>';
 
+    // Executive Insights Rows
+    if (insightsEl) {
+      insightsEl.innerHTML = 
+        '<div class="insight-card">' +
+          '<div class="insight-header">' +
+            '<span class="insight-title">📊 Attendance Health Distribution</span>' +
+            '<span class="badge badge-success font-bold">Campus Wide</span>' +
+          '</div>' +
+          '<div class="insight-item-row">' +
+            '<span><strong>Optimal Tier (&gt;90% Attendance)</strong></span>' +
+            '<span class="badge badge-success font-bold font-mono">3 Sections (75%)</span>' +
+          '</div>' +
+          '<div style="width:100%; height:6px; background:var(--surface-muted); border-radius:var(--radius-pill); overflow:hidden; margin-bottom:12px;">' +
+            '<div style="width:75%; height:100%; background:#10b981;"></div>' +
+          '</div>' +
+          '<div class="insight-item-row">' +
+            '<span><strong>Good Tier (80% - 90% Attendance)</strong></span>' +
+            '<span class="badge" style="background:#fef3c7; color:#b45309; font-weight:700; font-family:monospace;">1 Section (25%)</span>' +
+          '</div>' +
+          '<div style="width:100%; height:6px; background:var(--surface-muted); border-radius:var(--radius-pill); overflow:hidden; margin-bottom:12px;">' +
+            '<div style="width:25%; height:100%; background:#f59e0b;"></div>' +
+          '</div>' +
+          '<div class="insight-item-row">' +
+            '<span class="text-muted">Critical Tier (&lt;80% Attendance)</span>' +
+            '<span class="text-muted font-mono">0 Sections (0%)</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="insight-card">' +
+          '<div class="insight-header">' +
+            '<span class="insight-title">📚 Subject-wise Teaching Load Breakdown</span>' +
+            '<span class="badge badge-primary font-bold">5 Departments</span>' +
+          '</div>' +
+          '<div style="display:flex; flex-direction:column; gap:8px;">' +
+            '<div class="insight-item-row" style="margin-bottom:0;">' +
+              '<span>📐 <strong>Mathematics</strong> &bull; Er. Alok Sharma</span>' +
+              '<span class="badge badge-primary font-mono font-bold">11 lecs/wk</span>' +
+            '</div>' +
+            '<div class="insight-item-row" style="margin-bottom:0;">' +
+              '<span>⚡ <strong>Physics</strong> &bull; Dr. Meenakshi Soni</span>' +
+              '<span class="badge badge-primary font-mono font-bold">10 lecs/wk</span>' +
+            '</div>' +
+            '<div class="insight-item-row" style="margin-bottom:0;">' +
+              '<span>🧪 <strong>Chemistry</strong> &bull; Dr. Rashmi Verma</span>' +
+              '<span class="badge badge-primary font-mono font-bold">6 lecs/wk</span>' +
+            '</div>' +
+            '<div class="insight-item-row" style="margin-bottom:0;">' +
+              '<span>🔬 <strong>Biology &amp; STEM Lab</strong> &bull; Arindam Sen / Vikramaditya</span>' +
+              '<span class="badge badge-primary font-mono font-bold">8 lecs/wk</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    // Upgraded Table Rows with Occupancy and Enter Section button
     tbody.innerHTML = sections.map(function (sec) {
       var enrolled = (sec.student_ids || []).length;
-      var facultyNames = (sec.subject_faculty_map || []).map(function (m) {
+      var cap = sec.capacity || 30;
+      var pct = Math.round((enrolled / cap) * 100);
+
+      var facultyChips = (sec.subject_faculty_map || []).map(function (m) {
         var t = (STATE.teachers || []).find(function (tc) { return tc.id === m.teacher_id; });
-        return (t ? t.name : 'Faculty') + ' (' + m.subject + ')';
-      }).join(', ');
+        return '<span class="pill pill-primary" style="margin:2px 4px 2px 0; font-size:11px;">' + (t ? t.name : 'Faculty') + ' (' + m.subject + ')</span>';
+      }).join('');
 
       return (
         '<tr>' +
-          '<td><strong>' + sec.full_code + '</strong> <span class="pill pill-primary" style="font-size:10px; margin-left:4px;">' + sec.board + '</span></td>' +
-          '<td>🏛️ ' + sec.room + '</td>' +
-          '<td style="font-size:12px; color:var(--text-secondary);">' + facultyNames + '</td>' +
-          '<td><strong>' + enrolled + '</strong> of ' + sec.capacity + '</td>' +
+          '<td>' +
+            '<div style="font-weight:800; font-size:14px; color:var(--text-main);">' + sec.full_code + '</div>' +
+            '<span class="pill pill-muted" style="font-size:10px; margin-top:2px;">' + sec.board + '</span>' +
+          '</td>' +
+          '<td><span class="pill pill-muted">📍 ' + sec.room + '</span></td>' +
+          '<td>' + facultyChips + '</td>' +
+          '<td><strong>' + enrolled + '</strong> of ' + cap + '</td>' +
+          '<td>' +
+            '<div class="occupancy-cell-bar">' +
+              '<div class="occupancy-bar-bg">' +
+                '<div class="occupancy-bar-fill" style="width:' + pct + '%;"></div>' +
+              '</div>' +
+              '<span class="font-mono text-xs font-bold">' + pct + '%</span>' +
+            '</div>' +
+          '</td>' +
           '<td><span class="badge badge-success font-bold font-mono">95%</span></td>' +
           '<td><span class="badge badge-success font-bold">HEALTHY ✓</span></td>' +
+          '<td>' +
+            '<button type="button" class="btn btn-outline btn-sm btn-analytics-enter-sec" data-sec-id="' + sec.id + '" style="padding:3px 10px; font-size:11.5px; white-space:nowrap;">' +
+              'Enter Section ➜' +
+            '</button>' +
+          '</td>' +
         '</tr>'
       );
     }).join('');
+
+    tbody.querySelectorAll('.btn-analytics-enter-sec').forEach(function (btn) {
+      btn.onclick = function () {
+        var secId = this.getAttribute('data-sec-id');
+        navigateTo('coaching/' + activeCoachingId + '/section/' + secId + '/students');
+      };
+    });
+
+    var refreshBtn = document.getElementById('btnRefreshAnalytics');
+    if (refreshBtn) {
+      refreshBtn.onclick = function () {
+        renderCoachingAnalytics(inst);
+        showToast('✓ Analytics metrics refreshed live!', 'success');
+      };
+    }
   }
 
   function setupNoticeModal() {
