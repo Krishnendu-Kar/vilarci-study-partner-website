@@ -1243,6 +1243,552 @@ body.in-coaching-deck #view-coaching-detail {
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   SIDEBAR CONTROL COMPONENT & WORKSPACE DISPLAY MODES
+   (Expanded, Collapsed, Expand on hover)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Base sidebar adjustments */
+.deck-sidebar {
+  position: relative;
+  overflow: visible !important;
+}
+
+.deck-sidebar-footer {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Sidebar Brand Header & Top Right Actions */
+.deck-sidebar-brand {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: visible !important;
+}
+
+.deck-brand-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.sidebar-ctrl-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Trigger button: rounded square matching screenshot */
+.btn-sidebar-ctrl-trigger {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-sidebar-ctrl-trigger:hover,
+.btn-sidebar-ctrl-trigger.active {
+  background: #18191b;
+  border-color: #2d3035;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .btn-sidebar-ctrl-trigger {
+  background: #25121A;
+  border-color: #441A27;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-sidebar-ctrl-trigger:hover,
+[data-theme="dark"] .btn-sidebar-ctrl-trigger.active {
+  background: #18191b;
+  border-color: #2d3035;
+  color: #ffffff;
+}
+
+.btn-sidebar-ctrl-trigger svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  display: block;
+}
+
+/* Dark-themed Popover Menu matching screenshot media_1792566300721_29c8a17a.png */
+/* Placed at Top Right within Sidebar, opens downward */
+.sidebar-ctrl-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 175px;
+  background: #18191b;
+  border: 1px solid #2d3035;
+  border-radius: 10px;
+  padding: 4px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
+  z-index: 9999;
+  display: none;
+  transform-origin: top right;
+}
+
+.sidebar-ctrl-popover.open {
+  display: block;
+  animation: sidebarPopInTop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sidebarPopInTop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.sidebar-ctrl-header {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #9ca3af;
+  padding: 8px 12px 6px 12px;
+  letter-spacing: 0.2px;
+  border-bottom: 1px solid #282a2e;
+  user-select: none;
+}
+
+.sidebar-ctrl-menu {
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-ctrl-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #d1d5db;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  font-family: var(--font-sans);
+}
+
+.sidebar-ctrl-item:hover {
+  background: #282a2e;
+  color: #ffffff;
+}
+
+.sidebar-ctrl-bullet {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+.sidebar-ctrl-item.active .sidebar-ctrl-bullet::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #d1d5db;
+  box-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.sidebar-ctrl-item.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Exit button flex adjustments */
+.btn-exit-sidebar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ── MODE 1: EXPANDED ── */
+.sidebar-mode-expanded .deck-sidebar {
+  width: 285px;
+  min-width: 285px;
+  transition: width 0.2s ease;
+}
+
+/* ── MODE 2: COLLAPSED ── */
+.sidebar-mode-collapsed .deck-sidebar {
+  width: 68px !important;
+  min-width: 68px !important;
+  transition: width 0.2s ease;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .brand-meta,
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-title,
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-schedule,
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-room,
+.sidebar-mode-collapsed .deck-sidebar .deck-nav-label,
+.sidebar-mode-collapsed .deck-sidebar .deck-nav-pill,
+.sidebar-mode-collapsed .deck-sidebar .deck-nav-item .badge,
+.sidebar-mode-collapsed .deck-sidebar .teacher-name-txt,
+.sidebar-mode-collapsed .deck-sidebar #coachingSidebarTeacherName,
+.sidebar-mode-collapsed .deck-sidebar #sidebarTeacherSubject,
+.sidebar-mode-collapsed .deck-sidebar #coachingSidebarTeacherRole,
+.sidebar-mode-collapsed .deck-sidebar .btn-exit-text {
+  display: none !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-brand {
+  padding: 10px 4px !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .brand-box {
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .brand-icon {
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-brand-right-actions {
+  width: 100% !important;
+  justify-content: center !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .sidebar-ctrl-popover {
+  left: 0 !important;
+  right: auto !important;
+  transform-origin: top left !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-card {
+  padding: 10px 4px !important;
+  text-align: center;
+  border-left-width: 2px;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-card > div {
+  justify-content: center !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-card .pill {
+  display: none !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-nav {
+  padding: 12px 6px;
+  align-items: center;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-nav-item {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-nav-icon {
+  font-size: 18px;
+  margin: 0;
+  width: auto;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .deck-sidebar-footer {
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .teacher-profile-chip {
+  padding: 0 !important;
+  width: 40px !important;
+  height: 40px !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  margin-bottom: 8px !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .teacher-profile-chip > div:last-child {
+  display: none !important;
+}
+
+.sidebar-mode-collapsed .deck-sidebar .btn-exit-sidebar {
+  width: 40px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+}
+
+/* ── MODE 3: EXPAND ON HOVER ── */
+@media (min-width: 993px) {
+  .sidebar-mode-hover .deck-workspace-shell {
+    padding-left: 68px;
+    transition: padding-left 0.2s ease;
+  }
+
+  .sidebar-mode-hover .deck-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 68px;
+    min-width: 68px;
+    z-index: 90;
+    box-shadow: 1px 0 0 var(--border);
+    transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
+  }
+
+  /* Unhovered state in hover mode: same as collapsed */
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .brand-meta,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-batch-title,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-batch-schedule,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-batch-room,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-nav-label,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-nav-pill,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-nav-item .badge,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .teacher-name-txt,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) #coachingSidebarTeacherName,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) #sidebarTeacherSubject,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) #coachingSidebarTeacherRole,
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .btn-exit-text {
+    display: none !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-brand {
+    padding: 10px 4px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .brand-box {
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .brand-icon {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-brand-right-actions {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .sidebar-ctrl-popover {
+    left: 0 !important;
+    right: auto !important;
+    transform-origin: top left !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-batch-card {
+    padding: 10px 4px !important;
+    text-align: center;
+    border-left-width: 2px;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-batch-card > div {
+    justify-content: center !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-batch-card .pill {
+    display: none !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-nav {
+    padding: 12px 6px;
+    align-items: center;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-nav-item {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: var(--radius-md);
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-nav-icon {
+    font-size: 18px;
+    margin: 0;
+    width: auto;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .deck-sidebar-footer {
+    padding: 12px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .teacher-profile-chip {
+    padding: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    margin-bottom: 8px !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .teacher-profile-chip > div:last-child {
+    display: none !important;
+  }
+
+  .sidebar-mode-hover .deck-sidebar:not(:hover) .btn-exit-sidebar {
+    width: 40px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+  }
+
+  /* Hovered state: overlays canvas at 285px with soft elevation drop-shadow */
+  .sidebar-mode-hover .deck-sidebar:hover {
+    width: 285px;
+    min-width: 285px;
+    box-shadow: 14px 0 38px rgba(0, 0, 0, 0.18);
+  }
+
+  .sidebar-mode-hover .deck-sidebar:hover .deck-nav-label,
+  .sidebar-mode-hover .deck-sidebar:hover .brand-meta,
+  .sidebar-mode-hover .deck-sidebar:hover .deck-sidebar-batch-title,
+  .sidebar-mode-hover .deck-sidebar:hover .deck-sidebar-batch-schedule,
+  .sidebar-mode-hover .deck-sidebar:hover .deck-sidebar-batch-room,
+  .sidebar-mode-hover .deck-sidebar:hover .btn-exit-text {
+    animation: fadeInLabel 0.18s ease forwards;
+  }
+}
+
+@keyframes fadeInLabel {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile overrides for drawer */
+@media (max-width: 992px) {
+  .sidebar-mode-hover .deck-workspace-shell {
+    padding-left: 0 !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar,
+  .sidebar-mode-hover .deck-sidebar {
+    width: 290px !important;
+    min-width: 290px !important;
+    position: fixed !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar .brand-meta,
+  .sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-title,
+  .sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-schedule,
+  .sidebar-mode-collapsed .deck-sidebar .deck-sidebar-batch-room,
+  .sidebar-mode-collapsed .deck-sidebar .deck-nav-label,
+  .sidebar-mode-collapsed .deck-sidebar .deck-nav-pill,
+  .sidebar-mode-collapsed .deck-sidebar .deck-nav-item .badge,
+  .sidebar-mode-collapsed .deck-sidebar .teacher-name-txt,
+  .sidebar-mode-collapsed .deck-sidebar #coachingSidebarTeacherName,
+  .sidebar-mode-collapsed .deck-sidebar #sidebarTeacherSubject,
+  .sidebar-mode-collapsed .deck-sidebar #coachingSidebarTeacherRole,
+  .sidebar-mode-collapsed .deck-sidebar .btn-exit-text,
+  .sidebar-mode-hover .deck-sidebar .brand-meta,
+  .sidebar-mode-hover .deck-sidebar .deck-sidebar-batch-title,
+  .sidebar-mode-hover .deck-sidebar .deck-sidebar-batch-schedule,
+  .sidebar-mode-hover .deck-sidebar .deck-sidebar-batch-room,
+  .sidebar-mode-hover .deck-sidebar .deck-nav-label,
+  .sidebar-mode-hover .deck-sidebar .deck-nav-pill,
+  .sidebar-mode-hover .deck-sidebar .deck-nav-item .badge,
+  .sidebar-mode-hover .deck-sidebar .teacher-name-txt,
+  .sidebar-mode-hover .deck-sidebar #coachingSidebarTeacherName,
+  .sidebar-mode-hover .deck-sidebar #sidebarTeacherSubject,
+  .sidebar-mode-hover .deck-sidebar #coachingSidebarTeacherRole,
+  .sidebar-mode-hover .deck-sidebar .btn-exit-text {
+    display: block !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar .deck-nav-item,
+  .sidebar-mode-hover .deck-sidebar .deck-nav-item {
+    width: 100% !important;
+    height: auto !important;
+    padding: 10px 14px !important;
+    justify-content: flex-start !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar .teacher-profile-chip,
+  .sidebar-mode-hover .deck-sidebar .teacher-profile-chip {
+    width: 100% !important;
+    height: auto !important;
+    border-radius: var(--radius-pill) !important;
+    padding: 5px 12px !important;
+    justify-content: flex-start !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar .teacher-profile-chip > div:last-child,
+  .sidebar-mode-hover .deck-sidebar .teacher-profile-chip > div:last-child {
+    display: block !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar .btn-exit-sidebar,
+  .sidebar-mode-hover .deck-sidebar .btn-exit-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    padding: 8px 16px !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar .deck-sidebar-brand,
+  .sidebar-mode-hover .deck-sidebar .deck-sidebar-brand {
+    padding: 14px 16px !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+  }
+
+  .sidebar-mode-collapsed .deck-sidebar .deck-brand-right-actions,
+  .sidebar-mode-hover .deck-sidebar .deck-brand-right-actions {
+    width: auto !important;
+    justify-content: flex-end !important;
+  }
+}
+
 /* ─── SWITCH TOGGLE (iOS / Modern Pill Style) ────────────────────────────── */
 .switch-toggle {
   position: relative;

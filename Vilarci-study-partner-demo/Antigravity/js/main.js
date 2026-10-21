@@ -25,6 +25,7 @@
     setupWorkspaceTabs();
     setupClassFilterChips();
     setupCoachingSidebar();
+    setupSidebarControls();
     setupNoticeModal();
     setupModals();
     setupThemeToggle();
@@ -429,6 +430,95 @@
         cSidebar.classList.remove('mobile-open');
         cBackdrop.classList.remove('active');
       };
+    }
+  }
+
+  // ─── SIDEBAR CONTROL CONTROLLER (Expanded, Collapsed, Expand on Hover) ─────
+  function setupSidebarControls() {
+    var savedMode = localStorage.getItem('vilarci_sidebar_mode') || 'expanded';
+    applySidebarMode(savedMode, false);
+
+    var triggers = [
+      { btn: document.getElementById('btnSidebarCtrlCoaching'), popover: document.getElementById('popoverSidebarCtrlCoaching') },
+      { btn: document.getElementById('btnSidebarCtrlDeck'), popover: document.getElementById('popoverSidebarCtrlDeck') }
+    ];
+
+    triggers.forEach(function (t) {
+      if (!t.btn || !t.popover) return;
+
+      t.btn.onclick = function (e) {
+        e.stopPropagation();
+        var wasOpen = t.popover.classList.contains('open');
+        closeAllSidebarPopovers();
+        if (!wasOpen) {
+          t.popover.classList.add('open');
+          t.btn.classList.add('active');
+        }
+      };
+
+      var items = t.popover.querySelectorAll('.sidebar-ctrl-item');
+      items.forEach(function (item) {
+        item.onclick = function (e) {
+          e.stopPropagation();
+          var mode = item.getAttribute('data-mode');
+          if (mode) {
+            applySidebarMode(mode, true);
+            closeAllSidebarPopovers();
+          }
+        };
+      });
+    });
+
+    // Close on click outside
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.sidebar-ctrl-wrapper')) {
+        closeAllSidebarPopovers();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeAllSidebarPopovers();
+      }
+    });
+  }
+
+  function closeAllSidebarPopovers() {
+    document.querySelectorAll('.sidebar-ctrl-popover').forEach(function (p) {
+      p.classList.remove('open');
+    });
+    document.querySelectorAll('.btn-sidebar-ctrl-trigger').forEach(function (b) {
+      b.classList.remove('active');
+    });
+  }
+
+  function applySidebarMode(mode, notify) {
+    if (['expanded', 'collapsed', 'hover'].indexOf(mode) === -1) {
+      mode = 'expanded';
+    }
+
+    localStorage.setItem('vilarci_sidebar_mode', mode);
+
+    document.body.classList.remove('sidebar-mode-expanded', 'sidebar-mode-collapsed', 'sidebar-mode-hover');
+    document.body.classList.add('sidebar-mode-' + mode);
+
+    // Update active bullet class on all sidebar-ctrl-item buttons across all sidebars
+    document.querySelectorAll('.sidebar-ctrl-item').forEach(function (item) {
+      if (item.getAttribute('data-mode') === mode) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+
+    if (notify) {
+      var labels = {
+        expanded: 'Expanded',
+        collapsed: 'Collapsed',
+        hover: 'Expand on hover'
+      };
+      showToast('Sidebar control set to: ' + labels[mode], 'success');
     }
   }
 
